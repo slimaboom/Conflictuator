@@ -1,4 +1,4 @@
-from configuration import MAIN_SECTOR, SECONDARY_SECTOR, BALISES
+from configuration import MAIN_SECTOR, SECONDARY_SECTOR, BALISES, ROUTES
 
 import matplotlib.pyplot as plt
 
@@ -16,6 +16,10 @@ def main():
 
     # Affichage des balises
     ax = BALISES.plot(ax, color='#BBBBBB')
+
+    # Affichage des routes aeriennes
+    ax = ROUTES.plot(ax, BALISES, color='grey')
+
     # Limit de la figure
     ax.set_xlim(-limit_xy, 1+limit_xy)
     ax.set_ylim(-limit_xy, 1+limit_xy)

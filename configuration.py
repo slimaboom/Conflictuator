@@ -1,7 +1,7 @@
 from sector import Sector
 from point import Point
 from balise import Balise, DatabaseBalise
-
+from route import Airway
 #------------------------------------------------------------------------------
 #--------- Definition  des secteurs: principal et secondaires -----------------
 #------------------------------------------------------------------------------
@@ -157,4 +157,68 @@ BALISES = DatabaseBalise([
     Balise(0.9032258064516129, 1-0.975609756097561, name="SICIL"),
     Balise(0.966501240694789, 1-0.42014162077104644, name="BIELA"),
     Balise(0.9844913151364765, 1-0.982690794649882, name="SODR")]
+)
+
+
+
+#------------------------------------------------------------------------------
+#--------- Definition  des routes aeriennes:  ---------------------------------
+#------------------------------------------------------------------------------
+ROUTES = Airway()
+ROUTES.add(key="NO-SE1", 
+           value=["ATN", "BURGO", "BOJOL", "LSE", "LTP", "GRENA", "SANTO", "JAMBI"]
+)
+
+ROUTES.add(
+    key="NO-SE2", 
+    value=["ATN", "BURGO", "BOJOL", "LSE", "LTP", "GRENA", "SANTO", "SAMOS"]
+)
+
+ROUTES.add(key="NO-SO1",
+           value=["ATN", "BURGO", "BOJOL", "LSE", "MINDI", "LANZA", "MEN", "GAI"]
+)
+
+ROUTES.add(
+    key="NE-SO1",
+    value=["FRI", "MELKA", "PAS", "LIMAN", "LSE", "MINDI", "LANZA", "MEN", "GAI"]
+)
+
+ROUTES.add(
+    key="NE-SE1",
+    value=["FRI", "MELKA", "PAS", "LIMAN", "LSE", "LTP", "GRENA", "SANTO", "JAMBI"]
+)
+
+ROUTES.add(
+    key="NE-SE2",
+    value=["FRI", "MELKA", "PAS", "LIMAN", "LSE", "LTP", "GRENA", "SANTO", "SAMOS"]
+)
+
+ROUTES.add(
+    key="SE-NE1", 
+    value=["JAMBI", "MTL", "LTP", "MOZAO", "SEVET", "RAPID"]
+)
+
+ROUTES.add(
+    key="SE-NO1", 
+    value=["JAMBI", "MTL", "MINDI", "CFA", "VULCA"]
+)
+
+ROUTES.add(
+    key="SE-SO1",
+     value=["JAMBI", "MTL", "SPIDY", "ETORI", "ONGHI", "GAI"]
+)
+
+ROUTES.add(
+    key="S-E1",
+    value=["MAJOR", "MTL", "GRENA", "BOSUA", "JUVEN", "BIELA"]
+)
+
+ROUTES.add(
+    key="S-NE1", 
+    value=["MAJOR", "MTL", "LTP", "MOZAO", "SEVET", "RAPID"]
+)
+
+ROUTES.add(
+    key="S-NO1",
+    value=["MAJOR", "MTL", "MINDI", "CFA", "VULCA"]
 )
