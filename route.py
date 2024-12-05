@@ -1,10 +1,7 @@
 from collector import Collector
-from balise import DatabaseBalise
-
-import numpy as np
+from balise import DatabaseBalise, Balise
 
 from matplotlib.pyplot import Axes
-from matplotlib.patches import Polygon
 
 from typing import List
 
@@ -18,3 +15,7 @@ class Airway(Collector[List[str]]):
             xs, ys = zip(*[(p.x, p.y) for p in balise_on_route])
             ax.plot(xs, ys, marker='None', color=color, linestyle='-', linewidth=1, alpha=0.5)
         return ax
+    
+    @staticmethod
+    def transform(routes: List[str], balises: DatabaseBalise) -> List[Balise]:
+        return [balises.get_from_key(waypoint) for waypoint in routes]

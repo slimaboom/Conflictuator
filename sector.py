@@ -20,9 +20,3 @@ class Sector(Collector[List[Point]]):
             ax.add_patch(polygon)
             #ax.text(xymean[0], xymean[1], s=name)
         return ax
-    
-
-# Plot flight routes
-#for route in Flightroutes:
-#xs, ys = zip(*route)
-#ax.plot(xs, ys, marker='o', color='gray', linestyle='-', linewidth=1, alpha=0.5)"""
