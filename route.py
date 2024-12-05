@@ -17,5 +17,8 @@ class Airway(Collector[List[str]]):
         return ax
     
     @staticmethod
-    def transform(routes: List[str], balises: DatabaseBalise) -> List[Balise]:
-        return [balises.get_from_key(waypoint) for waypoint in routes]
+    def transform(routes: List[str], balises: DatabaseBalise, reverse: bool=False) -> List[Balise]:
+        points = [balises.get_from_key(waypoint) for waypoint in routes]
+        if reverse:
+            points = list(reversed(points))
+        return points

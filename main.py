@@ -12,7 +12,9 @@ def main():
 
     # Création des avions avec un plan de vol
     aircrafts = [Aircraft(speed=0.02, 
-                          flight_plan=Airway.transform(ROUTES.get_from_key("NO-SE1"), BALISES))]
+                          flight_plan=Airway.transform(ROUTES.get_from_key("NO-SE1"), BALISES)),
+                 Aircraft(speed=0.04, 
+                          flight_plan=Airway.transform(ROUTES.get_from_key("NO-SO1"), BALISES, reverse=True))]
     
     # Initialiser l'animation
     timestep = 0.05  # Intervalle de temps pour chaque mise à jour
