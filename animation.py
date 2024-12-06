@@ -37,37 +37,38 @@ def update(frame: int, aircrafts: List[Aircraft], timestep: float, ax: Axes,
     triangle_size = 0.01  # Taille du triangle
     for aircraft in aircrafts:
         aircraft.update(timestep)  # Mise à jour de la position de l'avion
-        
-        # Dessiner les positions precedantes sur la carte
-        history = aircraft.history
-        if len(history) > 1:
-            N_PAST = 100
-            timesteps = sorted(history.keys(), reverse=True)  # Tri des temps dans l'ordre décroissant
+        print(aircraft.id, aircraft.has_reached_final_point())
+        if not aircraft.has_reached_final_point():
+            # Dessiner les positions precedantes sur la carte
+            history = aircraft.history
+            if len(history) > 1:
+                N_PAST = 50
+                timesteps = sorted(history.keys(), reverse=True)  # Tri des temps dans l'ordre décroissant
 
-            for i, t in enumerate(timesteps[:N_PAST]):
-                if i % 4 == 0:
-                    oldinfo = history.get(t)
-                    oldpost = oldinfo.position
-                    
-                    # Couleur et taille des marqueurs
-                    alpha = 1 - (i + 1) / N_PAST  # Alpha décroît avec l'index
-                    marker_size = min(6, 12 * (1 - (i+1)/N_PAST))
-                    
-                    # Afficher le point
-                    ax.plot(oldpost.x, oldpost.y, color='black', marker=".", ms=marker_size, alpha=alpha)
+                for i, t in enumerate(timesteps[:N_PAST]):
+                    if i % 4 == 0:
+                        oldinfo = history.get(t)
+                        oldpost = oldinfo.position
+                        
+                        # Couleur et taille des marqueurs
+                        alpha = 1 - (i + 1) / N_PAST  # Alpha décroît avec l'index
+                        marker_size = min(6, 12 * (1 - (i+1)/N_PAST))
+                        
+                        # Afficher le point
+                        ax.plot(oldpost.x, oldpost.y, color='black', marker=".", ms=marker_size, alpha=alpha)
 
-        # Dessiner la position de l'avion sur la carte
-        # Ajouter un triangle orienté selon le heading
-        triangle_size = 0.01  # Taille du triangle
-        triangle = RegularPolygon(
-            (aircraft.position.x, aircraft.position.y),  # Position du centre
-            numVertices=3,                               # Nombre de sommets (triangle)
-            radius=triangle_size,                        # Taille
-            orientation=aircraft.heading - np.pi / 2,    # Orientation alignée avec le cap
-            color="black"                                # Couleur
-        )
-        ax.add_patch(triangle)
-        #ax.plot(aircraft.position.x, aircraft.position.y, 'black', marker="o", ms=8)
+            # Dessiner la position de l'avion sur la carte
+            # Ajouter un triangle orienté selon le heading
+            triangle_size = 0.01  # Taille du triangle
+            triangle = RegularPolygon(
+                (aircraft.position.x, aircraft.position.y),  # Position du centre
+                numVertices=3,                               # Nombre de sommets (triangle)
+                radius=triangle_size,                        # Taille
+                orientation=aircraft.heading - np.pi / 2,    # Orientation alignée avec le cap
+                color="black"                                # Couleur
+            )
+            ax.add_patch(triangle)
+            #ax.plot(aircraft.position.x, aircraft.position.y, 'black', marker="o", ms=8)
 
 
     # Réglages de l'axe et de la vue

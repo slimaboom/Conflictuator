@@ -50,6 +50,7 @@ class Aircraft:
         self.time     = 0.
         self.heading  = self.calculate_heading(self.position, self.flight_plan[self.current_target_index])
 
+    def has_reached_final_point(self): return self._is_finished
 
     def generate_position_near_balise(self, balise: Balise) -> Point:
         """
@@ -96,7 +97,7 @@ class Aircraft:
 
         # Calculer la distance vers la balise
         distance_to_target = self.position.distance_horizontale(target_balise)
-        approximation = 1e-3 # Pour savoir si on proche de la balise ou pas
+        approximation = 1.1*timestep*self.speed # Pour savoir si on proche de la balise ou pas
 
         if distance_to_target <= approximation:
             # Passer a la prochaine balise
@@ -113,7 +114,7 @@ class Aircraft:
                 self.position = Point(prev_balise.x, prev_balise.y, self.position.z)
 
             else:
-                self.__is_finished = True
+                self._is_finished = True
                 print(f"Aircraft {self.id} has reached the final waypoint.")
                 return   
         else:

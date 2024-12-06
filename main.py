@@ -17,15 +17,16 @@ def main():
                           flight_plan=Airway.transform(ROUTES.get_from_key("NO-SO1"), BALISES, reverse=True))]
     
     # Initialiser l'animation
-    timestep = 0.05  # Intervalle de temps pour chaque mise à jour
+    # Calcul du timestep basé sur l'intervalle et le facteur d'échelle
+    timestep = 0.1
 
     # Passer les secteurs et les routes en tant que paramètres dans la fonction update
     ani = FuncAnimation(
         fig,
         update,  # La fonction à appeler à chaque frame
-        frames=200,  # Nombre total de frames
+        frames=500,  # Nombre total de frames
         fargs=(aircrafts, timestep, ax, MAIN_SECTOR, SECONDARY_SECTOR, BALISES, ROUTES),  # Arguments supplémentaires
-        interval=100,  # Intervalle en millisecondes
+        interval=50,  # Intervalle en millisecondes
         blit=False  # On ne fait pas du "blit" ici car il y a trop d'éléments à redessiner
     )
 
