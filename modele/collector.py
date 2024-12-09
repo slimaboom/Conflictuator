@@ -4,7 +4,7 @@ from typing import List, Dict, TypeVar, Generic, Union
 
 T= TypeVar('T')
 
-class Collector(ABC, Generic[T]):
+class Collector(Generic[T]):
     def __init__(self, key: str = None, values: Union[List[T], T] = None):
         self._database = defaultdict(dict)
         if key: self.add(key, values)

@@ -1,8 +1,11 @@
 from dataclasses import dataclass, field
-from point import Point
-from balise import Balise
+from modele.point import Point
+from modele.balise import Balise
+from modele.utils import rad_to_deg_aero
+from modele.collector import Collector
 
 from typing import List, Dict
+from copy import deepcopy
 
 import numpy as np
 
@@ -14,8 +17,14 @@ class Information:
     position: Point
     time: float
     speed: float
-    heading: float   
+    heading: float
 
+    def get_position(self): return self.position
+    def get_time(self): return self.time
+    def get_speed(self): return self.speed
+    def get_heading(self, in_aero: bool = True): return rad_to_deg_aero(self.heading)
+
+ 
 @dataclass
 class Aircraft:
     position: Point = field(init=False)
@@ -27,7 +36,7 @@ class Aircraft:
 
     current_target_index: int = field(init=False)  # Indice de la balise cible actuelle
      # Historique des positions de l'avion: key=time et value=Information(position, time, speed, heading)
-    history: Dict[float, Information] = field(default_factory=dict, init=False)
+    history: Dict[float, Information] = field(default_factory=dict, init=False) # Gestion d'un dictionnaire car recherche de point par cle en O(1)
     _is_finished: bool = field(init=False) # La trajectoire est-elle terminee ?
 
     # Attribut de classe pour suivre le nombre d'instances
@@ -50,6 +59,10 @@ class Aircraft:
         self.time     = 0.
         self.heading  = self.calculate_heading(self.position, self.flight_plan[self.current_target_index])
 
+    def deepcopy(self) -> 'Aircraft':
+        new_aircraft = deepcopy(self)
+        return new_aircraft
+
     def has_reached_final_point(self): return self._is_finished
 
     def generate_position_near_balise(self, balise: Balise) -> Point:
@@ -59,12 +72,12 @@ class Aircraft:
         radius = 0.1 # Rayon maximal autour de la balise (modifiable)
         
         # Générer un angle et une distance aléatoires dans le cercle
-
-        if balise.x < 0.5 and balise.y < 0.5: # Sud Ouest
+        bx, by = balise.getXY()
+        if bx < 0.5 and by < 0.5: # Sud Ouest
             min_angle, max_angle = -np.pi/2, np.pi
-        elif balise.x < 0.5 and balise.y >= 0.5: # Nord Ouest
+        elif bx < 0.5 and by >= 0.5: # Nord Ouest
             min_angle, max_angle = np.pi/2, np.pi
-        elif balise.x >= 0.5 and balise.y <= 0.5: # Sud Est
+        elif bx >= 0.5 and by <= 0.5: # Sud Est
             min_angle, max_angle = -np.pi/2, 0
         else: # Nord Est
             min_angle, max_angle = 0, np.pi/2
@@ -73,15 +86,15 @@ class Aircraft:
         distance = self.rng.uniform(0, radius)  # Distance entre 0 et le rayon
 
         # Calculer les coordonnées dans le cercle
-        x = balise.x + distance * np.cos(angle)
-        y = balise.y + distance * np.sin(angle)
-        z = 0.5#self.rng.random() # Tirage dans N(0, 1)
+        x = bx + distance * np.cos(angle)
+        y = by + distance * np.sin(angle)
+        z = 0.5 #self.rng.random() # Tirage dans N(0, 1)
         return Point(x, y, z)
 
     def calculate_heading(self, point: Point, balise: Balise) -> float:
         """ Calcul le heading entre le point et la balise"""
-        dx = balise.x - point.x
-        dy = balise.y - point.y
+        dx = balise.getX() - point.getX()
+        dy = balise.getY() - point.getY()
         heading = np.arctan2(dy, dx) % (2*np.pi) # modulo 2 pi
         return heading
 
@@ -115,14 +128,14 @@ class Aircraft:
 
             else:
                 self._is_finished = True
-                print(f"Aircraft {self.id} has reached the final waypoint.")
+                #print(f"Aircraft {self.id} has reached the final waypoint.")
                 return   
         else:
             # Si trajectoire pas terminee
             if not self._is_finished:            
                 # Calculer le vecteur de direction vers la balise cible
-                dx = abs(target_balise.x - self.position.x)
-                dy = abs(target_balise.y - self.position.y)
+                dx = abs(target_balise.getX() - self.position.getX())
+                dy = abs(target_balise.getY() - self.position.getY())
                 dz = 0.
 
                 # Normaliser le vecteur de direction
@@ -131,20 +144,37 @@ class Aircraft:
                 direction_z = dz / distance_to_target
 
                 # Calculer le déplacement selon la vitesse et le pas de temps
-                displacement = self.speed * timestep
-                new_x = self.position.x + np.cos(self.heading) * direction_x * displacement
-                new_y = self.position.y + np.sin(self.heading) * direction_y * displacement
-                new_z = self.position.z + direction_z * displacement
+                displacement = self.speed
+                new_x = self.position.getX() + np.cos(self.heading) * direction_x * displacement
+                new_y = self.position.getY() + np.sin(self.heading) * direction_y * displacement
+                new_z = self.position.getZ() + direction_z * displacement
 
-                print(f"At t={self.time}: {self.position} --> {new_x, new_y, new_z} with heading {self.heading} with speed {self.speed}")
-                print(f"Distance to Target balise: {target_balise}: {distance_to_target}\n")
+                #print(f"At t={self.time}: {self.position} --> {new_x, new_y, new_z} with heading {self.heading} with speed {self.speed}")
+                #print(f"Distance to Target balise: {target_balise}: {distance_to_target}\n")
 
                 # Mettre à jour la position et le temps
                 self.position = Point(new_x, new_y, new_z)
                 self.time += timestep
 
+    def get_position(self): return self.position
+    def get_time(self): return self.time/1000
+    def get_speed(self): return self.speed
+    def get_heading(self, in_aero=False): 
+        if not in_aero: return self.heading
+        else: return rad_to_deg_aero(self.heading)
+    def get_flight_plan(self): return self.flight_plan
+    def get_next_target(self): return self.flight_plan[self.current_target_index]
+    def get_id_aircraft(self): return self.id
+    def get_history(self): return self.history
 
 
 
 
 
+class AircraftCollector(Collector):
+    def __init__(self, value: Aircraft = None):
+        super().__init__()
+        if value: self.add(value)
+    
+    def add_aircraft(self, value: Aircraft) -> None:
+        super().add(key = value.get_id_aircraft(), value=value)

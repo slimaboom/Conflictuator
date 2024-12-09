@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import List
-from point import Point
-from collector import Collector
+from modele.point import Point
+from modele.collector import Collector
 
 import numpy as np
 
@@ -13,6 +13,8 @@ class Balise(Point):
     def __init__(self, x: float, y: float, z: float = 0, name: str = None):
         super().__init__(x, y, z)
         self.name = name
+
+    def get_name(self): return self.name
 
     def __repr__(self):
         repr = super().__repr__()

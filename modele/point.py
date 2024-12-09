@@ -10,15 +10,22 @@ class Point:
         - y: ordonnée normalisée entre -1 et 1.
         - altitude: Altitude normalisée entre 0 et 1.
         """
-        if not (0 <= x <= 1):
+        if not (-1 <= x <= 1):
             raise ValueError("abscisse normalisée doit être entre -1 et 1.")
-        if not (0 <= y <= 1):
+        if not (-1 <= y <= 1):
             raise ValueError("ordonnée normalisée doit être entre -1 et 1.")
         if not (0 <= z <= 1):
             raise ValueError("Altitude normalisée doit être entre 0 et 1.")
         self.x = x
         self.y = y
         self.z = z
+
+    def getX(self): return self.x
+    def getY(self): return self.y
+    def getZ(self): return self.z
+
+    def getXYZ(self): return self.getX(), self.getY(), self.getZ()
+    def getXY(self): return self.getX(), self.getY()
 
     def distance(self, other: 'Point') -> float:
         """

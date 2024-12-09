@@ -1,7 +1,9 @@
-from sector import Sector
-from point import Point
-from balise import Balise, DatabaseBalise
-from route import Airway
+from modele.sector import Sector
+from modele.point import Point
+from modele.balise import Balise, DatabaseBalise
+from modele.route import Airway
+from modele.aircraft import Aircraft, AircraftCollector
+
 #------------------------------------------------------------------------------
 #--------- Definition  des secteurs: principal et secondaires -----------------
 #------------------------------------------------------------------------------
@@ -221,4 +223,16 @@ ROUTES.add(
 ROUTES.add(
     key="S-NO1",
     value=["MAJOR", "MTL", "MINDI", "CFA", "VULCA"]
+)
+
+
+#------------------------------------------------------------------------------
+#--------- Definition  des avions:  -------------------------------------------
+#------------------------------------------------------------------------------
+AIRCRAFTS = AircraftCollector() # Gestion d'un dictionnaire car recherche en O(1)
+AIRCRAFTS.add_aircraft(Aircraft(speed=0.0001, 
+                                flight_plan=Airway.transform(ROUTES.get_from_key("NO-SE1"), BALISES))
+                    )
+AIRCRAFTS.add_aircraft(Aircraft(speed=0.0002, 
+                                flight_plan=Airway.transform(ROUTES.get_from_key("NO-SO1"), BALISES, reverse=True))
 )
