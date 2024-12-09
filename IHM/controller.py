@@ -136,29 +136,6 @@ class SimulationController(QObject):
         for _, qtaircraft in self.aircrafts.get_all().items():
             qtaircraft.update(dt, self._speed_factor) # Update QtAircraft et Aircraft
         
-
-    def reset(self, interval: int) -> None:
-        """Réinitialise la simulation."""
-        self.logger.info("Reseting SimulationController")
-
-        self.scene.clear()
-        self.logger.info("Clearing scene")
-
-        self.running = False
-        self.logger.info(f"Reseting running to {self.running }")
-
-        self.time_elapsed = 0
-        self.logger.info(f"Reseting time_elapsed to {self.time_elapsed}")
-
-        self._interval = int(SimulationController.INTERVAL)
-        self.logger.info(f"Reseting interval to  {interval}")
-
-        self.initialize()
-        self.logger.info("Initializing QtObjects")
-
-        self.draw()
-        self.logger.info("Drawing QtObjects")
-
     def toggle_running(self) -> None:
         """Bascule entre démarrer/arrêter la simulation."""
         msg = f"Toggle running attribut from {self.running} to {not(self.running)}"

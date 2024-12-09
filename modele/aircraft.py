@@ -120,11 +120,11 @@ class Aircraft:
                 target_balise = self.flight_plan[self.current_target_index]
                 # Recalculer la distance
                 distance_to_target = self.position.distance_horizontale(target_balise)
-                self.heading = self.calculate_heading(self.position, target_balise) 
 
                 self.time += timestep
                 prev_balise = self.flight_plan[self.current_target_index - 1]
-                self.position = Point(prev_balise.x, prev_balise.y, self.position.z)
+                self.position = Point(prev_balise.getX(), prev_balise.getY(), self.position.getZ())
+                self.heading = self.calculate_heading(self.position, target_balise) 
 
             else:
                 self._is_finished = True
@@ -159,13 +159,19 @@ class Aircraft:
     def get_position(self): return self.position
     def get_time(self): return self.time/1000
     def get_speed(self): return self.speed
-    def get_heading(self, in_aero=False): 
-        if not in_aero: return self.heading
-        else: return rad_to_deg_aero(self.heading)
+    def get_heading(self, in_aero: bool = False): 
+        if in_aero: return rad_to_deg_aero(self.heading)
+        else: return self.heading
     def get_flight_plan(self): return self.flight_plan
     def get_next_target(self): return self.flight_plan[self.current_target_index]
     def get_id_aircraft(self): return self.id
     def get_history(self): return self.history
+
+    def set_speed(self, speed: float) -> None:
+        self.speed = speed
+    
+    def set_heading(self, hdg: float) -> None:
+        self.heading = hdg
 
 
 

@@ -6,6 +6,11 @@ def rad_to_deg_aero(radians: float) -> float:
     deg_aero = (450 - deg) % 360
     return deg_aero if deg_aero != 0 else 360.
 
+def deg_aero_to_rad(deg: float) -> float:
+    if isinstance(deg, str):
+        deg = float(deg)
+    math_deg = (450 - deg) % 360    
+    return np.deg2rad(math_deg)
 
 def sec_to_time(seconds: float) -> str:
     """Convertit un temps en secondes avec précision en un format HH:MM:SS.sss."""

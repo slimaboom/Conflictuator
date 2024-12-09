@@ -231,11 +231,8 @@ class QtAircraft(QGraphicsPolygonItem):
     def mousePressEvent(self, event):
         super().mousePressEvent(event)
         # Lorsque l'utilisateur presse la souris, "attraper" la souris
-        self.grabMouse()  # L'élément attrape la souris pour obtenir les événements
+        self.signal_emitter.clicked.emit(self)
 
     def mouseReleaseEvent(self, event):
-        print(event)
         # Lorsque l'utilisateur relâche la souris, "délivrer" la souris
-        self.ungrabMouse()  # L'élément relâche la prise de la souris
-        self.signal_emitter.clicked.emit()  # Émettre le signal clicked
         super().mouseReleaseEvent(event)  # Appeler la méthode parente

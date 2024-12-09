@@ -2,13 +2,18 @@ from PyQt5.QtWidgets import (QMainWindow, QVBoxLayout,
                              QWidget, QApplication,
                              QHBoxLayout, QPushButton,
                              QSlider, QLabel,
-                             QGraphicsView, QGraphicsScene
+                             QGraphicsView, QGraphicsScene,
+                             QMenu, QAction, 
+                             QInputDialog, QDialog, 
+                             QDoubleSpinBox, QDialogButtonBox
 )
 
 from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QCursor
 from logging_config import setup_logging
 from IHM.controller import SimulationController
-from modele.utils import sec_to_time
+from IHM.QtObject import QtAircraft
+from modele.utils import sec_to_time, deg_aero_to_rad
 
 import sys
 import os
@@ -58,11 +63,10 @@ class MainWindow(QMainWindow):
 
         # Afficher le temps de simulation
         self.time_label = QLabel("Temps: 00:00:00.00")
-        self.simulation_controller.time_updated.connect(self.update_time_label)
 
         # Curseur pour régler la vitesse
         self.speed_slider = QSlider(Qt.Horizontal)
-        self.speed_slider.setRange(1, 5)  # Vitesse entre 1x et 5x
+        self.speed_slider.setRange(1, 10)  # Vitesse entre 1x et 10x
         self.speed_slider.setValue(1)  # Par défaut, à 1
         self.speed_slider.valueChanged.connect(self.update_speed)
 
@@ -91,9 +95,91 @@ class MainWindow(QMainWindow):
         simulation_controller = SimulationController(self.scene)
         for _, qtaircraft in simulation_controller.get_aircrafts().get_all().items():
             # Connexion des avions sur le signal clicked
-            qtaircraft.signal_emitter.clicked.connect(lambda :self.toggle_simulation(False))
+            qtaircraft.signal_emitter.clicked.connect(self.click_on_aircraft)
+        
+        # Connexion a l'affichage du temps
+        simulation_controller.time_updated.connect(self.update_time_label)
         return simulation_controller
 
+
+    def click_on_aircraft(self, qtaircraft: QtAircraft) -> None:
+        """Gère le clic sur un avion."""
+        # Stopper la simulation
+        self.toggle_simulation(False)
+        # Création du menu
+        menu = QMenu(self)
+
+        # Titre (non sélectionnable)
+        title_action = QAction(f"Identifiant: {qtaircraft.get_aircraft().get_id_aircraft()}", self)
+        title_action.setEnabled(False)  # Non sélectionnable
+        menu.addAction(title_action)
+
+        # Séparateur
+        menu.addSeparator()
+
+        # Action: Changer le cap
+        change_heading_action = QAction("Changer le cap", self)
+        change_heading_action.triggered.connect(lambda: self.change_aircraft_heading(qtaircraft))
+        menu.addAction(change_heading_action)
+
+        # Action: Changer la vitesse
+        change_speed_action = QAction("Changer la vitesse", self)
+        change_speed_action.triggered.connect(lambda: self.change_aircraft_speed(qtaircraft))
+        menu.addAction(change_speed_action)
+
+        # Afficher le menu à la position actuelle du curseur
+        menu.exec_(QCursor.pos())
+
+    def change_aircraft_heading(self, qtaircraft: QtAircraft) -> None:
+        """Permet de changer le cap d'un avion."""
+        new_heading, ok = QInputDialog.getDouble(
+            self,
+            "Changer le cap",
+            f"Entrez le nouveau cap pour l'avion {qtaircraft.get_aircraft().get_id_aircraft()} (en degrés) :",
+            decimals=0,
+            min=1,
+            max=360,
+        )
+        if ok:
+            nhdg = deg_aero_to_rad(new_heading)
+            qtaircraft.get_aircraft().set_heading(nhdg)
+            print(f"Cap de l'avion {qtaircraft.get_aircraft().get_id_aircraft()} mis à jour : {nhdg} ({new_heading}°)")
+            # Relancer la simulation
+            self.toggle_simulation(True)
+
+
+    def change_aircraft_speed(self, qtaircraft: QtAircraft) -> None:
+        """Permet de changer la vitesse d'un avion avec un QDoubleSpinBox."""
+        dialog = QDialog(self)
+        dialog.setWindowTitle(f"Changer la vitesse pour l'avion {qtaircraft.get_aircraft().get_id_aircraft()}")
+
+        layout = QVBoxLayout()
+
+        # Création du QDoubleSpinBox
+        spin_box = QDoubleSpinBox(dialog)
+        spin_box.setDecimals(5)  # Nombre de décimales
+        spin_box.setRange(1e-5, 9e-4)  # Plage de valeurs
+        spin_box.setSingleStep(1e-5)  # Pas de 1e-5
+        spin_box.setValue(qtaircraft.get_aircraft().get_speed())  # Valeur actuelle
+
+        layout.addWidget(spin_box)
+
+        # Ajouter les boutons "OK" et "Annuler"
+        buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        buttons.accepted.connect(dialog.accept)
+        buttons.rejected.connect(dialog.reject)
+
+        layout.addWidget(buttons)
+        dialog.setLayout(layout)
+        
+        if dialog.exec_() == QDialog.Accepted:            
+            # Si l'utilisateur valide la nouvelle vitesse
+            new_speed = round(spin_box.value(), 5)
+            qtaircraft.get_aircraft().set_speed(new_speed)
+            print(f"Vitesse de l'avion {qtaircraft.get_aircraft().get_id_aircraft()} mise à jour : {new_speed}")
+            # Relancer la simulation
+            self.toggle_simulation(True)
+    
     def toggle_simulation(self, checked):
         """Lance ou met en pause la simulation."""
         self.manage_play_pause_button(checked)
@@ -128,7 +214,12 @@ class MainWindow(QMainWindow):
         self.logger.info("Simulation réinitialisée.")
         self.play_button.setStyleSheet(bg_style)
         self.speed_slider.setValue(1)
-        self.simulation_controller.reset(interval=SimulationController.INTERVAL)
+        # On recree un objet de SimulationController et on efface de la scene pour redessiner
+        # Les avions sont des copies donc il faut reinitialiser tout..
+        self.scene.clear()
+        self.simulation_controller = self.create_simulation_controller()
+        self.simulation_controller.draw()
+
         self.update_time_label(0)
         self.time_label.setStyleSheet(bg_style)
 
@@ -137,7 +228,6 @@ class MainWindow(QMainWindow):
         self.logger.info(f"Vitesse d'animation mise à jour : x {value}")
         if self.play_button.isChecked(): self.toggle_simulation(checked=False)
         self.simulation_controller.set_speed(speed_factor=value)
-
 
     def showEvent(self, event):
         super().showEvent(event)
