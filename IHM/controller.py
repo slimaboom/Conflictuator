@@ -92,6 +92,7 @@ class SimulationController(QObject):
         # Dessiner les avions en mouvement
         for aircraft_id, aircraft in AIRCRAFTS.get_all().copy().items():
             qtaircraft = QtAircraft(aircraft.deepcopy(), parent=self.scene)
+
             # Sauvegarde du QtAIrcraft dans l'attribut aircraft
             self.aircrafts.add(aircraft_id, qtaircraft)
 

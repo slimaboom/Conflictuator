@@ -1,10 +1,11 @@
 from PyQt5.QtGui import QPen, QColor, QPolygonF, QBrush
-from PyQt5.QtCore import Qt, QPointF
+from PyQt5.QtCore import Qt, QPointF, QRectF
 from PyQt5.QtWidgets import (QGraphicsPolygonItem, 
                              QGraphicsPathItem,
                              QGraphicsScene, 
                              QGraphicsTextItem,
-                             QGraphicsRectItem)
+                             QGraphicsRectItem,
+                             QGraphicsEllipseItem)
 
 from PyQt5.QtGui import QColor, QPainterPath
 
@@ -13,6 +14,7 @@ from typing import List
 from modele.point import Point
 from modele.balise import Balise
 from modele.aircraft import Aircraft
+from IHM.signal import SignalEmitter
 
 class QtSector(QGraphicsPolygonItem):
     def __init__(self, sector_name: str, parent: QGraphicsScene):
@@ -47,7 +49,6 @@ class QtBalise(QGraphicsPolygonItem):
                   QPointF(x * width + self.size_triangle, y * height + self.size_triangle)]
                   )
         self.setBrush(qcolor)
-        #self.setPen(QPen(Qt.black, 1))
         self.setPolygon(polygon)
 
         # Ajouter le texte pour le nom de la balise 
@@ -85,6 +86,9 @@ class QtAircraft(QGraphicsPolygonItem):
         # Ajouter une etiquette a l'avion
         self.setAcceptHoverEvents(True)
         self.initialise_tooltip()
+
+        # Emetteur de signaux
+        self.signal_emitter = SignalEmitter()
     
     def get_aircraft(self) -> Aircraft: return self.aircraft
 
@@ -129,8 +133,8 @@ class QtAircraft(QGraphicsPolygonItem):
         self.setPen(QPen(Qt.black, 1))
     
     def draw_history(self, speed_factor) -> None:
-        max_history_points = 20
-        step_points = 15*speed_factor
+        max_history_points = 6
+        step_points = 50
         history_keys = sorted(self.aircraft.get_history().keys(), reverse=True)[::step_points][:max_history_points]
         scale_factor = 1.0
 
@@ -150,14 +154,17 @@ class QtAircraft(QGraphicsPolygonItem):
             # Definir la taille du carre qui diminue avec l'age dans l'historique
             size_square = int(8 * (scale_factor - ((i+1)/max_history_points)))
 
-            square = self._get_square(x, y, size=size_square)
-            item = QGraphicsPolygonItem(square)
+            #square = self._get_square(x, y, size=size_square)
+            bounding_rect = QRectF(x - size_square, y - size_square, 2 * size_square, 2 * size_square)
+
+            item = QGraphicsEllipseItem(bounding_rect)
+            brush = QBrush(QColor(Qt.gray if i != 0 else Qt.black))
+            item.setPen(QPen(Qt.black, 1))
+            item.setBrush(brush)
+            # Dessiner des cercles
+            #item = QGraphicsPolygonItem(square)
 
             # Definir les propietes visuelles du triangle
-            brush = QBrush(QColor(Qt.black))
-            item.setBrush(brush)
-            item.setPen(QPen(Qt.black, 1))
-
             # Ajouter la representation dans history_drawing
             self.history_drawing[time_key] = item
             
@@ -219,3 +226,7 @@ class QtAircraft(QGraphicsPolygonItem):
         self.tooltip.setVisible(False)
         self.tooltip_background.setVisible(False)
 
+    def mousePressEvent(self, event):
+        # Émettre le signal lors d'un clic
+        self.signal_emitter.clicked.emit()
+        super().mousePressEvent(event)

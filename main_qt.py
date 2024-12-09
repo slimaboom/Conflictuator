@@ -32,7 +32,7 @@ class MainWindow(QMainWindow):
         self.view = QGraphicsView(self.scene, self)
 
         # Création des objets dans la scene
-        self.simulation_controller = SimulationController(self.scene)
+        self.simulation_controller = self.create_simulation_controller()
 
         self.control_panel = self.create_control_panel()
 
@@ -85,6 +85,14 @@ class MainWindow(QMainWindow):
     def update_time_label(self, time_seconds: float):
         """Met à jour le QLabel avec le temps écoulé."""
         self.time_label.setText(f"Temps: {sec_to_time(time_seconds)}")
+
+    def create_simulation_controller(self) -> SimulationController:
+        # Creation du SimulationController
+        simulation_controller = SimulationController(self.scene)
+        for _, qtaircraft in simulation_controller.get_aircrafts().get_all().items():
+            # Connexion des avions sur le signal clicked
+            qtaircraft.signal_emitter.clicked.connect(lambda :self.toggle_simulation(False))
+        return simulation_controller
 
     def toggle_simulation(self, checked):
         """Lance ou met en pause la simulation."""
@@ -140,6 +148,9 @@ class MainWindow(QMainWindow):
         """ Resize la fenetre principale et la scene et envoie la mise a jour au controller"""
         self.logger.info(f"Fenetre principale redimensionnee width={self.width()}, height={self.height()}")
         self.view.fitInView(self.scene.sceneRect(), Qt.KeepAspectRatio)
+
+
+
 
 # Application PyQt5
 if __name__ == "__main__":

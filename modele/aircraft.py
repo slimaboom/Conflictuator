@@ -110,7 +110,7 @@ class Aircraft:
 
         # Calculer la distance vers la balise
         distance_to_target = self.position.distance_horizontale(target_balise)
-        approximation = 1.1*timestep*self.speed # Pour savoir si on proche de la balise ou pas
+        approximation = 1.1*self.speed # Pour savoir si on proche de la balise ou pas
 
         if distance_to_target <= approximation:
             # Passer a la prochaine balise
