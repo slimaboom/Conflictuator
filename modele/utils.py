@@ -17,10 +17,10 @@ def sec_to_time(seconds: float) -> str:
 
 def time_to_sec(time_str: str) -> float:
     """
-    Convertit un temps au format HH:MM:SS ou HH:MM:SS,ss en secondes.
+    Convertit un temps au format HH:MM:SS ou HH:MM:SS.ss en secondes.
     
     Args:
-        time_str (str): Une chaîne de caractères représentant le temps (HH:MM:SS ou HH:MM:SS,ss).
+        time_str (str): Une chaîne de caractères représentant le temps (HH:MM:SS ou HH:MM:SS.ss).
     
     Returns:
         float: Le temps en secondes.
@@ -41,7 +41,7 @@ def time_to_sec(time_str: str) -> float:
         hours, minutes, secs = map(int, main_time.split(":"))
         return hours * 3600 + minutes * 60 + secs + millis/10
     except ValueError:
-        raise ValueError("Le format du temps doit être HH:MM:SS ou HH:MM:SS,ss.")
+        raise ValueError("Le format du temps doit être HH:MM:SS ou HH:MM:SS.ss.")
 
 
 

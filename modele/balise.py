@@ -25,7 +25,7 @@ class DatabaseBalise(Collector[Balise]):
     def __init__(self, balises: List[Balise] = []):
         super().__init__()
         for balise in balises:
-            self.add(key=balise.name,
+            self.add(key=balise.get_name(),
                      value=balise) # association cle/valeur
 
     def plot(self, ax: Axes, color: str) -> Axes:
@@ -37,9 +37,9 @@ class DatabaseBalise(Collector[Balise]):
 
         size=0.005
         for name, balise in self.get_all().items():
-            triangle = coordinates_triangles(balise.x, balise.y, size=size)
+            triangle = coordinates_triangles(balise.getX(), balise.getY(), size=size)
             polygon = Polygon(triangle, closed=True, fill=True, edgecolor=color, facecolor=color)
 
             ax.add_patch(polygon)
-            ax.text(balise.x, balise.y - size*2, name, fontsize=8, ha='right')
+            ax.text(balise.getX(), balise.getY() - size*2, name, fontsize=8, ha='right')
         return ax
