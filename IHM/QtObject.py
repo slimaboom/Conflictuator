@@ -1,6 +1,7 @@
 from PyQt5.QtGui import QPen, QColor, QPolygonF, QBrush
 from PyQt5.QtCore import Qt, QPointF, QRectF
-from PyQt5.QtWidgets import (QGraphicsPolygonItem, 
+from PyQt5.QtWidgets import (QGraphicsItem,
+                             QGraphicsPolygonItem, 
                              QGraphicsPathItem,
                              QGraphicsScene, 
                              QGraphicsTextItem,
@@ -14,6 +15,7 @@ from typing import List
 from modele.point import Point
 from modele.balise import Balise
 from modele.aircraft import Aircraft
+from modele.utils import sec_to_time
 from IHM.signal import SignalEmitter
 
 class QtSector(QGraphicsPolygonItem):
@@ -21,7 +23,7 @@ class QtSector(QGraphicsPolygonItem):
         super().__init__()
         self.sector_name = sector_name
         self.parent = parent
-
+    
     def add_polygon(self, points: List[Point], qcolor: QColor) -> None:
         # Definir le polygone pour chaque secteur
         w, h = self.parent.width(), self.parent.height()
@@ -89,7 +91,10 @@ class QtAircraft(QGraphicsPolygonItem):
 
         # Emetteur de signaux
         self.signal_emitter = SignalEmitter()
-    
+        
+        # Cela permet à l'élément d'écouter les événements de la souris
+        self.setFlag(QGraphicsItem.ItemIsSelectable)  
+
     def get_aircraft(self) -> Aircraft: return self.aircraft
 
     def initialise_tooltip(self) -> QGraphicsTextItem:
@@ -177,7 +182,7 @@ class QtAircraft(QGraphicsPolygonItem):
         self.draw_history(speed_factor)  # Redessine l'historique
         self.draw_aircraft() # Redessine l'avion
 
-   # Gestion des événements de survol
+    # Gestion des événements de survol
     def hoverEnterEvent(self, event):
         # Appeler la méthode parente
         super().hoverEnterEvent(event)
@@ -187,7 +192,7 @@ class QtAircraft(QGraphicsPolygonItem):
         speed = self.aircraft.get_speed()
         heading = round(self.aircraft.get_heading(in_aero=True), 2)
         x, y, z = self.aircraft.get_position().getXYZ()
-        time = round(self.aircraft.get_time(), 5)
+        time = sec_to_time(self.aircraft.get_time())
         # Mettre à jour le texte de l'info-bulle
         tooltip_text = f"""
 <div style="font-size: 10pt; color: black;">
@@ -213,10 +218,7 @@ class QtAircraft(QGraphicsPolygonItem):
         # Afficher l'info-bulle
         self.tooltip_background.setVisible(True)
         self.tooltip.setVisible(True)
-
-
         self.tooltip.setPos(x, y)
-        self.tooltip.setVisible(True)
 
     def hoverLeaveEvent(self, event):
         # Appeler la méthode parente
@@ -227,6 +229,13 @@ class QtAircraft(QGraphicsPolygonItem):
         self.tooltip_background.setVisible(False)
 
     def mousePressEvent(self, event):
-        # Émettre le signal lors d'un clic
-        self.signal_emitter.clicked.emit()
         super().mousePressEvent(event)
+        # Lorsque l'utilisateur presse la souris, "attraper" la souris
+        self.grabMouse()  # L'élément attrape la souris pour obtenir les événements
+
+    def mouseReleaseEvent(self, event):
+        print(event)
+        # Lorsque l'utilisateur relâche la souris, "délivrer" la souris
+        self.ungrabMouse()  # L'élément relâche la prise de la souris
+        self.signal_emitter.clicked.emit()  # Émettre le signal clicked
+        super().mouseReleaseEvent(event)  # Appeler la méthode parente
