@@ -64,25 +64,34 @@ class MainWindow(QMainWindow):
         # Afficher le temps de simulation
         self.time_label = QLabel("Temps: 00:00:00.00")
 
+        # Layout de vitesse (QLabel + QDoubleSpinBox)
+        speed_layout = QHBoxLayout()
         # Curseur pour régler la vitesse
-        self.speed_slider = QSlider(Qt.Horizontal)
-        self.speed_slider.setRange(1, 10)  # Vitesse entre 1x et 10x
-        self.speed_slider.setValue(1)  # Par défaut, à 1
-        self.speed_slider.valueChanged.connect(self.update_speed)
+        self.speed_spin =  QDoubleSpinBox()
+        self.speed_spin.setRange(1, 10)  # Vitesse entre 1x et 10x
+        self.speed_spin.setDecimals(0)
+        self.speed_spin.setValue(1)  # Par défaut, à 1
+        self.speed_spin.setSingleStep(1)
+        self.speed_spin.valueChanged.connect(self.update_speed)
 
         # Afficher la vitesse
         self.speed_label = QLabel("Vitesse : x1")
-        self.speed_slider.valueChanged.connect(
-            lambda value: self.speed_label.setText(f"Vitesse : x {value}")
+        self.speed_spin.valueChanged.connect(
+            lambda value: self.speed_label.setText(f"Vitesse : x {int(value)}")
         )
+        speed_layout.addWidget(self.speed_label)
+        speed_layout.addWidget(self.speed_spin)
+
+        # Bloc de vitesse
+        speed_container = QWidget()
+        speed_container.setLayout(speed_layout)
 
         # Ajouter les widgets à la barre
         layout.addWidget(self.play_button)
         layout.addWidget(self.stop_button)
         layout.addWidget(self.time_label)  # Ajouter le QLabel au panneau
-        layout.addWidget(QLabel("Vitesse"))
-        layout.addWidget(self.speed_slider)
         layout.addWidget(self.speed_label)
+        layout.addWidget(speed_container)
         
         return control_panel
 
@@ -214,7 +223,7 @@ class MainWindow(QMainWindow):
         self.toggle_simulation(False)
         self.logger.info("Simulation réinitialisée.")
         self.play_button.setStyleSheet(bg_style)
-        self.speed_slider.setValue(1)
+        self.speed_spin.setValue(1)
         # On recree un objet de SimulationController et on efface de la scene pour redessiner
         # Les avions sont des copies donc il faut reinitialiser tout..
         self.scene.clear()
