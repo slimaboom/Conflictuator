@@ -13,6 +13,7 @@ class Balise(Point):
     def __init__(self, x: float, y: float, z: float = 0, name: str = None):
         super().__init__(x, y, z)
         self.name = name
+        self.conflits = []
 
     def get_name(self): return self.name
 
@@ -20,6 +21,12 @@ class Balise(Point):
         repr = super().__repr__()
         repr = repr.replace('Point', 'Balise').replace(')', f", name='{self.name}')")
         return repr
+    
+    def add_conflicts(self, conflicts):
+        self.conflits = conflicts # Ajoute les conflits
+
+    
+    def get_conflicts(self): return self.conflits
     
 class DatabaseBalise(Collector[Balise]):
     def __init__(self, balises: List[Balise] = []):

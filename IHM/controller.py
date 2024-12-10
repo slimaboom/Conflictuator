@@ -11,6 +11,8 @@ from PyQt5.QtWidgets import QGraphicsScene
 from PyQt5.QtGui import QColor
 from PyQt5.QtCore import QTimer, QObject, pyqtSignal
 
+from modele.conflict import Conflict
+
 class SimulationController(QObject):
     INTERVAL = 100
     time_updated = pyqtSignal(float) # Signal qui transmet le temps écoulé (en seconds)
@@ -44,6 +46,8 @@ class SimulationController(QObject):
         self.initialise_balises()
         self.initialise_routes()
         self.intialise_aircrafts()
+        self.initialise_conflits()
+        
 
     def initialise_sectors(self) -> None:
         sectors = [(SectorName.MAIN, MAIN_SECTOR), 
@@ -95,6 +99,12 @@ class SimulationController(QObject):
 
             # Sauvegarde du QtAIrcraft dans l'attribut aircraft
             self.aircrafts.add(aircraft_id, qtaircraft)
+    
+    def initialise_conflits(self) -> None:
+        aircraft_list = []
+        for aircraft in self.aircrafts.get_all().items(): 
+            aircraft_list.append(aircraft[1].get_aircraft())
+            Conflict.detect_conflicts(aircraft_list, 1000)
 
     def draw_sectors(self) -> None:
         # Ajouter les secteurs a la secene
@@ -134,7 +144,7 @@ class SimulationController(QObject):
         self.time_updated.emit(self.time_elapsed/1000) # envoie du temps ecoulé
 
         for _, qtaircraft in self.aircrafts.get_all().items():
-            qtaircraft.update(dt, self._speed_factor) # Update QtAircraft et Aircraft
+            qtaircraft.update(dt/1000, self._speed_factor) # Update QtAircraft et Aircraft
         
 
     def reset(self, interval: int) -> None:
@@ -158,6 +168,7 @@ class SimulationController(QObject):
 
         self.draw()
         self.logger.info("Drawing QtObjects")
+        
 
     def toggle_running(self) -> None:
         """Bascule entre démarrer/arrêter la simulation."""
