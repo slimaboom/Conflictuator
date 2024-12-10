@@ -9,6 +9,8 @@ from PyQt5.QtWidgets import (QGraphicsItem,
                              QGraphicsEllipseItem)
 
 from PyQt5.QtGui import QColor, QPainterPath
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QTextEdit
+from PyQt5.QtWidgets import QPushButton
 
 from typing import List
 
@@ -17,6 +19,7 @@ from modele.balise import Balise
 from modele.aircraft import Aircraft
 from modele.utils import sec_to_time
 from IHM.signal import SignalEmitter
+from modele.conflict import Conflict
 
 class QtSector(QGraphicsPolygonItem):
     def __init__(self, sector_name: str, parent: QGraphicsScene):
@@ -41,6 +44,11 @@ class QtBalise(QGraphicsPolygonItem):
     
         # Taille du triangle
         self.size_triangle = 10
+
+        # Ajout d'un signal pour les clics
+        self.signal_emitter = SignalEmitter()
+    
+    def get_balise(self) -> Balise: return self.balise
     
     def makePolygon(self, qcolor: QColor) -> None:
         x, y = self.balise.getXY()
@@ -57,6 +65,11 @@ class QtBalise(QGraphicsPolygonItem):
         self.text_item = QGraphicsTextItem(self.balise.get_name(), self) 
         self.text_item.setPos(x * width, y *  height + self.size_triangle) 
         self.text_item.setDefaultTextColor(Qt.black)
+
+    def mousePressEvent(self, event):
+        """Gère l'événement de clic et émet un signal."""
+        self.signal_emitter.clicked.emit(self.balise)  # Transmet la balise cliquée
+        super().mousePressEvent(event)
 
 class QtAirway(QGraphicsPathItem):
     def __init__(self, airway_name: str, parent: QGraphicsScene):
@@ -236,3 +249,41 @@ class QtAircraft(QGraphicsPolygonItem):
     def mouseReleaseEvent(self, event):
         # Lorsque l'utilisateur relâche la souris, "délivrer" la souris
         super().mouseReleaseEvent(event)  # Appeler la méthode parente
+        self.signal_emitter.clicked.emit(self)  # Émettre le signal clicked
+        super().mouseReleaseEvent(event)  # Appeler la méthode parente
+
+
+class ConflictWindow(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Conflits détectés")
+
+        # Configuration de la mise en page
+        layout = QVBoxLayout(self)
+
+        self.title_label = QLabel("Conflits détectés :")
+        self.conflict_display = QTextEdit()
+        self.conflict_display.setReadOnly(True)  # Zone non modifiable
+
+        # Bouton de fermeture
+        self.close_button = QPushButton("Fermer")
+        self.close_button.clicked.connect(self.hide)  # Connecte le clic pour cacher la fenêtre
+
+        # Ajouter les widgets à la mise en page
+        layout.addWidget(self.title_label)
+        layout.addWidget(self.conflict_display)
+        layout.addWidget(self.close_button)
+
+    def update_conflicts(self, balise):
+        """Met à jour l'affichage avec la liste des conflits."""
+        conflicts = balise.get_conflicts()
+        if not conflicts:
+            self.conflict_display.setText("<b>Aucun conflit détecté.</b>")
+        else:
+            text = f"<h3>Balise : {balise.get_name()}</h3><ul>"
+            for conflict in conflicts:
+
+                text = Conflict.set_conflict_text(conflict, text)
+
+            self.conflict_display.setHtml(text)
+

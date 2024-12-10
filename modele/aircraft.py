@@ -32,10 +32,11 @@ class Aircraft:
     speed: float
     heading: float = field(init=False)
     flight_plan: List[Balise]
+    flight_plan_timed: Dict[str, float] # Dictionnaire avec le nom de la balise en clé et le temps de passage en valeur
     id: int = field(init=False)  # L'attribut `id` sera défini dans `__post_init__`
 
     current_target_index: int = field(init=False)  # Indice de la balise cible actuelle
-     # Historique des positions de l'avion: key=time et value=Information(position, time, speed, heading)
+    # Historique des positions de l'avion: key=time et value=Information(position, time, speed, heading)
     history: Dict[float, Information] = field(default_factory=dict, init=False) # Gestion d'un dictionnaire car recherche de point par cle en O(1)
     _is_finished: bool = field(init=False) # La trajectoire est-elle terminee ?
 
@@ -53,12 +54,17 @@ class Aircraft:
         # Initialisation des attributs
         self.current_target_index = 0  # Commence avec la première balise
         self._is_finished = False
+        self.flight_plan_timed = {}
 
         # Premiere position autour de la premiere balise
         self.position = self.generate_position_near_balise(self.flight_plan[self.current_target_index])
         self.time     = 0.
         self.heading  = self.calculate_heading(self.position, self.flight_plan[self.current_target_index])
 
+        # Enregistrer les temps de passage prévu par le plan de vol
+        self.calculate_estimated_times()
+        print(self.id)
+        
     def deepcopy(self) -> 'Aircraft':
         new_aircraft = deepcopy(self)
         return new_aircraft
@@ -97,6 +103,23 @@ class Aircraft:
         dy = balise.getY() - point.getY()
         heading = np.arctan2(dy, dx) % (2*np.pi) # modulo 2 pi
         return heading
+    
+    def calculate_estimated_times(self) -> None:
+        """
+        Calcule les temps estimés de passage de l'avion pour chaque balise.
+        Le Range dans l'attribut flight_time_timed
+        """
+        current_position = self.position
+        current_time = self.time
+
+        for balise in self.flight_plan[self.current_target_index:]:
+            distance_to_balise = current_position.distance_horizontale(balise)
+            time_to_balise = distance_to_balise / self.speed
+            current_time += time_to_balise
+            self.flight_plan_timed[balise.name] = current_time
+            current_position = balise  # Simuler que l'avion atteint la balise
+        
+        return None
 
 
     def update(self, timestep: float) -> None:
@@ -110,51 +133,38 @@ class Aircraft:
 
         # Calculer la distance vers la balise
         distance_to_target = self.position.distance_horizontale(target_balise)
-        approximation = 1.1*self.speed # Pour savoir si on proche de la balise ou pas
-
+        approximation = 1.1 * self.speed # Pour savoir si on proche de la balise ou pas
+        
         if distance_to_target <= approximation:
-            # Passer a la prochaine balise
+            # Passer à la balise suivante
             if self.current_target_index < len(self.flight_plan) - 1:
                 self.current_target_index += 1
-                
                 target_balise = self.flight_plan[self.current_target_index]
-                # Recalculer la distance
-                distance_to_target = self.position.distance_horizontale(target_balise)
-
+                self.heading = self.calculate_heading(self.position, target_balise)
                 self.time += timestep
-                prev_balise = self.flight_plan[self.current_target_index - 1]
-                self.position = Point(prev_balise.getX(), prev_balise.getY(), self.position.getZ())
-                self.heading = self.calculate_heading(self.position, target_balise) 
-
             else:
                 self._is_finished = True
                 #print(f"Aircraft {self.id} has reached the final waypoint.")
-                return   
+                return
         else:
-            # Si trajectoire pas terminee
-            if not self._is_finished:            
-                # Calculer le vecteur de direction vers la balise cible
-                dx = abs(target_balise.getX() - self.position.getX())
-                dy = abs(target_balise.getY() - self.position.getY())
-                dz = 0.
+            # Déplacement rectiligne vers la balise
+            displacement = self.speed
 
-                # Normaliser le vecteur de direction
-                direction_x = dx / distance_to_target
-                direction_y = dy / distance_to_target
-                direction_z = dz / distance_to_target
+            # Calculer les nouvelles coordonnées
+            direction_x = (target_balise.x - self.position.x) / distance_to_target
+            direction_y = (target_balise.y - self.position.y) / distance_to_target
+            direction_z = 0.0  # Pas de variation verticale pour l'instant
 
-                # Calculer le déplacement selon la vitesse et le pas de temps
-                displacement = self.speed
-                new_x = self.position.getX() + np.cos(self.heading) * direction_x * displacement
-                new_y = self.position.getY() + np.sin(self.heading) * direction_y * displacement
-                new_z = self.position.getZ() + direction_z * displacement
+            new_x = self.position.x + direction_x * displacement
+            new_y = self.position.y + direction_y * displacement
+            new_z = self.position.z + direction_z * displacement
 
-                #print(f"At t={self.time}: {self.position} --> {new_x, new_y, new_z} with heading {self.heading} with speed {self.speed}")
-                #print(f"Distance to Target balise: {target_balise}: {distance_to_target}\n")
+            #print(f"At t={self.time}: {self.position} --> {new_x, new_y, new_z} with heading {self.heading} with speed {self.speed}")
+            #print(f"Distance to Target balise: {target_balise}: {distance_to_target}\n")
 
-                # Mettre à jour la position et le temps
-                self.position = self.controle_position(new_x, new_y, new_z)
-                self.time += timestep
+            # Mettre à jour la position et le temps
+            self.position = self.controle_position(new_x, new_y, new_z)
+            self.time += timestep
 
     def controle_position(self, x: float, y: float, z:float):
         try:
@@ -174,7 +184,7 @@ class Aircraft:
             return new_point        
 
     def get_position(self): return self.position
-    def get_time(self): return self.time/1000
+    def get_time(self): return self.time
     def get_speed(self): return self.speed
     def get_heading(self, in_aero: bool = False): 
         if in_aero: return rad_to_deg_aero(self.heading)
@@ -190,6 +200,7 @@ class Aircraft:
     def set_heading(self, hdg: float) -> None:
         self.heading = hdg
 
+    def get_flight_plan_timed(self): return self.flight_plan_timed
 
 
 
