@@ -33,7 +33,7 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(container)
 
         # Création d'une scène et d'une vue pour afficher les secteurs
-        self.scene = QGraphicsScene(0, 0, self.width(), self.height())
+        self.scene = QGraphicsScene(0, 0, 1.05*self.width(), 1.05*self.height())
         self.view = QGraphicsView(self.scene, self)
 
         # Création des objets dans la scene

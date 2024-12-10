@@ -7,9 +7,9 @@ from modele.sector import SectorName
 from IHM.QtObject import QtSector, QtBalise, QtAirway, QtAircraft
 from logging_config import setup_logging
 
-from PyQt5.QtWidgets import QGraphicsScene
-from PyQt5.QtGui import QColor
-from PyQt5.QtCore import QTimer, QObject, pyqtSignal
+from PyQt5.QtWidgets import QGraphicsScene, QGraphicsRectItem
+from PyQt5.QtGui import QColor, QPen
+from PyQt5.QtCore import QTimer, QObject, pyqtSignal, Qt
 
 class SimulationController(QObject):
     INTERVAL = 100
@@ -116,7 +116,27 @@ class SimulationController(QObject):
         for _, qtaircraft in self.aircrafts.get_all().items():
             self.scene.addItem(qtaircraft)
 
+
+    def draw_boundary_rectangle(self) -> None:
+        """Ajoute un rectangle pour délimiter la zone d'évolution des avions."""
+        # Dimensions de la scène
+        scene_width = self.scene.width()
+        scene_height = self.scene.height()
+
+        # Créer le rectangle
+        rect = QGraphicsRectItem(0, 0, scene_width, scene_height)
+
+        # Style des bordures
+        pen = QPen(Qt.black)
+        pen.setWidth(2)  # Épaisseur des bordures
+        rect.setPen(pen)
+
+        # Ajouter le rectangle à la scène
+        self.scene.addItem(rect)
+
     def draw(self) -> None:
+        # Dessiner la limite d'evoluation
+        self.draw_boundary_rectangle()
         # Dessiner les secteurs
         self.draw_sectors()
         # Dessiner les routes aeriennes

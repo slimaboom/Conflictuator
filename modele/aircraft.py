@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from modele.point import Point
+from modele.point import Point, PointValue
 from modele.balise import Balise
 from modele.utils import rad_to_deg_aero
 from modele.collector import Collector
@@ -153,8 +153,25 @@ class Aircraft:
                 #print(f"Distance to Target balise: {target_balise}: {distance_to_target}\n")
 
                 # Mettre à jour la position et le temps
-                self.position = Point(new_x, new_y, new_z)
+                self.position = self.controle_position(new_x, new_y, new_z)
                 self.time += timestep
+
+    def controle_position(self, x: float, y: float, z:float):
+        try:
+            new_point = Point(x, y, z)
+        except ValueError:
+            if x < PointValue.MinX or x > PointValue.MaxX:
+                self.heading = np.pi - self.heading
+            if y < PointValue.MinY or y > PointValue.MaxY:
+                self.heading = -self.heading
+            if self.heading < 0:
+                self.heading += 2*np.pi
+            if self.heading > 2*np.pi:
+                self.heading -= 2*np.pi    
+
+            new_point = self.position
+        finally:
+            return new_point        
 
     def get_position(self): return self.position
     def get_time(self): return self.time/1000
