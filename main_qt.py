@@ -139,6 +139,7 @@ class MainWindow(QMainWindow):
             decimals=0,
             min=1,
             max=360,
+            value=qtaircraft.get_aircraft().get_heading(in_aero=True)
         )
         if ok:
             nhdg = deg_aero_to_rad(new_heading)
