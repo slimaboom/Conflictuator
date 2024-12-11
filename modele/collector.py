@@ -32,4 +32,12 @@ class Collector(Generic[T]):
 
     def __repr__(self) -> str:
         attr = ", ".join([f"'{key}'" for key in self.get_all()])
-        return f"Sector({attr})"
+        return f"Collector({attr})"
+    
+    def is_empty(self): return len(self._database) == 0
+
+    def __contains__(self, key: str) -> bool:
+        return key in self._database
+    
+    def __iter__(self):
+        return iter(self._database)

@@ -3,6 +3,7 @@ from modele.point import Point, PointValue
 from modele.balise import Balise
 from modele.utils import rad_to_deg_aero
 from modele.collector import Collector
+from logging_config import setup_logging
 
 from typing import List, Dict
 from copy import deepcopy
@@ -22,8 +23,9 @@ class Information:
     def get_position(self): return self.position
     def get_time(self): return self.time
     def get_speed(self): return self.speed
-    def get_heading(self, in_aero: bool = True): return rad_to_deg_aero(self.heading)
-
+    def get_heading(self, in_aero: bool = True): 
+        if in_aero: return rad_to_deg_aero(self.heading)
+        else: return self.heading
  
 @dataclass
 class Aircraft:
@@ -39,11 +41,14 @@ class Aircraft:
     # Historique des positions de l'avion: key=time et value=Information(position, time, speed, heading)
     history: Dict[float, Information] = field(default_factory=dict, init=False) # Gestion d'un dictionnaire car recherche de point par cle en O(1)
     _is_finished: bool = field(init=False) # La trajectoire est-elle terminee ?
+    _conflict_dict: Collector[List[float]] = field(init=False) # Dictionnaire de conflict entre self et les autres: cle=id_autre, valeur=liste des dates conflicts
 
     # Attribut de classe pour suivre le nombre d'instances
     __COUNTER: int = 0
 
     def __post_init__(self):
+        self.logger = setup_logging(__class__.__name__)
+
         # Incrémenter le compteur de classe et assigner l'ID unique
         self.__class__.__COUNTER += 1
         object.__setattr__(self, 'id', self.__class__.__COUNTER)
@@ -62,7 +67,10 @@ class Aircraft:
         self.heading  = self.calculate_heading(self.position, self.flight_plan[self.current_target_index])
 
         # Enregistrer les temps de passage prévu par le plan de vol
+        self.flight_plan_timed = {} # Initialisation du dictionnaire rempli par calculate_estimated_times
         self.calculate_estimated_times()
+
+        self._conflict_dict = Collector() # Dictionnaire vide au depart
         
     def deepcopy(self) -> 'Aircraft':
         new_aircraft = deepcopy(self)
@@ -108,7 +116,6 @@ class Aircraft:
         Calcule les temps estimés de passage de l'avion pour chaque balise.
         Le Range dans l'attribut flight_time_timed
         """
-        self.flight_plan_timed = {} # Initialisation du dictionnaire
         current_position = self.position
         current_time = self.time
 
@@ -200,8 +207,29 @@ class Aircraft:
     def set_heading(self, hdg: float) -> None:
         self.heading = hdg
 
-    def get_flight_plan_timed(self): return self.flight_plan_timed
+    def get_flight_plan_timed(self) -> Dict[str, float]: return self.flight_plan_timed
 
+    def is_in_conflict(self) -> bool: return self._conflict_dict.is_empty() # Si collection vide alors pas de conflit
+
+    def get_conflict(self) -> Collector[List[float]]: return self._conflict_dict
+    def set_conflict(self, other: 'Aircraft', time_date_conflict: float) -> None:
+        """ Methode qui ajoute le conflict entre self et other.
+        Le conflict a lieu a la time_date_conflict
+
+        L'ajout n'est pas que pour l'objet self. Il faudra appeler la methode sur other aussi.
+        """
+        # Avec quelle avion, suis-je en conflict
+        
+        conflict_with = other.get_id_aircraft()
+        # Ajout du conflict dans le dictionnaire
+        values = self._conflict_dict.get_from_key(conflict_with)
+
+        self.logger.info(f"Ajout d'un conflict entre {self.get_id_aircraft()} et {conflict_with} pour t_{self.get_id_aircraft()}={time_date_conflict}")
+
+        if values: # La cle existe si ca renvoie pas None
+            self._conflict_dict.get_from_key(conflict_with).append(time_date_conflict) # Modification en place
+        else:
+            self._conflict_dict.add(key=conflict_with, value=[time_date_conflict]) # Forcer la valeur a etre une liste
 
 
 

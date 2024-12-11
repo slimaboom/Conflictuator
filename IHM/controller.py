@@ -101,10 +101,9 @@ class SimulationController(QObject):
             self.aircrafts.add(aircraft_id, qtaircraft)
     
     def initialise_conflits(self) -> None:
-        aircraft_list = []
-        for aircraft in self.aircrafts.get_all().items(): 
-            aircraft_list.append(aircraft[1].get_aircraft())
-            Conflict.detect_conflicts(aircraft_list, 1000)
+        aircraft_list = list(map(lambda qtacft: qtacft.get_aircraft(), self.aircrafts.get_all().values()))
+        Conflict.detect_conflicts(aircraft_list, 1000)
+
 
     def draw_sectors(self) -> None:
         # Ajouter les secteurs a la secene

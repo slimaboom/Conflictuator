@@ -44,6 +44,10 @@ class Conflict:
                         "time_2": time2,
                         "time_difference": time2 - time1,
                     })
+                    
+                    # Ajouter les conflits aux avions
+                    aircraft1.set_conflict(other=aircraft2, time_date_conflict=time1)
+                    aircraft2.set_conflict(other=aircraft1, time_date_conflict=time2)
             
             if len(conflicts) > 0 :
                 BALISES.get_from_key(balise_name).add_conflicts(conflicts)
@@ -60,7 +64,7 @@ class Conflict:
         conflict_time = conflict["time_1"]
         text = text1
         v1 = f"{aircraft_1.get_speed():.1e}".replace('.0', '')
-        v2 = f"{aircraft_1.get_speed():.1e}".replace('.0', '')
+        v2 = f"{aircraft_2.get_speed():.1e}".replace('.0', '')
         # Ajout du style CSS pour décaler légèrement le texte vers la gauche
         text += """
         <style>
