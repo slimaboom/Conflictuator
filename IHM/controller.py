@@ -164,7 +164,7 @@ class SimulationController(QObject):
         self.time_updated.emit(self.time_elapsed/1000) # envoie du temps ecoulé
 
         for _, qtaircraft in self.aircrafts.get_all().items():
-            qtaircraft.update(dt/1000, self._speed_factor) # Update QtAircraft et Aircraft
+            qtaircraft.update(dt, self._speed_factor) # Update QtAircraft et Aircraft
         
     def toggle_running(self) -> None:
         """Bascule entre démarrer/arrêter la simulation."""
@@ -180,7 +180,6 @@ class SimulationController(QObject):
     def set_speed(self, speed_factor: int) -> None:
         """Modifie la vitesse de simulation."""
         self._speed_factor = int(speed_factor)
-        self._interval = int(self.INTERVAL/(2*speed_factor))
 
     def stop_simulation(self):
         if self.running: self.toggle_running()

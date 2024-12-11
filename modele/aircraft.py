@@ -32,7 +32,7 @@ class Aircraft:
     speed: float
     heading: float = field(init=False)
     flight_plan: List[Balise]
-    flight_plan_timed: Dict[str, float] # Dictionnaire avec le nom de la balise en clé et le temps de passage en valeur
+    flight_plan_timed: Dict[str, float] = field(init=False) # Dictionnaire avec le nom de la balise en clé et le temps de passage en valeur
     id: int = field(init=False)  # L'attribut `id` sera défini dans `__post_init__`
 
     current_target_index: int = field(init=False)  # Indice de la balise cible actuelle
@@ -63,7 +63,6 @@ class Aircraft:
 
         # Enregistrer les temps de passage prévu par le plan de vol
         self.calculate_estimated_times()
-        print(self.id)
         
     def deepcopy(self) -> 'Aircraft':
         new_aircraft = deepcopy(self)
@@ -109,6 +108,7 @@ class Aircraft:
         Calcule les temps estimés de passage de l'avion pour chaque balise.
         Le Range dans l'attribut flight_time_timed
         """
+        self.flight_plan_timed = {} # Initialisation du dictionnaire
         current_position = self.position
         current_time = self.time
 
@@ -116,7 +116,7 @@ class Aircraft:
             distance_to_balise = current_position.distance_horizontale(balise)
             time_to_balise = distance_to_balise / self.speed
             current_time += time_to_balise
-            self.flight_plan_timed[balise.name] = current_time
+            self.flight_plan_timed[balise.get_name()] = current_time
             current_position = balise  # Simuler que l'avion atteint la balise
         
         return None

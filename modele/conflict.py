@@ -5,9 +5,6 @@ from modele.aircraft import Aircraft
 from logging_config import setup_logging
 @dataclass
 class Conflict:
-
-    def __init__(self):
-        self.logger  = setup_logging(__class__.__name__)
     
     def detect_conflicts(aircraft_list: List[Aircraft], time_threshold: float = 60) -> Dict[str, List[Dict]]:
         """
