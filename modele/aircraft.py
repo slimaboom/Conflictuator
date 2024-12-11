@@ -44,7 +44,7 @@ class Aircraft:
     # Historique des positions de l'avion: key=time et value=Information(position, time, speed, heading)
     history: Dict[float, Information] = field(default_factory=dict, init=False) # Gestion d'un dictionnaire car recherche de point par cle en O(1)
     _is_finished: bool = field(init=False) # La trajectoire est-elle terminee ?
-    _conflict_dict: Collector[List[Conflict]] = field(init=False) # Dictionnaire de conflict entre self et les autres: cle=id_autre, valeur=liste des dates conflicts
+    _conflict_dict: Collector[List['Conflict']] = field(init=False) # Dictionnaire de conflict entre self et les autres: cle=id_autre, valeur=liste des dates conflicts
 
     # Attribut de classe pour suivre le nombre d'instances
     __COUNTER: int = 0
@@ -214,9 +214,9 @@ class Aircraft:
 
     def is_in_conflict(self) -> bool: return not self._conflict_dict.is_empty() # Si collection vide alors pas de conflit
 
-    def get_conflicts(self) -> Collector[List[Conflict]]: return self._conflict_dict
+    def get_conflicts(self) -> Collector[List['Conflict']]: return self._conflict_dict
     
-    def set_conflicts(self, conflict_info: Conflict) -> None:
+    def set_conflicts(self, conflict_info: 'Conflict') -> None:
         """ 
             Methode qui ajoute le conflict au dictionnaire.
         """

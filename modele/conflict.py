@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import List, TYPE_CHECKING
+from typing import List, Dict, TYPE_CHECKING
 from modele.configuration import BALISES, AIRCRAFTS
 from modele.utils import sec_to_time
 
@@ -8,8 +8,8 @@ if TYPE_CHECKING:
 
 @dataclass(frozen=True)
 class Conflict:
-    aircraft_one: Aircraft
-    aircraft_two: Aircraft
+    aircraft_one: 'Aircraft'
+    aircraft_two: 'Aircraft'
     conflict_time_one: float
     conflict_time_two: float
     location: str # Balise.get_name...
@@ -34,7 +34,7 @@ class Conflict:
         return f"Conflict(id_one={id_one}, id_two={id_two}, time_one={self.conflict_time_one}, time_two={self.conflict_time_two}, location=\'{self.location}\')"
 
     @staticmethod
-    def detect_conflicts(aircraft_list: List[Aircraft], time_threshold: float = 60) -> None: # La fonction ne renvoie rien
+    def detect_conflicts(aircraft_list: List['Aircraft'], time_threshold: float = 60) -> None: # La fonction ne renvoie rien
         """
         Détecte les conflits de passage par les balises.
         Retourne un dictionnaire où chaque balise est associée à une liste de conflits.
@@ -84,7 +84,7 @@ class Conflict:
         return None
     
     @staticmethod
-    def set_conflict_text(conflict, text1):
+    def set_conflict_text(conflict: Dict[str, float], text1: str) -> str:
         
         aircraft_id1 = conflict["aircraft_1"]
         aircraft_1 = AIRCRAFTS.get_from_key(aircraft_id1)
