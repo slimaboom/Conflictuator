@@ -59,6 +59,8 @@ class Conflict:
         aircraft_2 = AIRCRAFTS.get_from_key(aircraft_id2)
         conflict_time = conflict["time_1"]
         text = text1
+        v1 = f"{aircraft_1.get_speed():.1e}".replace('.0', '')
+        v2 = f"{aircraft_1.get_speed():.1e}".replace('.0', '')
         # Ajout du style CSS pour décaler légèrement le texte vers la gauche
         text += """
         <style>
@@ -74,13 +76,13 @@ class Conflict:
                 <b>Avion 1 :</b> {aircraft_id1}<br>
                 <b>Position :</b> ({aircraft_1.get_position().getX():.2f}, 
                                     {aircraft_1.get_position().getY():.2f})<br>
-                <b>Vitesse :</b> {aircraft_1.get_speed():.2f} unités<br>
+                <b>Vitesse :</b> {v1} unité/s<br>
                     <b>Cap :</b> {aircraft_1.get_heading(in_aero=True):.2f}°<br>
                     <br>
                     <b>Avion 2 :</b> {aircraft_id2}<br>
                     <b>Position :</b> ({aircraft_2.get_position().getX():.2f}, 
                                         {aircraft_2.get_position().getY():.2f})<br>
-                    <b>Vitesse :</b> {aircraft_2.get_speed():.2f} unité/s<br>
+                    <b>Vitesse :</b> {v2} unité/s<br>
                     <b>Cap :</b> {aircraft_2.get_heading(in_aero=True):.2f}°<br>
                     <br>
                 </li>
