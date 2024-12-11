@@ -8,7 +8,7 @@ from PyQt5.QtWidgets import (QGraphicsItem,
                              QGraphicsRectItem,
                              QGraphicsEllipseItem)
 
-from PyQt5.QtGui import QColor, QPainterPath
+from PyQt5.QtGui import QColor, QPainterPath, QTextOption
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QTextEdit
 from PyQt5.QtWidgets import QPushButton
 
@@ -286,4 +286,3 @@ class ConflictWindow(QWidget):
                 text = Conflict.set_conflict_text(conflict, text)
 
             self.conflict_display.setHtml(text)
-
