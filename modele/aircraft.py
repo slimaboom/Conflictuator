@@ -5,10 +5,13 @@ from modele.utils import rad_to_deg_aero
 from modele.collector import Collector
 from logging_config import setup_logging
 
-from typing import List, Dict
+from typing import List, Dict, TYPE_CHECKING
 from copy import deepcopy
 
 import numpy as np
+
+if TYPE_CHECKING:
+    from modele.conflict import Conflict
 
 @dataclass(frozen=True)
 class Information:
@@ -41,7 +44,7 @@ class Aircraft:
     # Historique des positions de l'avion: key=time et value=Information(position, time, speed, heading)
     history: Dict[float, Information] = field(default_factory=dict, init=False) # Gestion d'un dictionnaire car recherche de point par cle en O(1)
     _is_finished: bool = field(init=False) # La trajectoire est-elle terminee ?
-    _conflict_dict: Collector[List[float]] = field(init=False) # Dictionnaire de conflict entre self et les autres: cle=id_autre, valeur=liste des dates conflicts
+    _conflict_dict: Collector[List[Conflict]] = field(init=False) # Dictionnaire de conflict entre self et les autres: cle=id_autre, valeur=liste des dates conflicts
 
     # Attribut de classe pour suivre le nombre d'instances
     __COUNTER: int = 0
@@ -209,27 +212,24 @@ class Aircraft:
 
     def get_flight_plan_timed(self) -> Dict[str, float]: return self.flight_plan_timed
 
-    def is_in_conflict(self) -> bool: return self._conflict_dict.is_empty() # Si collection vide alors pas de conflit
+    def is_in_conflict(self) -> bool: return not self._conflict_dict.is_empty() # Si collection vide alors pas de conflit
 
-    def get_conflict(self) -> Collector[List[float]]: return self._conflict_dict
-    def set_conflict(self, other: 'Aircraft', time_date_conflict: float) -> None:
-        """ Methode qui ajoute le conflict entre self et other.
-        Le conflict a lieu a la time_date_conflict
-
-        L'ajout n'est pas que pour l'objet self. Il faudra appeler la methode sur other aussi.
+    def get_conflicts(self) -> Collector[List[Conflict]]: return self._conflict_dict
+    
+    def set_conflicts(self, conflict_info: Conflict) -> None:
+        """ 
+            Methode qui ajoute le conflict au dictionnaire.
         """
-        # Avec quelle avion, suis-je en conflict
-        
-        conflict_with = other.get_id_aircraft()
         # Ajout du conflict dans le dictionnaire
+        conflict_with = conflict_info.get_aircraft_two().get_id_aircraft()
         values = self._conflict_dict.get_from_key(conflict_with)
 
-        self.logger.info(f"Ajout d'un conflict entre {self.get_id_aircraft()} et {conflict_with} pour t_{self.get_id_aircraft()}={time_date_conflict}")
+        self.logger.info(f"Ajout d'un conflict: {conflict_info}")
 
         if values: # La cle existe si ca renvoie pas None
-            self._conflict_dict.get_from_key(conflict_with).append(time_date_conflict) # Modification en place
+            self._conflict_dict.get_from_key(conflict_with).append(conflict_info) # Modification en place
         else:
-            self._conflict_dict.add(key=conflict_with, value=[time_date_conflict]) # Forcer la valeur a etre une liste
+            self._conflict_dict.add(key=conflict_with, value=[conflict_info]) # Forcer la valeur a etre une liste
 
 
 

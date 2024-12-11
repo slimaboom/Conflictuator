@@ -1,13 +1,40 @@
 from dataclasses import dataclass
-from typing import List, Dict
-from modele.configuration import MAIN_SECTOR, SECONDARY_SECTOR, BALISES, ROUTES, AIRCRAFTS
-from modele.aircraft import Aircraft
+from typing import List, TYPE_CHECKING
+from modele.configuration import BALISES, AIRCRAFTS
 from modele.utils import sec_to_time
 
-@dataclass
+if TYPE_CHECKING:
+    from modele.aircraft import Aircraft
+
+@dataclass(frozen=True)
 class Conflict:
+    aircraft_one: Aircraft
+    aircraft_two: Aircraft
+    conflict_time_one: float
+    conflict_time_two: float
+    location: str # Balise.get_name...
+
+    @property
+    def time_difference(self) -> float:
+        """Calcule la différence de temps entre les deux avions."""
+        return self.conflict_time_two - self.conflict_time_one
+
+    def get_aircraft_one(self): return self.aircraft_one
+    def get_aircraft_two(self): return self.aircraft_two
+
+    def get_conflict_time_one(self): return self.conflict_time_one
+    def get_conflict_time_two(self): return self.conflict_time_two
     
-    def detect_conflicts(aircraft_list: List[Aircraft], time_threshold: float = 60) -> Dict[str, List[Dict]]:
+    def get_location(self): return self.location
+    def get_time_difference(self): return self.time_difference
+    
+    def __repr__(self):
+        id_one = self.aircraft_one.get_id_aircraft()
+        id_two = self.aircraft_two.get_id_aircraft()
+        return f"Conflict(id_one={id_one}, id_two={id_two}, time_one={self.conflict_time_one}, time_two={self.conflict_time_two}, location=\'{self.location}\')"
+
+    @staticmethod
+    def detect_conflicts(aircraft_list: List[Aircraft], time_threshold: float = 60) -> None: # La fonction ne renvoie rien
         """
         Détecte les conflits de passage par les balises.
         Retourne un dictionnaire où chaque balise est associée à une liste de conflits.
@@ -45,16 +72,18 @@ class Conflict:
                         "time_difference": time2 - time1,
                     })
                     
+                    conflict_info_one = Conflict(aircraft1, aircraft2, time1, time2, balise_name)
+                    conflict_info_two = Conflict(aircraft2, aircraft1, time2, time1, balise_name)
                     # Ajouter les conflits aux avions
-                    aircraft1.set_conflict(other=aircraft2, time_date_conflict=time1)
-                    aircraft2.set_conflict(other=aircraft1, time_date_conflict=time2)
+                    aircraft1.set_conflicts(conflict_info_one)
+                    aircraft2.set_conflicts(conflict_info_two)
             
             if len(conflicts) > 0 :
                 BALISES.get_from_key(balise_name).add_conflicts(conflicts)
 
-
         return None
     
+    @staticmethod
     def set_conflict_text(conflict, text1):
         
         aircraft_id1 = conflict["aircraft_1"]
