@@ -159,9 +159,9 @@ class SimulationController(QObject):
 
     def update_simulation(self) -> None:
         """Met à jour la simulation."""
-        dt = self.timer.interval() # en milliseconds
+        dt = self.timer.interval()/1000 # en milliseconds
         self.time_elapsed += dt * self._speed_factor
-        self.time_updated.emit(self.time_elapsed/1000) # envoie du temps ecoulé
+        self.time_updated.emit(self.time_elapsed) # envoie du temps ecoulé
 
         for _, qtaircraft in self.aircrafts.get_all().items():
             qtaircraft.update(dt, self._speed_factor) # Update QtAircraft et Aircraft
@@ -191,7 +191,7 @@ class SimulationController(QObject):
     def get_sectors(self) -> Collector[QtSector]: return self.sectors
     def get_routes(self) -> Collector[QtAirway]: return self.routes
     def get_balises(self) -> Collector[QtBalise]: return self.balises
-    def get_time_elapsed(self) -> float: return self.time_elapsed / 1000
+    def get_time_elapsed(self) -> float: return self.time_elapsed
     def get_running(self) -> bool: return self.running
 
     def add_aircraft(self, aircraft: Aircraft) -> None:
