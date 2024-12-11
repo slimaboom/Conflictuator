@@ -230,12 +230,12 @@ ROUTES.add(
 #--------- Definition  des avions:  -------------------------------------------
 #------------------------------------------------------------------------------
 AIRCRAFTS = AircraftCollector() # Gestion d'un dictionnaire car recherche en O(1)
-AIRCRAFTS.add_aircraft(Aircraft(speed=0.0001, 
+AIRCRAFTS.add_aircraft(Aircraft(speed=0.001, 
                                 flight_plan=Airway.transform(ROUTES.get_from_key("NO-SE1"), BALISES))
                     )
-AIRCRAFTS.add_aircraft(Aircraft(speed=0.0002, 
+AIRCRAFTS.add_aircraft(Aircraft(speed=0.002, 
                                 flight_plan=Airway.transform(ROUTES.get_from_key("NO-SO1"), BALISES, reverse=True))
 )
-AIRCRAFTS.add_aircraft(Aircraft(speed=0.00015, 
-                                flight_plan=Airway.transform(ROUTES.get_from_key("SE-NE1"), BALISES))
-)
+#AIRCRAFTS.add_aircraft(Aircraft(speed=0.00015, 
+#                                flight_plan=Airway.transform(ROUTES.get_from_key("SE-NE1"), BALISES))
+#)

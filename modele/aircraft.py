@@ -118,7 +118,7 @@ class Aircraft:
             current_time += time_to_balise
             self.flight_plan_timed[balise.get_name()] = current_time
             current_position = balise  # Simuler que l'avion atteint la balise
-        
+            print(self.id, balise, time_to_balise)
         return None
 
 
@@ -133,7 +133,7 @@ class Aircraft:
 
         # Calculer la distance vers la balise
         distance_to_target = self.position.distance_horizontale(target_balise)
-        approximation = 1.1 * self.speed # Pour savoir si on proche de la balise ou pas
+        approximation = 1.1 * self.speed * timestep # Pour savoir si on proche de la balise ou pas
         
         if distance_to_target <= approximation:
             # Passer à la balise suivante
@@ -148,7 +148,7 @@ class Aircraft:
                 return
         else:
             # Déplacement rectiligne vers la balise
-            displacement = self.speed
+            displacement = self.speed * timestep
 
             # Calculer les nouvelles coordonnées
             direction_x = (target_balise.x - self.position.x) / distance_to_target
