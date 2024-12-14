@@ -53,6 +53,7 @@ class ConflictManager:
         self.aircraft_list = []
         self.balises = {}
         self.time_threshold = time_threshold
+        self.time_simulation = None
 
     def register_aircraft(self, aircraft: 'Aircraft') -> None:
         """Enregistre un avion dans le gestionnaire."""
@@ -61,6 +62,9 @@ class ConflictManager:
     def register_balise(self, balise: Balise) -> None:
         """Enregistre une balise dans le gestionnaire."""
         self.balises[balise.get_name()] = balise
+
+    def set_time_simulation(self, time: float) -> None:
+        self.time_simulation = time
 
     def update_aircraft_conflicts(self, updated_aircraft: 'Aircraft') -> None:
         """
@@ -92,7 +96,7 @@ class ConflictManager:
 
         # Analyser les conflits pour chaque balise
         for balise_name, passages in balise_passages.items():
-            self.balises.get(balise_name).clear_conflicts() # Effacer les conflicts en cas de recalcul
+            self.balises.get(balise_name).clear_conflicts(self.time_simulation) # Effacer les conflicts en cas de recalcul
 
             # Trier les passages par temps
             passages.sort(key=lambda x: x[1])

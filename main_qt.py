@@ -227,6 +227,12 @@ class MainWindow(QMainWindow):
             new_speed = round(spin_box.value(), 5)
             qtaircraft.get_aircraft().set_speed(new_speed)
             print(f"Vitesse de l'avion {qtaircraft.get_aircraft().get_id_aircraft()} mise à jour : {new_speed}")
+            
+            current_balise = self.conflict_window.current_balise
+            if current_balise and self.conflict_window.isVisible():
+                self.conflict_window.close()
+                self.show_conflicts_for_balise(current_balise)
+
             # Relancer la simulation
             self.toggle_simulation(True)
     
@@ -263,7 +269,7 @@ class MainWindow(QMainWindow):
         self.toggle_simulation(False)
         self.logger.info("Simulation réinitialisée.")
         self.play_button.setStyleSheet(bg_style)
-        self.speed_spin.setValue(1)
+        self.speed_spin.setValue(1) 
         # On recree un objet de SimulationController et on efface de la scene pour redessiner
         # Les avions sont des copies donc il faut reinitialiser tout..
         self.scene.clear()
@@ -273,6 +279,7 @@ class MainWindow(QMainWindow):
         self.update_time_label(0)
         self.time_label.setStyleSheet(bg_style)
 
+        self.conflict_window.close()
 
     def update_speed(self, value):
         """Met à jour la vitesse d'animation."""

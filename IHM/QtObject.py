@@ -274,8 +274,14 @@ class ConflictWindow(QWidget):
         layout.addWidget(self.conflict_display)
         layout.addWidget(self.close_button)
 
+        self._current_balise = None
+
+    @property
+    def current_balise(self): return self._current_balise
+
     def update_conflicts(self, balise):
         """Met à jour l'affichage avec la liste des conflits."""
+        self._current_balise = balise
         conflicts = balise.get_conflicts()
         if not conflicts:
             self.conflict_display.setText("<b>Aucun conflit détecté.</b>")

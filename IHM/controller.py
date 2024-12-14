@@ -32,6 +32,7 @@ class SimulationController(QObject):
 
         # Enregistrer le gestionnaire comme observateur
         self.conflict_manager = ConflictManager(time_threshold=60)
+        self.conflict_manager.set_time_simulation(self.time_elapsed)
         Aircraft.register_observer(self.conflict_manager)
 
         # Timer
@@ -175,6 +176,8 @@ class SimulationController(QObject):
         dt = self.timer.interval()/1000 # en milliseconds
         self.time_elapsed += dt * self._speed_factor
         self.time_updated.emit(self.time_elapsed) # envoie du temps ecoulé
+
+        self.conflict_manager.set_time_simulation(self.time_elapsed) # Mise a jour du temps de simulation dans le manager
 
         for _, qtaircraft in self.aircrafts.get_all().items():
             qtaircraft.update(dt, self._speed_factor) # Update QtAircraft et Aircraft

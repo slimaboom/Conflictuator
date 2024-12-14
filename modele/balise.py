@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import List
+from typing import List, Dict
 from modele.point import Point
 from modele.collector import Collector
 
@@ -18,23 +18,30 @@ class Balise(Point):
         self.conflits = []
         self.logger = setup_logging(__class__.__name__)
 
-    def get_name(self): return self.name
+    def get_name(self) -> str: return self.name
 
     def __repr__(self):
         repr = super().__repr__()
         repr = repr.replace('Point', 'Balise').replace(')', f", name='{self.name}')")
         return repr
     
-    def add_conflicts(self, conflicts):
-        self.logger.info(f"Adding/Replacinf conflict in balise: {self}\nfrom {self.conflits} to {conflicts}")
+    def add_conflicts(self, conflicts) -> None:
+        self.logger.info(f"Adding/Replacing conflict in balise: {self}\nfrom {self.conflits} to {conflicts}")
         self.conflits = conflicts # Ajoute les conflits
 
     
-    def get_conflicts(self): return self.conflits
+    def get_conflicts(self) -> List[Dict[str, float]]: return self.conflits
 
-    def clear_conflicts(self): 
+    def clear_conflicts(self, time: float) -> None: 
         self.logger.info(f"Clearing conflict in balise: {self}")
-        self.conflits.clear()
+    
+        filter_conflict = []
+        for c in self.conflits:
+            time_of_conflict = float(c.get('time_1'))
+            if time_of_conflict < time:
+                filter_conflict.append(c)
+        
+        self.conflits = filter_conflict
     
     def deepcopy(self) -> 'Balise':
         new_aircraft = deepcopy(self)
