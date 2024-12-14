@@ -41,3 +41,6 @@ class Collector(Generic[T]):
     
     def __iter__(self):
         return iter(self._database)
+    
+    def clear(self) -> None:
+        self._database.clear()

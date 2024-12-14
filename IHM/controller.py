@@ -11,7 +11,7 @@ from PyQt5.QtWidgets import QGraphicsScene, QGraphicsRectItem
 from PyQt5.QtGui import QColor, QPen
 from PyQt5.QtCore import QTimer, QObject, pyqtSignal, Qt
 
-from modele.conflict import Conflict
+from modele.conflict_manager import ConflictManager
 
 class SimulationController(QObject):
     INTERVAL = 100
@@ -29,7 +29,11 @@ class SimulationController(QObject):
 
         self._interval = int(self.INTERVAL)
         self._speed_factor = 1
-  
+
+        # Enregistrer le gestionnaire comme observateur
+        self.conflict_manager = ConflictManager(time_threshold=60)
+        Aircraft.register_observer(self.conflict_manager)
+
         # Timer
         self.timer = QTimer()
         self.timer.timeout.connect(self.update_simulation)
@@ -71,8 +75,8 @@ class SimulationController(QObject):
         self.balises = Collector()
         # Dessiner les balises
         qcolor = QColor("#BBBBBB")
-        for balise_name, balise in BALISES.get_all().items():
-            qtbalise = QtBalise(balise, parent=self.scene)
+        for balise_name, balise in BALISES.get_all().copy().items():
+            qtbalise = QtBalise(balise.deepcopy(), parent=self.scene)
             qtbalise.makePolygon(qcolor)
             # Sauvegarde du QtBalise dans l'attribut balises
             self.balises.add(balise_name, qtbalise)
@@ -102,8 +106,18 @@ class SimulationController(QObject):
     
     def initialise_conflits(self) -> None:
         aircraft_list = list(map(lambda qtacft: qtacft.get_aircraft(), self.aircrafts.get_all().values()))
-        Conflict.detect_conflicts(aircraft_list, 1000)
+        for aircraft in aircraft_list:
+            # Enregistrer les avions dans le manager
+            self.conflict_manager.register_aircraft(aircraft)
+        
+        balise_list = list(map(lambda qtbalise: qtbalise.get_balise(), self.balises.get_all().values()))
+        for balise in balise_list:
+            # Enregistrer les balises dans le manager
+            self.conflict_manager.register_balise(balise)
 
+        for aircraft in aircraft_list:
+            # Declencher la creation des conflicts
+            aircraft.set_speed(aircraft.get_speed())
 
     def draw_sectors(self) -> None:
         # Ajouter les secteurs a la secene

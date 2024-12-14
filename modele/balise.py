@@ -7,6 +7,8 @@ import numpy as np
 
 from matplotlib.pyplot import Axes
 from matplotlib.patches import Polygon
+from copy import deepcopy
+from logging_config import setup_logging
 
 @dataclass
 class Balise(Point):
@@ -14,6 +16,7 @@ class Balise(Point):
         super().__init__(x, y, z)
         self.name = name
         self.conflits = []
+        self.logger = setup_logging(__class__.__name__)
 
     def get_name(self): return self.name
 
@@ -23,11 +26,20 @@ class Balise(Point):
         return repr
     
     def add_conflicts(self, conflicts):
+        self.logger.info(f"Adding/Replacinf conflict in balise: {self}\nfrom {self.conflits} to {conflicts}")
         self.conflits = conflicts # Ajoute les conflits
 
     
     def get_conflicts(self): return self.conflits
+
+    def clear_conflicts(self): 
+        self.logger.info(f"Clearing conflict in balise: {self}")
+        self.conflits.clear()
     
+    def deepcopy(self) -> 'Balise':
+        new_aircraft = deepcopy(self)
+        return new_aircraft        
+
 class DatabaseBalise(Collector[Balise]):
     def __init__(self, balises: List[Balise] = []):
         super().__init__()

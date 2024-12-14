@@ -208,8 +208,8 @@ class MainWindow(QMainWindow):
         # Création du QDoubleSpinBox
         spin_box = QDoubleSpinBox(dialog)
         spin_box.setDecimals(5)  # Nombre de décimales
-        spin_box.setRange(1e-5, 9e-4)  # Plage de valeurs
-        spin_box.setSingleStep(1e-5)  # Pas de 1e-5
+        spin_box.setRange(1e-3, 9e-3)  # Plage de valeurs
+        spin_box.setSingleStep(1e-3)  # Pas de 1e-5
         spin_box.setValue(qtaircraft.get_aircraft().get_speed())  # Valeur actuelle
 
         layout.addWidget(spin_box)
