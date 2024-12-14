@@ -74,7 +74,7 @@ class Aircraft:
         # Premiere position autour de la premiere balise
         self.position = self.generate_position_near_balise(self.flight_plan[self.current_target_index])
         self.time     = 0.
-        self.heading  = self.calculate_heading(self.position, self.flight_plan[self.current_target_index])
+        object.__setattr__(self, 'heading',  self.calculate_heading(self.position, self.flight_plan[self.current_target_index]))
 
         # Enregistrer les temps de passage prévu par le plan de vol
         self.flight_plan_timed = {} # Initialisation du dictionnaire rempli par calculate_estimated_times
@@ -170,13 +170,15 @@ class Aircraft:
             displacement = self.speed * timestep
 
             # Calculer les nouvelles coordonnées
-            direction_x = (target_balise.x - self.position.x) / distance_to_target
-            direction_y = (target_balise.y - self.position.y) / distance_to_target
+            dx = target_balise.getX() - self.position.getX()
+            dy = target_balise.getY() - self.position.getY()
+            direction_x = dx/ distance_to_target
+            direction_y = dy / distance_to_target
             direction_z = 0.0  # Pas de variation verticale pour l'instant
 
-            new_x = self.position.x + direction_x * displacement
-            new_y = self.position.y + direction_y * displacement
-            new_z = self.position.z + direction_z * displacement
+            new_x = self.position.getX() + displacement * np.cos(self.heading)
+            new_y = self.position.getY() + displacement * np.sin(self.heading)
+            new_z = self.position.getZ() + displacement * direction_z
 
             #print(f"At t={self.time}: {self.position} --> {new_x, new_y, new_z} with heading {self.heading} with speed {self.speed}")
             #print(f"Distance to Target balise: {target_balise}: {distance_to_target}\n")
@@ -221,6 +223,7 @@ class Aircraft:
         self.update_conflicts()
     
     def set_heading(self, hdg: float) -> None:
+        self.__class__.logger.info(f"Set heading to aircraft {self.id}: from {self.heading} to {hdg}")
         self.heading = hdg
 
     def get_flight_plan_timed(self) -> Dict[str, float]: return self.flight_plan_timed
