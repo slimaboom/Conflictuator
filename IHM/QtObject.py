@@ -211,7 +211,7 @@ class QtAircraft(QGraphicsPolygonItem):
 <div style="font-size: 10pt; color: black;">
     Idt: <span style="color: blue;"><b>{identifiant}</b></span>
     Alt: <span style="color: blue;"><b>{z}</b></span>
-    V: <span style="color: blue;"><b>{speed}</b> unit</span>
+    V: <span style="color: blue;"><b>{speed}</b> unité/s</span>
     Hdg: <span style="color: blue;"><b>{heading} ° </b></span>
     Time: <span style="color: blue;"><b>{time}</b></span>
 </div>"""
@@ -318,14 +318,14 @@ class ConflictWindow(QWidget):
                 <b>Position :</b> ({aircraft_1.get_position().getX():.2f}, 
                                     {aircraft_1.get_position().getY():.2f})<br>
                 <b>Vitesse :</b> {v1} unité/s<br>
-                    <b>Cap :</b> {aircraft_1.get_heading(in_aero=True):.2f}°<br>
-                    <br>
-                    <b>Avion 2 :</b> {aircraft_id2}<br>
-                    <b>Position :</b> ({aircraft_2.get_position().getX():.2f}, 
-                                        {aircraft_2.get_position().getY():.2f})<br>
-                    <b>Vitesse :</b> {v2} unité/s<br>
-                    <b>Cap :</b> {aircraft_2.get_heading(in_aero=True):.2f}°<br>
-                    <br>
+                <b>Cap :</b> {aircraft_1.get_heading(in_aero=True):.2f}°<br>
+                <br>
+                <b>Avion 2 :</b> {aircraft_id2}<br>
+                <b>Position :</b> ({aircraft_2.get_position().getX():.2f}, 
+                                    {aircraft_2.get_position().getY():.2f})<br>
+                <b>Vitesse :</b> {v2} unité/s/s<br>
+                <b>Cap :</b> {aircraft_2.get_heading(in_aero=True):.2f}°<br>
+                <br>
                 </li>
         """
         text += "</div></ul>"
