@@ -1,4 +1,3 @@
-from abc import ABC
 from collections import defaultdict
 from typing import List, Dict, TypeVar, Generic, Union
 

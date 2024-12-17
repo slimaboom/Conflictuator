@@ -8,18 +8,18 @@ from PyQt5.QtWidgets import (QGraphicsItem,
                              QGraphicsRectItem,
                              QGraphicsEllipseItem)
 
-from PyQt5.QtGui import QColor, QPainterPath, QTextOption
+from PyQt5.QtGui import QColor, QPainterPath
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QTextEdit
 from PyQt5.QtWidgets import QPushButton
 
 from typing import List, Dict
 
-from modele.point import Point
-from modele.balise import Balise
-from modele.aircraft import Aircraft
-from modele.utils import sec_to_time
-from IHM.signal import SignalEmitter
-from modele.configuration import AIRCRAFTS
+from model.point import Point
+from model.balise import Balise
+from model.aircraft import Aircraft
+from model.utils import sec_to_time
+from model.configuration import AIRCRAFTS
+from view.signal import SignalEmitter
 
 class QtSector(QGraphicsPolygonItem):
     def __init__(self, sector_name: str, parent: QGraphicsScene):
@@ -46,7 +46,7 @@ class QtBalise(QGraphicsPolygonItem):
         self.size_triangle = 10
 
         # Ajout d'un signal pour les clics
-        self.signal_emitter = SignalEmitter()
+        self.signal = SignalEmitter()
     
     def get_balise(self) -> Balise: return self.balise
     
@@ -68,7 +68,7 @@ class QtBalise(QGraphicsPolygonItem):
 
     def mousePressEvent(self, event):
         """Gère l'événement de clic et émet un signal."""
-        self.signal_emitter.clicked.emit(self.balise)  # Transmet la balise cliquée
+        self.signal.clicked.emit(self.balise)  # Transmet la balise cliquée
         super().mousePressEvent(event)
 
 class QtAirway(QGraphicsPathItem):
@@ -103,7 +103,7 @@ class QtAircraft(QGraphicsPolygonItem):
         self.initialise_tooltip()
 
         # Emetteur de signaux
-        self.signal_emitter = SignalEmitter()
+        self.signal = SignalEmitter()
         
         # Cela permet à l'élément d'écouter les événements de la souris
         self.setFlag(QGraphicsItem.ItemIsSelectable)  
@@ -244,12 +244,12 @@ class QtAircraft(QGraphicsPolygonItem):
     def mousePressEvent(self, event):
         super().mousePressEvent(event)
         # Lorsque l'utilisateur presse la souris, "attraper" la souris
-        self.signal_emitter.clicked.emit(self)
+        self.signal.clicked.emit(self)
 
     def mouseReleaseEvent(self, event):
         # Lorsque l'utilisateur relâche la souris, "délivrer" la souris
         super().mouseReleaseEvent(event)  # Appeler la méthode parente
-        self.signal_emitter.clicked.emit(self)  # Émettre le signal clicked
+        self.signal.clicked.emit(self)  # Émettre le signal clicked
         super().mouseReleaseEvent(event)  # Appeler la méthode parente
 
 
@@ -274,14 +274,15 @@ class ConflictWindow(QWidget):
         layout.addWidget(self.conflict_display)
         layout.addWidget(self.close_button)
 
-        self._current_balise = None
+        self._current_balise: QtBalise = None
 
     @property
-    def current_balise(self): return self._current_balise
+    def current_balise(self) -> QtBalise: return self._current_balise
 
-    def update_conflicts(self, balise):
+    def update_conflicts(self, qtbalise: QtBalise) -> None:
         """Met à jour l'affichage avec la liste des conflits."""
-        self._current_balise = balise
+        self._current_balise = qtbalise
+        balise = qtbalise.get_balise()
         conflicts = balise.get_conflicts()
         if not conflicts:
             self.conflict_display.setText("<b>Aucun conflit détecté.</b>")

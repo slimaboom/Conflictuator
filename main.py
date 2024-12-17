@@ -10,15 +10,22 @@ from PyQt5.QtWidgets import (QMainWindow, QVBoxLayout,
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QCursor
+
+from controller.controller_view import SimulationViewController
+from view.QtObject import QtAircraft, ConflictWindow
+from model.utils import sec_to_time, deg_aero_to_rad
+
 from logging_config import setup_logging
-from IHM.controller import SimulationController
-from IHM.QtObject import QtAircraft, ConflictWindow
-from modele.utils import sec_to_time, deg_aero_to_rad
 
 import sys
 import os
 from platform import system
 from enum import Enum
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from view.QtObject import QtBalise
 
 class PlatformName(Enum):
     WINDOWS = "Windows"
@@ -43,7 +50,6 @@ class MainWindow(QMainWindow):
 
         # Création des objets dans la scène
         self.simulation_controller = self.create_simulation_controller()
-
         self.control_panel = self.create_control_panel()
 
         # Fenêtre des conflits
@@ -83,7 +89,7 @@ class MainWindow(QMainWindow):
         self.stop_button.clicked.connect(self.reset_simulation)
 
         # Afficher le temps de simulation
-        self.time_label = QLabel("Temps: 00:00:00.00")
+        self.time_label = QLabel("Elapsed Time: 00:00:00.00")
 
         # Layout de vitesse (QLabel + QDoubleSpinBox)
         speed_layout = QHBoxLayout()
@@ -93,12 +99,12 @@ class MainWindow(QMainWindow):
         self.speed_spin.setDecimals(0)
         self.speed_spin.setValue(1)  # Par défaut, à 1
         self.speed_spin.setSingleStep(1)
-        self.speed_spin.valueChanged.connect(self.update_speed)
+        self.speed_spin.valueChanged.connect(self.update_animation_speed)
 
         # Afficher la vitesse
-        self.speed_label = QLabel("Vitesse : x1")
+        self.speed_label = QLabel("Animation : x 1")
         self.speed_spin.valueChanged.connect(
-            lambda value: self.speed_label.setText(f"Vitesse : x {int(value)}")
+            lambda value: self.speed_label.setText(f"Animation : x {int(value)}")
         )
         speed_layout.addWidget(self.speed_label)
         speed_layout.addWidget(self.speed_spin)
@@ -118,48 +124,34 @@ class MainWindow(QMainWindow):
 
     def update_time_label(self, time_seconds: float):
         """Met à jour le QLabel avec le temps écoulé."""
-        self.time_label.setText(f"Temps: {sec_to_time(time_seconds)}")
+        txt = f"Elapsed Time: {sec_to_time(time_seconds)}"
+        self.time_label.setText(txt)
 
-    def create_simulation_controller(self) -> SimulationController:
-        simulation_controller = SimulationController(self.scene)
-        
-        # Connexion des avions au signal clicked
-        for _, qtaircraft in simulation_controller.get_aircrafts().get_all().items():
-            # Connexion des avions sur le signal clicked
-            qtaircraft.signal_emitter.clicked.connect(self.click_on_aircraft)
-        
+    def create_simulation_controller(self) -> SimulationViewController:
+        simulation_controller = SimulationViewController(self.scene)
         # Connexion a l'affichage du temps
-        simulation_controller.time_updated.connect(self.update_time_label)
+        simulation_controller.chronometer.connect(self.update_time_label)
+
+        # Connexion des avions au signal clicked
+        simulation_controller.connect_to_qtaircrafts(self.click_on_aircraft)
 
         # Connexion des balises au signal clicked
-        for _, qtbalise in simulation_controller.get_balises().get_all().items():
-            qtbalise.signal_emitter.clicked.connect(
-                lambda _, balise=qtbalise.get_balise(): self.show_conflicts_for_balise(balise)
-            )
+        simulation_controller.connect_to_qtbalises(self.show_conflicts_for_balise)
+        
         return simulation_controller
     
 
-    def reset_connexion(self):
-        # Connexion des avions au signal clicked
-        for _, qtaircraft in self.simulation_controller.get_aircrafts().get_all().items():
-            qtaircraft.signal_emitter.clicked.connect(lambda: self.toggle_simulation(False))
-        # Connexion des balises au signal clicked
-        for _, qtbalise in self.simulation_controller.get_balises().get_all().items():
-            qtbalise.signal_emitter.clicked.connect(
-                lambda _, balise=qtbalise.get_balise(): self.show_conflicts_for_balise(balise)
-            )
-        return None
-
-
     def click_on_aircraft(self, qtaircraft: QtAircraft) -> None:
         """Gère le clic sur un avion."""
+        self.logger.info(type(qtaircraft))
         # Stopper la simulation
         self.toggle_simulation(False)
+
         # Création du menu
         menu = QMenu(self)
 
         # Titre (non sélectionnable)
-        title_action = QAction(f"Identifiant: {qtaircraft.get_aircraft().get_id_aircraft()}", self)
+        title_action = QAction(f"Identifier: {qtaircraft.get_aircraft().get_id_aircraft()}", self)
         title_action.setEnabled(False)  # Non sélectionnable
         menu.addAction(title_action)
 
@@ -167,12 +159,12 @@ class MainWindow(QMainWindow):
         menu.addSeparator()
 
         # Action: Changer le cap
-        change_heading_action = QAction("Changer le cap", self)
+        change_heading_action = QAction("Heading change", self)
         change_heading_action.triggered.connect(lambda: self.change_aircraft_heading(qtaircraft))
         menu.addAction(change_heading_action)
 
         # Action: Changer la vitesse
-        change_speed_action = QAction("Changer la vitesse", self)
+        change_speed_action = QAction("Speed change", self)
         change_speed_action.triggered.connect(lambda: self.change_aircraft_speed(qtaircraft))
         menu.addAction(change_speed_action)
 
@@ -183,8 +175,8 @@ class MainWindow(QMainWindow):
         """Permet de changer le cap d'un avion."""
         new_heading, ok = QInputDialog.getDouble(
             self,
-            "Changer le cap",
-            f"Entrez le nouveau cap pour l'avion {qtaircraft.get_aircraft().get_id_aircraft()} (en degrés) :",
+            "Heading setting le cap",
+            f"Enter new heading value for aircraft: {qtaircraft.get_aircraft().get_id_aircraft()} (in degrees) :",
             decimals=0,
             min=1,
             max=360,
@@ -201,15 +193,15 @@ class MainWindow(QMainWindow):
     def change_aircraft_speed(self, qtaircraft: QtAircraft) -> None:
         """Permet de changer la vitesse d'un avion avec un QDoubleSpinBox."""
         dialog = QDialog(self)
-        dialog.setWindowTitle(f"Changer la vitesse pour l'avion {qtaircraft.get_aircraft().get_id_aircraft()}")
+        dialog.setWindowTitle(f"Speed setting for aircraft: {qtaircraft.get_aircraft().get_id_aircraft()}")
 
         layout = QVBoxLayout()
 
         # Création du QDoubleSpinBox
         spin_box = QDoubleSpinBox(dialog)
         spin_box.setDecimals(5)  # Nombre de décimales
-        spin_box.setRange(1e-3, 9e-3)  # Plage de valeurs
-        spin_box.setSingleStep(1e-3)  # Pas de 1e-5
+        spin_box.setRange(9e-4, 1e-2)  # Plage de valeurs
+        spin_box.setSingleStep(1e-4)  # Pas de 1e-4
         spin_box.setValue(qtaircraft.get_aircraft().get_speed())  # Valeur actuelle
 
         layout.addWidget(spin_box)
@@ -236,7 +228,7 @@ class MainWindow(QMainWindow):
             # Relancer la simulation
             self.toggle_simulation(True)
     
-    def toggle_simulation(self, checked):
+    def toggle_simulation(self, checked) -> None:
         """Lance ou met en pause la simulation."""
         self.manage_play_pause_button(checked)
         if checked:
@@ -263,14 +255,14 @@ class MainWindow(QMainWindow):
             self.time_label.setStyleSheet(bg_style)
 
 
-    def reset_simulation(self):
+    def reset_simulation(self) -> None:
         """Réinitialise la simulation."""
         bg_style = "background-color: white;"
         self.toggle_simulation(False)
         self.logger.info("Simulation réinitialisée.")
         self.play_button.setStyleSheet(bg_style)
         self.speed_spin.setValue(1) 
-        # On recree un objet de SimulationController et on efface de la scene pour redessiner
+        # On recree un objet de SimulationViewController et on efface de la scene pour redessiner
         # Les avions sont des copies donc il faut reinitialiser tout..
         self.scene.clear()
         self.simulation_controller = self.create_simulation_controller()
@@ -281,25 +273,25 @@ class MainWindow(QMainWindow):
 
         self.conflict_window.close()
 
-    def update_speed(self, value):
+    def update_animation_speed(self, value: int):
         """Met à jour la vitesse d'animation."""
         self.logger.info(f"Vitesse d'animation mise à jour : x {value}")
         if self.play_button.isChecked(): self.toggle_simulation(checked=False)
-        self.simulation_controller.set_speed(speed_factor=value)
+        self.simulation_controller.set_simulation_speed(speed_factor=int(value))
 
-    def showEvent(self, event):
+    def showEvent(self, event) -> None:
         super().showEvent(event)
         self.view.fitInView(self.scene.sceneRect(), Qt.KeepAspectRatio)
         self.simulation_controller.draw()
 
-    def resizeEvent(self, event):
+    def resizeEvent(self, event) -> None:
         """ Resize la fenetre principale et la scene et envoie la mise a jour au controller"""
         self.logger.info(f"Fenetre principale redimensionnee width={self.width()}, height={self.height()}")
         self.view.fitInView(self.scene.sceneRect(), Qt.KeepAspectRatio)
 
-    def show_conflicts_for_balise(self, balise):
+    def show_conflicts_for_balise(self, qtbalise: 'QtBalise') -> None:
         """Affiche les conflits associés à une balise spécifique."""
-        self.conflict_window.update_conflicts(balise)
+        self.conflict_window.update_conflicts(qtbalise)
         self.conflict_window.show()
 
 #----------------------------------------------------------------------------

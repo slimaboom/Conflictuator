@@ -1,9 +1,10 @@
 from dataclasses import dataclass
+
+from model.balise import Balise
+from logging_config import setup_logging
+
 from typing import List, TYPE_CHECKING
 
-from modele.balise import Balise
-from modele.configuration import BALISES
-from logging_config import setup_logging
 if TYPE_CHECKING:
     from aircraft import Aircraft
 

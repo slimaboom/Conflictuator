@@ -1,8 +1,8 @@
-from modele.sector import Sector
-from modele.point import Point
-from modele.balise import Balise, DatabaseBalise
-from modele.route import Airway
-from modele.aircraft import Aircraft, AircraftCollector
+from model.sector import Sector
+from model.point import Point
+from model.balise import Balise, DatabaseBalise
+from model.route import Airway
+from model.aircraft import Aircraft, AircraftCollector
 
 #------------------------------------------------------------------------------
 #--------- Definition  des secteurs: principal et secondaires -----------------

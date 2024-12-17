@@ -1,12 +1,8 @@
 from dataclasses import dataclass
 from typing import List, Dict
-from modele.point import Point
-from modele.collector import Collector
+from model.point import Point
+from model.collector import Collector
 
-import numpy as np
-
-from matplotlib.pyplot import Axes
-from matplotlib.patches import Polygon
 from copy import deepcopy
 from logging_config import setup_logging
 
@@ -53,19 +49,3 @@ class DatabaseBalise(Collector[Balise]):
         for balise in balises:
             self.add(key=balise.get_name(),
                      value=balise) # association cle/valeur
-
-    def plot(self, ax: Axes, color: str) -> Axes:
-        def coordinates_triangles(x, y, size):
-            coords = np.array([[x, y + size],
-                               [x - size, y - size],
-                               [x + size, y - size]])
-            return coords
-
-        size=0.005
-        for name, balise in self.get_all().items():
-            triangle = coordinates_triangles(balise.getX(), balise.getY(), size=size)
-            polygon = Polygon(triangle, closed=True, fill=True, edgecolor=color, facecolor=color)
-
-            ax.add_patch(polygon)
-            ax.text(balise.getX(), balise.getY() - size*2, name, fontsize=8, ha='right')
-        return ax

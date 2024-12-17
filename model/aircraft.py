@@ -1,8 +1,8 @@
 from dataclasses import dataclass, field
-from modele.point import Point, PointValue
-from modele.balise import Balise
-from modele.utils import rad_to_deg_aero
-from modele.collector import Collector
+from model.point import Point, PointValue
+from model.balise import Balise
+from model.utils import rad_to_deg_aero
+from model.collector import Collector
 from logging_config import setup_logging
 
 from typing import List, Dict, TYPE_CHECKING
@@ -12,7 +12,7 @@ from weakref import WeakSet
 import numpy as np
 
 if TYPE_CHECKING:
-    from modele.conflict_manager import ConflictManager, ConflictInformation
+    from model.conflict_manager import ConflictManager, ConflictInformation
 
 @dataclass(frozen=True)
 class Information:
@@ -35,6 +35,8 @@ class Information:
 class Aircraft:
     position: Point = field(init=False)
     time: float = field(init=False)
+    flight_time: float = field(init=False)
+    take_off_time: float = field(init=False)
     speed: float
     heading: float = field(init=False)
     flight_plan: List[Balise]
@@ -74,6 +76,8 @@ class Aircraft:
         # Premiere position autour de la premiere balise
         self.position = self.generate_position_near_balise(self.flight_plan[self.current_target_index])
         self.time     = 0.
+        self.flight_time = 0.
+        self.take_off_time = 0.
         object.__setattr__(self, 'heading',  self.calculate_heading(self.position, self.flight_plan[self.current_target_index]))
 
         # Enregistrer les temps de passage prévu par le plan de vol
@@ -161,6 +165,7 @@ class Aircraft:
                 target_balise = self.flight_plan[self.current_target_index]
                 self.heading = self.calculate_heading(self.position, target_balise)
                 self.time += timestep
+                self.flight_time += timestep
             else:
                 self._is_finished = True
                 #print(f"Aircraft {self.id} has reached the final waypoint.")
@@ -170,10 +175,6 @@ class Aircraft:
             displacement = self.speed * timestep
 
             # Calculer les nouvelles coordonnées
-            dx = target_balise.getX() - self.position.getX()
-            dy = target_balise.getY() - self.position.getY()
-            direction_x = dx/ distance_to_target
-            direction_y = dy / distance_to_target
             direction_z = 0.0  # Pas de variation verticale pour l'instant
 
             new_x = self.position.getX() + displacement * np.cos(self.heading)
@@ -186,6 +187,7 @@ class Aircraft:
             # Mettre à jour la position et le temps
             self.position = self.controle_position(new_x, new_y, new_z)
             self.time += timestep
+            self.flight_time += timestep
 
     def controle_position(self, x: float, y: float, z:float):
         try:
@@ -206,6 +208,8 @@ class Aircraft:
 
     def get_position(self): return self.position
     def get_time(self): return self.time
+    def get_flight_time(self): return self.flight_time
+    def get_take_off_time(self): return self.take_off_time
     def get_speed(self): return self.speed
     def get_heading(self, in_aero: bool = False): 
         if in_aero: return rad_to_deg_aero(self.heading)
@@ -225,6 +229,9 @@ class Aircraft:
     def set_heading(self, hdg: float) -> None:
         self.__class__.logger.info(f"Set heading to aircraft {self.id}: from {self.heading} to {hdg}")
         self.heading = hdg
+
+    def set_take_off_time(self, take_off_time: float) -> None:
+        self.take_off_time = take_off_time
 
     def get_flight_plan_timed(self) -> Dict[str, float]: return self.flight_plan_timed
 
