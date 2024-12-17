@@ -8,11 +8,18 @@ from logging_config import setup_logging
 from typing import List, Dict, TYPE_CHECKING
 from copy import deepcopy
 from weakref import WeakSet
+from enum import Enum
 
 import numpy as np
 
 if TYPE_CHECKING:
     from model.conflict_manager import ConflictManager, ConflictInformation
+
+class SpeedValue(Enum):
+    MAX: float = 1e-2
+    MIN: float = 1e-4
+    STEP: float = 1e-4
+
 
 @dataclass(frozen=True)
 class Information:
@@ -33,15 +40,17 @@ class Information:
  
 @dataclass
 class Aircraft:
+    speed: float
+    flight_plan: List[Balise]
+
     position: Point = field(init=False)
     time: float = field(init=False)
     flight_time: float = field(init=False)
     take_off_time: float = field(init=False)
-    speed: float
     heading: float = field(init=False)
-    flight_plan: List[Balise]
     flight_plan_timed: Dict[str, float] = field(init=False) # Dictionnaire avec le nom de la balise en clé et le temps de passage en valeur
     id: int = field(init=False)  # L'attribut `id` sera défini dans `__post_init__`
+    rng: np.random.Generator = field(init=False)
 
     current_target_index: int = field(init=False)  # Indice de la balise cible actuelle
     # Historique des positions de l'avion: key=time et value=Information(position, time, speed, heading)
@@ -139,7 +148,6 @@ class Aircraft:
             current_time += time_to_balise
             self.flight_plan_timed[balise.get_name()] = round(current_time, 2)
             current_position = balise  # Simuler que l'avion atteint la balise
-            print(self.id, balise, self.flight_plan_timed[balise.get_name()] )
         return None
 
     def clear_flight_plan_timed(self):
@@ -181,9 +189,6 @@ class Aircraft:
             new_y = self.position.getY() + displacement * np.sin(self.heading)
             new_z = self.position.getZ() + displacement * direction_z
 
-            #print(f"At t={self.time}: {self.position} --> {new_x, new_y, new_z} with heading {self.heading} with speed {self.speed}")
-            #print(f"Distance to Target balise: {target_balise}: {distance_to_target}\n")
-
             # Mettre à jour la position et le temps
             self.position = self.controle_position(new_x, new_y, new_z)
             self.time += timestep
@@ -218,6 +223,7 @@ class Aircraft:
     def get_next_target(self): return self.flight_plan[self.current_target_index]
     def get_id_aircraft(self): return self.id
     def get_history(self): return self.history
+    def get_random_generator(self): return self.rng
 
     def set_speed(self, speed: float) -> None:
         """ Modifie la vitesse de l'avion et recalcul les conflits futurs """
@@ -227,7 +233,7 @@ class Aircraft:
         self.update_conflicts()
     
     def set_heading(self, hdg: float) -> None:
-        self.__class__.logger.info(f"Set heading to aircraft {self.id}: from {self.heading} to {hdg}")
+        #self.__class__.logger.info(f"Set heading to aircraft {self.id}: from {self.heading} to {hdg}")
         self.heading = hdg
 
     def set_take_off_time(self, take_off_time: float) -> None:
@@ -235,14 +241,14 @@ class Aircraft:
 
     def get_flight_plan_timed(self) -> Dict[str, float]: return self.flight_plan_timed
 
-    def is_in_conflict(self) -> bool: return not self._conflict_dict.is_empty() # Si collection vide alors pas de conflit
+    def is_in_conflict(self) -> bool: return not(self._conflict_dict == {})
 
     def get_conflicts(self) -> Collector[List['ConflictInformation']]: return self._conflict_dict
    
     def clear_conflicts(self, with_aircraft_id: int = None) -> None:
         """Efface les conflits dépassés ou spécifiques à un autre avion."""
         # Nouveau Collector pour stocker les conflits a garder
-        self.logger.info(f"Nettoyage des conflicts de l'avion {self.get_id_aircraft()} with_aircraft_id={with_aircraft_id})")
+        #self.logger.info(f"Nettoyage des conflicts de l'avion {self.get_id_aircraft()} with_aircraft_id={with_aircraft_id})")
         new_collector = Collector()
 
         for key, conflicts in self._conflict_dict.get_all().items():
@@ -254,7 +260,7 @@ class Aircraft:
                        c.get_aircraft_two().get_id_aircraft() != with_aircraft_id or 
                        c.get_conflict_time_one() < self.time))
             ]
-            self.logger.info(f"filtered_conflicts pour avion {self.id}: {filtered_conflicts}")
+            #self.logger.info(f"filtered_conflicts pour avion {self.id}: {filtered_conflicts}")
             # Ajouter les conflits restants dans le nouveau collector
             new_collector.add(key, filtered_conflicts)
 
@@ -269,7 +275,7 @@ class Aircraft:
         conflict_with = conflict_info.get_aircraft_two().get_id_aircraft()
         values = self._conflict_dict.get_from_key(conflict_with)
 
-        self.logger.info(f"Ajout d'un conflict: {conflict_info}")
+        #self.logger.info(f"Ajout d'un conflict: {conflict_info}")
 
         if values: # La cle existe si ca renvoie pas None
             self._conflict_dict.get_from_key(conflict_with).append(conflict_info) # Modification en place

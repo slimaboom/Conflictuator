@@ -72,11 +72,11 @@ class ConflictManager:
         Met à jour les conflits liés à un avion spécifique après un changement (ex: vitesse).
         """
         # Efface les anciens conflits de l'avion qui ont dépassé le temps courant
-        self.logger.info(f"Start Mise a jour de l'avion:  {updated_aircraft.get_id_aircraft()}")
+        #self.logger.info(f"Start Mise a jour de l'avion:  {updated_aircraft.get_id_aircraft()}")
 
         # Recalcule les conflits impliquant cet avion
         self.detect_conflicts(self.aircraft_list)
-        self.logger.info(f"End Mise a jour de l'avion:  {updated_aircraft.get_id_aircraft()}")
+        #self.logger.info(f"End Mise a jour de l'avion:  {updated_aircraft.get_id_aircraft()}")
 
 
     def detect_conflicts(self, aircraft_list: List['Aircraft']) -> None:
@@ -84,7 +84,7 @@ class ConflictManager:
         Détecte les conflits de passage par les balises.
         Retourne un dictionnaire où chaque balise est associée à une liste de conflits.
         """
-        self.logger.info(f"Calcul des conflits pour:  {[aircraft.get_id_aircraft() for aircraft in aircraft_list]}")
+        #self.logger.info(f"Calcul des conflits pour:  {[aircraft.get_id_aircraft() for aircraft in aircraft_list]}")
 
         # Collecter les temps de passage pour chaque avion
         balise_passages = {}
@@ -131,7 +131,7 @@ class ConflictManager:
                     aircraft2.set_conflicts(conflict_info_two)
             
             if len(conflicts) > 0 :
-                self.logger.info(f"Manager: conflicts detected for balise: {balise_name}")
+                #self.logger.info(f"Manager: conflicts detected for balise: {balise_name}")
                 self.balises.get(balise_name).add_conflicts(conflicts)
 
         return None

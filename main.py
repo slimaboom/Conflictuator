@@ -1,19 +1,21 @@
 from PyQt5.QtWidgets import (QMainWindow, QVBoxLayout, 
                              QWidget, QApplication,
                              QHBoxLayout, QPushButton,
-                             QSlider, QLabel,
+                             QLabel, QComboBox,
                              QGraphicsView, QGraphicsScene,
                              QMenu, QAction, 
                              QInputDialog, QDialog, 
                              QDoubleSpinBox, QDialogButtonBox
 )
 
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QModelIndex
 from PyQt5.QtGui import QCursor
 
 from controller.controller_view import SimulationViewController
 from view.QtObject import QtAircraft, ConflictWindow
 from model.utils import sec_to_time, deg_aero_to_rad
+from model.aircraft import SpeedValue
+from algorithm.type import AlgoType
 
 from logging_config import setup_logging
 
@@ -113,14 +115,49 @@ class MainWindow(QMainWindow):
         speed_container = QWidget()
         speed_container.setLayout(speed_layout)
 
+        # ComboBox pour les differents algorithmes
+        self.combobox = QComboBox()
+        self.combo_options = [algotype.value for algotype in AlgoType]
+        self.combobox.addItems(self.combo_options)
+        
+        # Connecter le signal
+        self.combobox.view().pressed.connect(self.on_combobox_item_clicked)
+        
+        # Redéfinir showPopup
+        self.combobox.showPopup = self.show_popup_combox
+        
         # Ajouter les widgets à la barre
         layout.addWidget(self.play_button)
         layout.addWidget(self.stop_button)
         layout.addWidget(self.time_label)  # Ajouter le QLabel au panneau
         layout.addWidget(self.speed_label)
         layout.addWidget(speed_container)
+        layout.addWidget(self.combobox)
         
         return control_panel
+
+    def show_popup_combox(self):
+        """Forcer la première option sélectionnée et afficher le menu déroulant."""
+        self.combobox.setCurrentIndex(0)  # Sélectionner toujours la première option
+        self.combobox.view().scrollToTop()  # S'assurer que la vue commence au début
+        QComboBox.showPopup(self.combobox)  # Appeler la méthode parent pour afficher le menu
+        
+
+    def on_combobox_item_clicked(self, index: QModelIndex) -> None:
+        """Déclenche une action uniquement quand l'utilisateur clique sur une option."""
+        selected_text = self.combobox.itemText(index.row())
+        algo = AlgoType.find(selected_text)
+
+        msg = f"Lauch {selected_text}"
+        self.logger.info(msg)
+
+        if algo == AlgoType.RECUIT:
+            pass
+        elif algo == AlgoType.GENETIQUE:
+            pass
+        else:
+            pass
+
 
     def update_time_label(self, time_seconds: float):
         """Met à jour le QLabel avec le temps écoulé."""
@@ -185,7 +222,6 @@ class MainWindow(QMainWindow):
         if ok:
             nhdg = deg_aero_to_rad(new_heading)
             qtaircraft.get_aircraft().set_heading(nhdg)
-            print(f"Cap de l'avion {qtaircraft.get_aircraft().get_id_aircraft()} mis à jour : {nhdg} ({new_heading}°)")
             # Relancer la simulation
             self.toggle_simulation(True)
 
@@ -200,8 +236,8 @@ class MainWindow(QMainWindow):
         # Création du QDoubleSpinBox
         spin_box = QDoubleSpinBox(dialog)
         spin_box.setDecimals(5)  # Nombre de décimales
-        spin_box.setRange(9e-4, 1e-2)  # Plage de valeurs
-        spin_box.setSingleStep(1e-4)  # Pas de 1e-4
+        spin_box.setRange(SpeedValue.MIN.value, SpeedValue.MAX.value)  # Plage de valeurs
+        spin_box.setSingleStep(SpeedValue.STEP.value)  # Pas de 1e-4
         spin_box.setValue(qtaircraft.get_aircraft().get_speed())  # Valeur actuelle
 
         layout.addWidget(spin_box)
@@ -217,9 +253,7 @@ class MainWindow(QMainWindow):
         if dialog.exec_() == QDialog.Accepted:            
             # Si l'utilisateur valide la nouvelle vitesse
             new_speed = round(spin_box.value(), 5)
-            qtaircraft.get_aircraft().set_speed(new_speed)
-            print(f"Vitesse de l'avion {qtaircraft.get_aircraft().get_id_aircraft()} mise à jour : {new_speed}")
-            
+            qtaircraft.get_aircraft().set_speed(new_speed)            
             current_balise = self.conflict_window.current_balise
             if current_balise and self.conflict_window.isVisible():
                 self.conflict_window.close()

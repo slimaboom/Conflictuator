@@ -20,8 +20,7 @@ class Collector(Generic[T]):
             del self._database[key]
         else:
             msg = f"{self.__class__.__name__} with key: '{key} is not defined ! Skipped"
-
-            print(f"Sector with name:' '{key}' is not defined ! Skipped")
+            print(msg)
     
     def get_all(self) -> Dict[str, Union[List[T], T]]:
         return self._database
@@ -43,3 +42,6 @@ class Collector(Generic[T]):
     
     def clear(self) -> None:
         self._database.clear()
+    
+    def __len__(self):
+        return len(self._database)

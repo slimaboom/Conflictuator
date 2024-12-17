@@ -22,14 +22,14 @@ class Balise(Point):
         return repr
     
     def add_conflicts(self, conflicts) -> None:
-        self.logger.info(f"Adding/Replacing conflict in balise: {self}\nfrom {self.conflits} to {conflicts}")
+        #self.logger.info(f"Adding/Replacing conflict in balise: {self}\nfrom {self.conflits} to {conflicts}")
         self.conflits = conflicts # Ajoute les conflits
 
     
     def get_conflicts(self) -> List[Dict[str, float]]: return self.conflits
 
     def clear_conflicts(self, time: float) -> None: 
-        self.logger.info(f"Clearing conflict in balise: {self}")
+        #self.logger.info(f"Clearing conflict in balise: {self}")
     
         filter_conflict = []
         for c in self.conflits:
