@@ -11,6 +11,7 @@ from weakref import WeakSet
 from enum import Enum
 
 import numpy as np
+import pdb
 
 if TYPE_CHECKING:
     from model.conflict_manager import ConflictManager, ConflictInformation
@@ -262,7 +263,8 @@ class Aircraft:
             ]
             #self.logger.info(f"filtered_conflicts pour avion {self.id}: {filtered_conflicts}")
             # Ajouter les conflits restants dans le nouveau collector
-            new_collector.add(key, filtered_conflicts)
+            if filtered_conflicts:
+                new_collector.add(key, filtered_conflicts)
 
         # Remplacer l'ancien _conflict_dict par le nouveau
         self._conflict_dict = new_collector
@@ -275,7 +277,7 @@ class Aircraft:
         conflict_with = conflict_info.get_aircraft_two().get_id_aircraft()
         values = self._conflict_dict.get_from_key(conflict_with)
 
-        #self.logger.info(f"Ajout d'un conflict: {conflict_info}")
+        #self.logger.info(f"Ajout d'un conflict: {conflict_info}: {values}")
 
         if values: # La cle existe si ca renvoie pas None
             self._conflict_dict.get_from_key(conflict_with).append(conflict_info) # Modification en place

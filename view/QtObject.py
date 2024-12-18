@@ -300,6 +300,8 @@ class ConflictWindow(QWidget):
         aircraft_id2 = conflict["aircraft_2"]
         aircraft_2 = AIRCRAFTS.get_from_key(aircraft_id2)
         conflict_time = conflict["time_1"]
+        time2 = conflict['time_2']
+
         text = text1
         v1 = f"{aircraft_1.get_speed():.1e}".replace('.0', '')
         v2 = f"{aircraft_2.get_speed():.1e}".replace('.0', '')
@@ -316,12 +318,14 @@ class ConflictWindow(QWidget):
             <b> Time : </b> {sec_to_time(conflict_time)}<br>({conflict_time} s)<br>
             <li>
                 <b>Avion 1 :</b> {aircraft_id1}<br>
+                <b>Arrive at:</b> {sec_to_time(conflict_time)}<br>
                 <b>Position :</b> ({aircraft_1.get_position().getX():.2f}, 
                                     {aircraft_1.get_position().getY():.2f})<br>
                 <b>Vitesse :</b> {v1} unité/s<br>
                 <b>Cap :</b> {aircraft_1.get_heading(in_aero=True):.2f}°<br>
                 <br>
                 <b>Avion 2 :</b> {aircraft_id2}<br>
+                <b>Arrive at:</b> {sec_to_time(conflict_time)} <br>
                 <b>Position :</b> ({aircraft_2.get_position().getX():.2f}, 
                                     {aircraft_2.get_position().getY():.2f})<br>
                 <b>Vitesse :</b> {v2} unité/s/s<br>

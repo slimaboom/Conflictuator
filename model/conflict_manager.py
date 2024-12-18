@@ -4,6 +4,7 @@ from model.balise import Balise
 from logging_config import setup_logging
 
 from typing import List, TYPE_CHECKING
+import pdb
 
 if TYPE_CHECKING:
     from aircraft import Aircraft
@@ -43,7 +44,9 @@ class ConflictInformation:
     def __repr__(self):
         id_one = self.aircraft_one.get_id_aircraft()
         id_two = self.aircraft_two.get_id_aircraft()
-        return f"Conflict(id_one={id_one}, id_two={id_two}, time_one={self.conflict_time_one}, time_two={self.conflict_time_two}, location=\'{self.location.get_name()}\')"
+        speed_one = self.aircraft_one.get_speed()
+        speed_two = self.aircraft_two.get_speed()
+        return f"Conflict(id_one={id_one} (v={speed_one}), id_two={id_two} (v={speed_two}), time_one={self.conflict_time_one}, time_two={self.conflict_time_two}, location=\'{self.location.get_name()}\')"
 
 
 class ConflictManager:

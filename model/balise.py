@@ -40,8 +40,8 @@ class Balise(Point):
         self.conflits = filter_conflict
     
     def deepcopy(self) -> 'Balise':
-        new_aircraft = deepcopy(self)
-        return new_aircraft        
+        new_balise = deepcopy(self)
+        return new_balise        
 
 class DatabaseBalise(Collector[Balise]):
     def __init__(self, balises: List[Balise] = []):
