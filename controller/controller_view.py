@@ -247,8 +247,6 @@ class SimulationViewController(QObject):
         
         qt_aircrafts_copies = self.copy_qtaircrafts()
 
-        self.logger.info(self.qt_aircrafts)
-        self.logger.info(self.qt_aircrafts_copies)
         # Mise à jour des avions optimaux
         for datastorage in final:
             id, speed = datastorage.id, datastorage.speed
