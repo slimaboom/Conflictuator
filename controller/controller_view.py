@@ -245,7 +245,7 @@ class SimulationViewController(QObject):
         self.logger.info(queue)
         final = queue.get_nowait()
         
-        self.qt_aircrafts_copies = self.copy_qtaircrafts()
+        qt_aircrafts_copies = self.copy_qtaircrafts()
 
         self.logger.info(self.qt_aircrafts)
         self.logger.info(self.qt_aircrafts_copies)
@@ -271,7 +271,7 @@ class SimulationViewController(QObject):
         self.enable_original_aircraft_interactions()
 
         # Ajouter les copies des avions (optimaux) à la scène
-        for qtaircraft_copy in self.qt_aircrafts_copies:
+        for qtaircraft_copy in qt_aircrafts_copies:
             # Rendre les copies distinctes visuellement
             qtaircraft_copy.setOpacity(0.4)
             qtaircraft_copy.setZValue(1)  # Z-index inférieur pour apparaître sous les originaux
@@ -300,8 +300,6 @@ class SimulationViewController(QObject):
         self.qt_sectors.clear()
         self.qt_balises.clear()
         self.qt_routes.clear()
-        if self.qt_aircrafts_copies:
-            self.qt_aircrafts_copies.clear()
         
         # Déconnecter les signaux pour éviter les callbacks
         self.simulation.signal.aircrafts_moved.disconnect(self.update_view)
