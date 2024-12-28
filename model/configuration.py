@@ -158,7 +158,7 @@ BALISES = DatabaseBalise([
     Balise(0.8815136476426799, 1-0.8174665617623919, name="SAMOS"),
     Balise(0.9032258064516129, 1-0.975609756097561, name="SICIL"),
     Balise(0.966501240694789, 1-0.42014162077104644, name="BIELA"),
-    Balise(0.9844913151364765, 1-0.982690794649882, name="SODR")]
+    Balise(0.9844913151364765, 1-0.982690794649882, name="SODRI")]
 )
 
 
@@ -168,7 +168,7 @@ BALISES = DatabaseBalise([
 #------------------------------------------------------------------------------
 ROUTES = Airway()
 ROUTES.add(key="NO-SE1", 
-           value=["ATN", "BURGO", "BOJOL", "LSE", "LTP", "GRENA", "SANTO", "JAMBI"]
+           value=["ATN", "BURGO", "BOJOL", "LSE", "LTP", "GRENA", "SANTO", "JAMBI", "SICIL", "SODRI"]
 )
 
 ROUTES.add(
@@ -225,21 +225,38 @@ ROUTES.add(
     value=["MAJOR", "MTL", "MINDI", "CFA", "VULCA"]
 )
 
+ROUTES.add(
+    key="NO-SO2",
+    value=["DIRMO", "ETAMO", "CFA", "MEN", "ETORI"] 
+)
+ROUTES.add(
+    key="NO-SO3",
+    value=["DIRMO", "GWENA", "GAI"]
+)
+ROUTES.add(
+    key="O-E1",
+    value=["GWENA", "VULCA", "BURGO", "VEYRI"]
+)
+ROUTES.add(
+    key="NE-NO1",
+    value=["VEYRI", "MELKA", "SEVET", "JUVEN"]
+)
+
 
 #------------------------------------------------------------------------------
 #--------- Definition  des avions:  -------------------------------------------
 #------------------------------------------------------------------------------
 AIRCRAFTS = AircraftCollector() # Gestion d'un dictionnaire car recherche en O(1)
-AIRCRAFTS.add_aircraft(Aircraft(speed=0.002, #0.001 # Conflit 5:48
+AIRCRAFTS.add_aircraft(Aircraft(speed=0.003, #0.001 # Conflit 5:48
                                 flight_plan=Airway.transform(ROUTES.get_from_key("NO-SE1"), BALISES))
                     )
-AIRCRAFTS.add_aircraft(Aircraft(speed=0.003, 
+AIRCRAFTS.add_aircraft(Aircraft(speed=0.002, 
                                 flight_plan=Airway.transform(ROUTES.get_from_key("NO-SO1"), BALISES, reverse=True))
 )
-AIRCRAFTS.add_aircraft(Aircraft(speed=0.003, 
+AIRCRAFTS.add_aircraft(Aircraft(speed=0.001, 
                                 flight_plan=Airway.transform(ROUTES.get_from_key("SE-NE1"), BALISES))
 )
-AIRCRAFTS.add_aircraft(Aircraft(speed=0.003, 
+AIRCRAFTS.add_aircraft(Aircraft(speed=0.0012, 
                                 flight_plan=Airway.transform(["MAJOR", "MTL", "MINDI", "CFA", "ETAMO"], BALISES))
 )
 #0.001, 0.002, 0.002, 0.001 conflit LSE (1-2) + MTL (3-4)

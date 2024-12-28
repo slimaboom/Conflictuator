@@ -225,7 +225,9 @@ class Aircraft:
     def get_id_aircraft(self): return self.id
     def get_history(self): return self.history
     def get_random_generator(self): return self.rng
-
+    def set_aircraft_id(self, id: int) -> None:
+        self.id = id
+        
     def set_speed(self, speed: float) -> None:
         """ Modifie la vitesse de l'avion et recalcul les conflits futurs """
         self.speed = speed

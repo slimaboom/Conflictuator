@@ -5,17 +5,19 @@ from model.sector import SectorType
 from model.timer import Timer
 from model.conflict_manager import ConflictManager
 
+from algorithm.type import AlgoType
+from algorithm.manager import AlgorithmManager
 from logging_config import setup_logging
 
-from threading import Thread
-from queue import Queue
 from PyQt5.QtCore import QTimer
 
-from typing import Dict, List, Callable, TYPE_CHECKING, Any
+from queue import Queue
+from typing import Dict, List, Callable, TYPE_CHECKING, Tuple
 
 if TYPE_CHECKING:
     from model.point import Point
     from model.balise import Balise
+    from algorithm.recuit.data import DataStorage
 
 class SimulationModel:
     """Classe responsable de la logique de la simulation."""    
@@ -35,6 +37,8 @@ class SimulationModel:
         # Gestion de la simulation
         self.time_elapsed = 0 # En secondes
         self.timer     = Timer()
+        self.set_timer(self.timer)
+
         self._external_timer = None  # Timer externe, par défaut None
         self._speed_factor = 1
 
@@ -47,8 +51,8 @@ class SimulationModel:
         # Initialize objets for simulation
         self.initialize()
 
-        # Algorithm used ? Recuit/Genetique
-        self._algorithm = None
+        # Algorithm manager
+        self._algorithm_manager = AlgorithmManager()
 
 
     def initialize(self) -> None:
@@ -82,7 +86,7 @@ class SimulationModel:
     def initialise_aircrafts(self) -> None:
         """Aircraft initialisation"""
         for aircraft in AIRCRAFTS.get_all().copy().values():
-            self.add_aircraft(aircraft.deepcopy())
+            self.add_aircraft(aircraft.deepcopy(), register_to_manager=True)
     
     def initialise_conflicts(self) -> None:
         """Conflict initialisation"""
@@ -98,8 +102,11 @@ class SimulationModel:
             # Declencher la creation des conflicts
             aircraft.set_speed(aircraft.get_speed())
 
-    def get_algorithm(self): return self._algorithm
-    def set_algorithm(self, algo) -> None: self._algorithm = algo
+    def get_algorithm(self) -> AlgoType: return self._algorithm_manager.get_algorithm()
+
+    def set_algorithm(self, algo: AlgoType) -> None: 
+        self._algorithm_manager.set_algorithm(algo)
+        self._algorithm_manager.set_data(list(self.aircrafts.values()))
 
     def get_aircrafts(self) -> Dict[int, Aircraft]: return self.aircrafts
     def get_sectors(self) -> Dict[SectorType, Dict[str, List['Point']]]: return self.sectors
@@ -107,17 +114,18 @@ class SimulationModel:
     def get_balises(self) -> Dict[str, 'Balise']: return self.balises
 
     def get_time_elapsed(self) -> float: return self.time_elapsed
-    def get_running(self) -> bool: return self.running
     def get_speed_factor(self) -> int: return self._speed_factor
 
-    def add_aircraft(self, aircraft: Aircraft) -> None:
+    def add_aircraft(self, aircraft: Aircraft, register_to_manager: bool = False) -> None:
         self.aircrafts[aircraft.get_id_aircraft()] = aircraft
+        if register_to_manager:
+            self.conflict_manager.register_aircraft(aircraft)
 
     def delete_aircraft(self, aircraft: Aircraft) -> bool:
         aircraft_key = aircraft.get_id_aircraft()
         if self.aircrafts.get(aircraft_key):
             del self.aircrafts[aircraft_key]
-            return True
+            return self.conflict_manager.delete_aircraft(aircraft)
         else: return False
     
 
@@ -195,6 +203,7 @@ class SimulationModel:
         for _ in range(self._speed_factor):
             self.time_elapsed += dt
             for aircraft in self.aircrafts.values():
+                self.logger.info(f"Avancement pour {aircraft.get_id_aircraft()} de {dt} seconds (elapsed: {self.time_elapsed})")
                 if aircraft.get_take_off_time() <= self.time_elapsed: # Decollage
                     aircraft.update(timestep=dt)
 
@@ -228,31 +237,5 @@ class SimulationModel:
     def is_running(self) -> bool: 
         return self.timer.isActive() if self.timer else False
 
-    def run_algorithm(self) -> Any:
-        """
-        Lance l'algorithme (par exemple recuit simulé) dans un thread séparé
-        et récupère les résultats via une Queue.
-        """
-        if self._algorithm:
-            # Créer une Queue pour récupérer les résultats
-            result_queue = Queue()
-
-            # Créer un thread pour exécuter l'algorithme
-            thread = Thread(target=self._run_algorithm_in_thread, args=(result_queue,), daemon=True)
-            thread.start()
-
-            # Attendre que le thread ait terminé et récupérer le résultat
-            result = result_queue.get()  # Récupère le résultat de la Queue
-            return result
-
-    def _run_algorithm_in_thread(self, result_queue: Queue) -> None:
-        """
-        Méthode interne qui exécute l'algorithme dans un thread séparé.
-        Elle place les résultats dans la Queue.
-        """
-        if self._algorithm:
-            # Exécute l'algorithme (par exemple recuit simulé)
-            result = self._algorithm.run()  # Exécution de l'algorithme
-
-            # Une fois l'algorithme terminé, on met les résultats dans la Queue
-            result_queue.put(result)
+    def start_algorithm(self, queue: 'Queue') -> None:
+        self._algorithm_manager.start_algorithm(queue)

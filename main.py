@@ -150,13 +150,21 @@ class MainWindow(QMainWindow):
 
         msg = f"Lauch {selected_text}"
         self.logger.info(msg)
+        if algo == AlgoType.RECUIT or algo.GENETIQUE:
+            # Marquer le changement comme interne
+            self.is_internal_change = True
+            self.combobox.setCurrentIndex(index.row())  # S'assurer que l'élément sélectionné reste visible
+            self.combobox.setDisabled(True)  # Désactiver la combobox
+            self.is_internal_change = False  # Réinitialiser le flag
 
-        if algo == AlgoType.RECUIT:
-            pass
-        elif algo == AlgoType.GENETIQUE:
-            pass
-        else:
-            pass
+            self.play_button.setDisabled(True)
+            self.speed_spin.setDisabled(True)
+            
+            # Désactiver les clics sur les avions
+            self.simulation_controller.disable_aircraft_interactions()
+
+            # Lancer l'algorithme
+            self.simulation_controller.simulation.start_algorithm(algo)
 
 
     def update_time_label(self, time_seconds: float):
@@ -174,6 +182,9 @@ class MainWindow(QMainWindow):
 
         # Connexion des balises au signal clicked
         simulation_controller.connect_to_qtbalises(self.show_conflicts_for_balise)
+        
+        # Connexion lors de la fin d'un algorithm pour re-enable les elements d'interactions
+        simulation_controller.simulation.signal.algorithm_terminated.connect(self.connect_elements)
         
         return simulation_controller
     
@@ -206,6 +217,7 @@ class MainWindow(QMainWindow):
         menu.addAction(change_speed_action)
 
         # Afficher le menu à la position actuelle du curseur
+        self.logger.info(QCursor.pos())
         menu.exec_(QCursor.pos())
 
     def change_aircraft_heading(self, qtaircraft: QtAircraft) -> None:
@@ -298,14 +310,31 @@ class MainWindow(QMainWindow):
         self.speed_spin.setValue(1) 
         # On recree un objet de SimulationViewController et on efface de la scene pour redessiner
         # Les avions sont des copies donc il faut reinitialiser tout..
-        self.scene.clear()
-        self.simulation_controller = self.create_simulation_controller()
-        self.simulation_controller.draw()
+
+        if self.simulation_controller:
+            self.simulation_controller.cleanup()
+            
+            self.scene.clear()
+
+            self.simulation_controller = self.create_simulation_controller()
+            self.simulation_controller.draw()
 
         self.update_time_label(0)
         self.time_label.setStyleSheet(bg_style)
 
         self.conflict_window.close()
+        
+        self.play_button.setDisabled(False)
+        self.combobox.setDisabled(False)
+        self.combobox.setCurrentIndex(0)
+        self.speed_spin.setDisabled(False)
+
+    def connect_elements(self):
+        self.play_button.setDisabled(False)
+        self.combobox.setDisabled(False)
+        self.combobox.setCurrentIndex(0)
+        self.speed_spin.setDisabled(False)
+        self.simulation_controller.enable_original_aircraft_interactions()
 
     def update_animation_speed(self, value: int):
         """Met à jour la vitesse d'animation."""

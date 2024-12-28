@@ -1,4 +1,4 @@
-from algorithm.recuit.data import ISimulatedObject
+from algorithm.recuit.data import ISimulatedObject, DataStorage
 import numpy as np
 from typing import List
 from logging_config import setup_logging
@@ -73,5 +73,8 @@ class Etat:
         msg += f"\n{self.vector}\n"
         return msg
     
+    def get(self) -> List[DataStorage]:
+        return self.vector
+
     def __repr__(self):
         return self.display()

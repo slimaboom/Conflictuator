@@ -6,17 +6,21 @@ from logging_config import setup_logging
 
 from PyQt5.QtWidgets import QGraphicsScene, QGraphicsRectItem
 from PyQt5.QtGui import QColor, QPen
-from PyQt5.QtCore import QTimer, QObject, pyqtSignal, Qt, QThread, QCoreApplication
+from PyQt5.QtCore import QTimer, QObject, pyqtSignal, Qt
 
-from functools import partial
-from typing import Callable, List
+from typing import Callable, List, TYPE_CHECKING
+from copy import deepcopy
+
+if TYPE_CHECKING:
+    from algorithm.type import AlgoType
+    from queue import Queue
 
 
 
 class SimulationViewController(QObject):
     # Signal qui transmet le temps écoulé (en secondes)
     chronometer = pyqtSignal(float)
-
+    
     def __init__(self, scene: QGraphicsScene):
         super().__init__()
         # Logger pour logger et afficher des informations dans le terminal
@@ -28,16 +32,21 @@ class SimulationViewController(QObject):
         # Timer
         self.timer = QTimer()
         self.simulation.set_timer(self.timer)
-        self.simulation.signal.aircrafts_moved.connect(self.update_view, type=Qt.QueuedConnection)
+        self.simulation.signal.aircrafts_moved.connect(self.update_view, type=Qt.QueuedConnection)  # Assure que le signal est traité dans le thread principal
+        self.aircraft_click_callback = None  # Callback pour les clics
 
         # Gestion/Sauvegarde des Vues
         self.qt_sectors: List[QtSector] = []
         self.qt_balises: List[QtBalise] = []
         self.qt_routes: List[QtAirway]  = []
         self.qt_aircrafts: List[QtAircraft] = []
-
         self.static_items_drawn = False
+
         self.initialise_view()
+
+        # Algorithme results
+        self.simulation.signal.algorithm_terminated.connect(self.update_view_with_algorithm, type=Qt.QueuedConnection)  # Assure que le signal est traité dans le thread principal
+        self.logger.info(self.qt_aircrafts)
 
 
     def initialise_view(self) -> None:
@@ -90,8 +99,8 @@ class SimulationViewController(QObject):
         """Initialise la vue des avions"""
         # Enregister les avions en mouvement
         for _, aircraft in self.simulation.get_aircrafts().items():
-            qtaircraft = QtAircraft(aircraft, parent=self.scene)
-
+            qtaircraft = QtAircraft(aircraft, parent=self.scene, qcolor=Qt.green)
+            
             # Sauvegarde du QtAircraft dans l'attribut aircrafts
             self.qt_aircrafts.append(qtaircraft)
     
@@ -119,8 +128,8 @@ class SimulationViewController(QObject):
     def draw_aircrafts(self) -> None:
         """Ajouter les avions a la scene"""
         # Ajouter les avions en mouvement a la scene
-        speed_factor = self.simulation.get_speed_factor()
         for qtaircraft in self.qt_aircrafts:
+            self.logger.info(f"{qtaircraft} added in the scene")
             self.scene.addItem(qtaircraft)
 
     def moving_aircrafts(self) -> None:
@@ -165,7 +174,7 @@ class SimulationViewController(QObject):
             
             # Mettre le flag a vrai pour eviter de redessiner les items statics
             self.static_items_drawn = True  
-
+            self.logger.info("draw method call")
          # Toujours mettre a jour de facon dynamique
         self.moving_aircrafts()
 
@@ -190,10 +199,103 @@ class SimulationViewController(QObject):
 
     def connect_to_qtaircrafts(self, callback: Callable[[QtAircraft], None]) -> None:
         """Connexion du callback a l'evenement clicked sur le signal"""
+        self.aircraft_click_callback = callback  # Callback pour les clics
         for qtaircraft in self.qt_aircrafts:
             qtaircraft.signal.clicked.connect(lambda _, qtacft=qtaircraft: callback(qtacft))
-    
+            qtaircraft.setAcceptHoverEvents(True)
+
     def connect_to_qtbalises(self, callback: Callable[[QtBalise], None]) -> None:
         """Connexion du callback a l'evenement clicked sur le signal"""
         for qtbalise in self.qt_balises:
             qtbalise.signal.clicked.connect(lambda _, qtbal=qtbalise: callback(qtbal))
+    
+    def disable_aircraft_interactions(self) -> None:
+        """Désactive les clics utilisateur sur les avions."""
+        for qtaircraft in self.qt_aircrafts:
+            try:
+                # Déconnecter le signal
+                qtaircraft.signal.clicked.disconnect()
+                self.logger.info(f"disable connexion of {qtaircraft}")
+            except TypeError:
+                # Si déjà déconnecté, ignorer l'erreur
+                self.logger.info(f"Echec disable connexion of {qtaircraft}")
+                pass
+
+    def enable_original_aircraft_interactions(self) -> None:
+        """Réactive les clics uniquement pour les avions originaux."""
+        if self.aircraft_click_callback:
+            self.connect_to_qtaircrafts(self.aircraft_click_callback)
+
+    def start_algorithm(self, algotype: 'AlgoType') -> None:
+        self.simulation.start_algorithm(algotype)
+    
+    def copy_qtaircrafts(self) -> List[QtAircraft]:
+        new_qtaircrafts = []
+        for qtaircraft in self.qt_aircrafts:
+            aircraft = qtaircraft.get_aircraft().deepcopy()
+            aircraft.set_aircraft_id(-aircraft.get_id_aircraft())
+
+            self.simulation.add_aircraft(aircraft, register_to_manager=False)
+
+            qt_aircraft = QtAircraft(aircraft, parent=self.scene, qcolor=Qt.gray)
+            new_qtaircrafts.append(qt_aircraft)
+
+        return new_qtaircrafts
+
+    def update_view_with_algorithm(self, queue: 'Queue'):
+        self.logger.info(queue)
+        optimums = queue.get_nowait()
+        qtaircraft_copies = self.copy_qtaircrafts()
+        
+        self.logger.info(self.qt_aircrafts)
+
+        # Mise à jour des avions optimaux
+        for datastorage in optimums:
+            id, speed = datastorage.id, datastorage.speed
+
+            for qtaircraft in self.qt_aircrafts:
+                aircraft = qtaircraft.get_aircraft()
+
+                # Vérifier si l'avion est déjà dans la scène
+                if qtaircraft not in self.scene.items():
+                    self.logger.warning(f"Avion manquant dans la scène : {aircraft.get_id_aircraft()} (recréation possible)")
+                    self.scene.addItem(qtaircraft)
+
+                # Mettre à jour les paramètres de l'avion
+                if aircraft.get_id_aircraft() == id:
+                    aircraft.set_speed(speed)
+                    self.logger.info(f"Avion {aircraft.get_id_aircraft()} mis à jour, vitesse : {speed}")
+
+                # Assurer un Z-index élevé pour les avions originaux
+                qtaircraft.setZValue(2)
+        
+        self.enable_original_aircraft_interactions()
+
+        # Ajouter les copies des avions (optimaux) à la scène
+        for qtaircraft_copy in qtaircraft_copies:
+            # Rendre les copies distinctes visuellement
+            qtaircraft_copy.setOpacity(0.4)
+            qtaircraft_copy.setZValue(1)  # Z-index inférieur pour apparaître sous les originaux
+
+            # Ajouter à la scène et les listes internes
+            self.qt_aircrafts.append(qtaircraft_copy)
+            self.scene.addItem(qtaircraft_copy)
+
+    def cleanup(self) -> None:
+        self.logger.info("Nettoyage des objets de l'ancienne vue...")
+        self.disable_aircraft_interactions()
+        
+        # Supprimer les avions de la scène
+        for qtaircraft in list(self.qt_aircrafts):
+            if qtaircraft in self.scene.items():
+                self.scene.removeItem(qtaircraft)
+
+        # Nettoyer les listes internes
+        self.qt_aircrafts.clear()
+        self.qt_sectors.clear()
+        self.qt_balises.clear()
+        self.qt_routes.clear()
+        
+        # Déconnecter les signaux pour éviter les callbacks
+        self.simulation.signal.aircrafts_moved.disconnect(self.update_view)
+        self.simulation.signal.algorithm_terminated.disconnect(self.update_view_with_algorithm)

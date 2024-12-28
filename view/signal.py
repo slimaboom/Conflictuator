@@ -5,3 +5,4 @@ class SignalEmitter(QObject):
     # cela permet d'accepter n'importe quel objet (type)
     clicked = pyqtSignal(object)
     aircrafts_moved = pyqtSignal()
+    algorithm_terminated = pyqtSignal(object)

@@ -89,11 +89,12 @@ class QtAirway(QGraphicsPathItem):
         self.setPen(QPen(qcolor, 2.5, Qt.SolidLine, Qt.RoundCap, Qt.RoundJoin))
 
 class QtAircraft(QGraphicsPolygonItem):
-    def __init__(self, aircraft: Aircraft, parent: QGraphicsScene):
+    def __init__(self, aircraft: Aircraft, parent: QGraphicsScene, qcolor: Qt.GlobalColor):
         super().__init__()
         self.aircraft = aircraft
         self.parent = parent
         self.history_drawing = {}
+        self.qcolor = qcolor
 
         # Dessiner l'avion (carré noir)
         self.draw_aircraft()
@@ -109,7 +110,9 @@ class QtAircraft(QGraphicsPolygonItem):
         self.setFlag(QGraphicsItem.ItemIsSelectable)  
 
     def get_aircraft(self) -> Aircraft: return self.aircraft
-
+    def set_aircraft_id(self, id: int) -> None:
+        self.aircraft.set_aircraft_id(id)
+        
     def initialise_tooltip(self) -> QGraphicsTextItem:
         qgraphictextitem = QGraphicsTextItem("", self)
         qgraphictextitem.setDefaultTextColor(Qt.black)
@@ -142,14 +145,14 @@ class QtAircraft(QGraphicsPolygonItem):
         x = self.aircraft.get_position().getX() * self.parent.width()
         y = (1 - self.aircraft.get_position().getY()) * self.parent.height()
 
-        half_size = size_square/2
         square = self._get_square(x, y, size=size_square)
         self.setPolygon(square)
 
         # Definir les propietes visuelles du triangle
-        self.setBrush(QColor(Qt.black))
-        self.setPen(QPen(Qt.black, 1))
-    
+        self.setBrush(QColor(self.qcolor))
+        self.setOpacity(self.opacity())
+        self.setPen(QPen(self.qcolor, 1))
+
     def draw_history(self, speed_factor) -> None:
         max_history_points = 6
         step_points = 50
@@ -176,11 +179,10 @@ class QtAircraft(QGraphicsPolygonItem):
             bounding_rect = QRectF(x - size_square, y - size_square, 2 * size_square, 2 * size_square)
 
             item = QGraphicsEllipseItem(bounding_rect)
-            brush = QBrush(QColor(Qt.gray if i != 0 else Qt.black))
-            item.setPen(QPen(Qt.black, 1))
+            brush = QBrush(QColor(self.qcolor))
+            item.setPen(QPen(self.qcolor, 1))
             item.setBrush(brush)
-            # Dessiner des cercles
-            #item = QGraphicsPolygonItem(square)
+            item.setOpacity(1 - (i+1)/max_history_points)
 
             # Definir les propietes visuelles du triangle
             # Ajouter la representation dans history_drawing
@@ -252,6 +254,8 @@ class QtAircraft(QGraphicsPolygonItem):
         self.signal.clicked.emit(self)  # Émettre le signal clicked
         super().mouseReleaseEvent(event)  # Appeler la méthode parente
 
+    def __repr__(self):
+        return f"{self.__class__.__name__}(id={self.aircraft.get_id_aircraft()})"
 
 class ConflictWindow(QWidget):
     def __init__(self):
