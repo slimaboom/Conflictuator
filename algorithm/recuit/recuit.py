@@ -2,6 +2,7 @@ from algorithm.recuit.etat import Etat
 from algorithm.recuit.data import ISimulatedObject
 from logging_config import setup_logging
 
+from copy import deepcopy
 import numpy as np
 
 from typing import List
@@ -19,6 +20,12 @@ class Recuit:
         self._cooling_rate: float = 0.995
         self._heat_up_rate: float = 1.5
         self._heat_up_accept: float = 0.8
+
+        # Sauvegarde des datas
+        self._data_saved = [deepcopy(d) for d in data]
+
+    def get_initial_data(self) -> List[ISimulatedObject]:
+        return self._data_saved
 
     def _accept(self, yi: float, yj: float, temperature: float) -> bool:
         """Principle of Acceptation in Maximisation or Minimisation"""
@@ -109,5 +116,10 @@ class Recuit:
     def run(self) -> Etat:
         # Heat up
         initial_temperature = self.heat_up_loop()
-        return self.cooling_loop(initial_temperature) # Cooling
-
+        best = self.cooling_loop(initial_temperature) # Cooling
+        
+        self.logger.info(f"Before setting initial value {best}")
+        for isimulatedobject, initial_isimulatedobject in zip(self.data, self.get_initial_data()):
+            isimulatedobject.update(initial_isimulatedobject.get_data_storage().speed)
+        self.logger.info(f"After setting initial value {best}")
+        return best

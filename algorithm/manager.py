@@ -55,8 +55,8 @@ class AlgorithmManager:
         """
         try:
             # Exécuter l'algorithme (par exemple recuit simulé)
-            #result = self.instance.run()
-            result = [DataStorage(speed=0.002, id=1), DataStorage(speed=0.003, id=2), DataStorage(speed=0.003, id=3), DataStorage(speed=0.003, id=4)]
+            result = self.instance.run().get()
+            #result = [DataStorage(speed=0.002, id=1), DataStorage(speed=0.003, id=2), DataStorage(speed=0.003, id=3), DataStorage(speed=0.003, id=4)]
             result_queue.put(result)  # Mettre le résultat dans la Queue
         except Exception as e:
             # En cas d'erreur, on met l'exception dans la Queue

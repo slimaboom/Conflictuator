@@ -255,7 +255,7 @@ class QtAircraft(QGraphicsPolygonItem):
         super().mouseReleaseEvent(event)  # Appeler la méthode parente
 
     def __repr__(self):
-        return f"{self.__class__.__name__}(id={self.aircraft.get_id_aircraft()})"
+        return f"{self.__class__.__name__}(id={self.aircraft.get_id_aircraft()}, speed={self.aircraft.get_speed()}, hdg={self.aircraft.get_heading(in_aero=True)})"
 
 class ConflictWindow(QWidget):
     def __init__(self):
