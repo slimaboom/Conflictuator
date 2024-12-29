@@ -322,14 +322,14 @@ class ConflictWindow(QWidget):
             <b> Time : </b> {sec_to_time(conflict_time)}<br>({conflict_time} s)<br>
             <li>
                 <b>Avion 1 :</b> {aircraft_id1}<br>
-                <b>Arrive at:</b> {sec_to_time(conflict_time)}<br>
+                <b>Arrive à:</b> {sec_to_time(conflict_time)}<br>
                 <b>Position :</b> ({aircraft_1.get_position().getX():.2f}, 
                                     {aircraft_1.get_position().getY():.2f})<br>
                 <b>Vitesse :</b> {v1} unité/s<br>
                 <b>Cap :</b> {aircraft_1.get_heading(in_aero=True):.2f}°<br>
                 <br>
                 <b>Avion 2 :</b> {aircraft_id2}<br>
-                <b>Arrive at:</b> {sec_to_time(conflict_time)} <br>
+                <b>Arrive à:</b> {sec_to_time(time2)} <br>
                 <b>Position :</b> ({aircraft_2.get_position().getX():.2f}, 
                                     {aircraft_2.get_position().getY():.2f})<br>
                 <b>Vitesse :</b> {v2} unité/s/s<br>
