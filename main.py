@@ -10,6 +10,7 @@ from PyQt5.QtWidgets import (QMainWindow, QVBoxLayout,
 
 from PyQt5.QtCore import Qt, QModelIndex
 from PyQt5.QtGui import QCursor
+from PyQt5.QtWidgets import QMessageBox
 
 from controller.controller_view import SimulationViewController
 from view.QtObject import QtAircraft, ConflictWindow
@@ -75,6 +76,7 @@ class MainWindow(QMainWindow):
 
         # Masquer la fenêtre des conflits au démarrage
         self.conflict_window.setVisible(False)
+        
 
     def create_control_panel(self):
         """Crée la barre de contrôle avec les boutons et curseurs."""
@@ -187,6 +189,8 @@ class MainWindow(QMainWindow):
         # Connexion lors de la fin d'un algorithm pour re-enable les elements d'interactions
         simulation_controller.simulation.signal.algorithm_terminated.connect(self.connect_elements)
         
+        simulation_controller.algorithm_terminated.connect(self.notify_algorithm_termination)
+
         return simulation_controller
     
 
@@ -357,6 +361,15 @@ class MainWindow(QMainWindow):
         """Affiche les conflits associés à une balise spécifique."""
         self.conflict_window.update_conflicts(qtbalise)
         self.conflict_window.show()
+    
+    def notify_algorithm_termination(self):
+        """Notifie l'utilisateur que l'algorithme est terminé."""
+        msg_box = QMessageBox()
+        msg_box.setIcon(QMessageBox.Information)
+        msg_box.setWindowTitle("Algorithme Terminé")
+        msg_box.setText("L'algorithme a terminé son exécution avec succès.")
+        msg_box.setStandardButtons(QMessageBox.Ok)
+        msg_box.exec_()
 
 #----------------------------------------------------------------------------
 #---------------------   MAIN PART  -----------------------------------------

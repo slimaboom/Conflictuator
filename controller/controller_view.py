@@ -20,6 +20,7 @@ if TYPE_CHECKING:
 class SimulationViewController(QObject):
     # Signal qui transmet le temps écoulé (en secondes)
     chronometer = pyqtSignal(float)
+    algorithm_terminated = pyqtSignal()
     
     def __init__(self, scene: QGraphicsScene):
         super().__init__()
@@ -283,6 +284,9 @@ class SimulationViewController(QObject):
             self.scene.addItem(qtaircraft_copy)
 
         self.logger.info(self.qt_aircrafts)
+
+        # Emission du signal de terminaison
+        self.algorithm_terminated.emit()
 
     def cleanup(self) -> None:
         self.logger.info("Nettoyage des objets de l'ancienne vue...")
