@@ -164,6 +164,7 @@ class MainWindow(QMainWindow):
             self.simulation_controller.disable_aircraft_interactions()
 
             # Lancer l'algorithme
+            self.toggle_simulation(checked=False)
             self.simulation_controller.simulation.start_algorithm(algo)
 
 
