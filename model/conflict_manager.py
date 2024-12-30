@@ -38,7 +38,7 @@ class ConflictInformation:
     def get_conflict_time_one(self): return self.conflict_time_one
     def get_conflict_time_two(self): return self.conflict_time_two
     
-    def get_location(self): return self.location
+    def get_location(self): return self.location.get_conflicts()
     def get_time_difference(self): return self.time_difference
     
     def __repr__(self):

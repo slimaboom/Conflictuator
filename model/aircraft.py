@@ -31,6 +31,7 @@ class Information:
     time: float
     speed: float
     heading: float
+    take_off: float
 
     def get_position(self): return self.position
     def get_time(self): return self.time
@@ -38,6 +39,7 @@ class Information:
     def get_heading(self, in_aero: bool = True): 
         if in_aero: return rad_to_deg_aero(self.heading)
         else: return self.heading
+    def get_take_off_(self): return self.take_off
  
 @dataclass
 class Aircraft:
@@ -57,7 +59,7 @@ class Aircraft:
     # Historique des positions de l'avion: key=time et value=Information(position, time, speed, heading)
     history: Dict[float, Information] = field(default_factory=dict, init=False) # Gestion d'un dictionnaire car recherche de point par cle en O(1)
     _is_finished: bool = field(init=False) # La trajectoire est-elle terminee ?
-    _conflict_dict: Dict[int, List['ConflictInformation']] = field(init=False) # Dictionnaire de conflict entre self et les autres: cle=id_autre, valeur=liste des dates conflicts
+    _conflict_dict: Collector[List['ConflictInformation']] = field(init=False) # Dictionnaire de conflict entre self et les autres: cle=id_autre, valeur=liste des dates conflicts
 
     # Attribut de classe pour suivre le nombre d'instances
     __COUNTER: int = 0
@@ -141,7 +143,7 @@ class Aircraft:
         Le Range dans l'attribut flight_time_timed
         """
         current_position = self.position
-        current_time = self.time
+        current_time = self.take_off_time
 
         for balise in self.flight_plan[self.current_target_index:]:
             distance_to_balise = current_position.distance_horizontale(balise)
@@ -156,7 +158,7 @@ class Aircraft:
 
     def update(self, timestep: float) -> None:
         # Sauvegarde la position courante dans l'historique
-        info = Information(self.position, self.time, self.speed, self.heading)
+        info = Information(self.position, self.time, self.speed, self.heading, self.take_off_time)
         self.history[self.time] = info
 
         #-----------------------------------------------------------------------
@@ -173,7 +175,6 @@ class Aircraft:
                 self.current_target_index += 1
                 target_balise = self.flight_plan[self.current_target_index]
                 self.heading = self.calculate_heading(self.position, target_balise)
-                self.time += timestep
                 self.flight_time += timestep
             else:
                 self._is_finished = True
@@ -192,7 +193,6 @@ class Aircraft:
 
             # Mettre à jour la position et le temps
             self.position = self.controle_position(new_x, new_y, new_z)
-            self.time += timestep
             self.flight_time += timestep
 
     def controle_position(self, x: float, y: float, z:float):
@@ -214,6 +214,8 @@ class Aircraft:
 
     def get_position(self): return self.position
     def get_time(self): return self.time
+    def set_time(self, time: float) -> None: 
+        self.time = time
     def get_flight_time(self): return self.flight_time
     def get_take_off_time(self): return self.take_off_time
     def get_speed(self): return self.speed

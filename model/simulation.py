@@ -204,6 +204,7 @@ class SimulationModel:
             self.time_elapsed += dt
             for aircraft in self.aircrafts.values():
                 #self.logger.info(f"Avancement pour {aircraft.get_id_aircraft()} de {dt} seconds (elapsed: {self.time_elapsed})")
+                aircraft.set_time(self.time_elapsed)
                 if aircraft.get_take_off_time() <= self.time_elapsed: # Decollage
                     aircraft.update(timestep=dt)
 
