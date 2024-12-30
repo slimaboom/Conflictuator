@@ -37,6 +37,10 @@ class SimulationModelNotifier(SimulationModel):
         self._queue = queue
         self.qtimer.start(1000) # msec
 
+    def stop_algorithm(self) -> None:
+        super().stop_algorithm()
+        self.qtimer.stop()
+
     def _watch_queue(self) -> None:
         self.logger.info("Watch queue launch")
         if self._queue.qsize() != 0:

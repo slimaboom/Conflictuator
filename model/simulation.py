@@ -240,3 +240,6 @@ class SimulationModel:
 
     def start_algorithm(self, queue: 'Queue') -> None:
         self._algorithm_manager.start_algorithm(queue)
+    
+    def stop_algorithm(self) -> None:
+        self._algorithm_manager.stop_algorithm()

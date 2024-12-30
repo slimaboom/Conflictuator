@@ -236,6 +236,9 @@ class SimulationViewController(QObject):
     def start_algorithm(self, algotype: 'AlgoType') -> None:
         self.simulation.start_algorithm(algotype)
     
+    def stop_algorithm(self) -> None:
+        self.simulation.stop_algorithm()
+    
     def copy_qtaircrafts(self) -> List[QtAircraft]:
         new_qtaircrafts = []
         for qtaircraft in self.qt_aircrafts.values():
@@ -295,6 +298,9 @@ class SimulationViewController(QObject):
         self.algorithm_terminated.emit()
 
     def cleanup(self) -> None:
+        self.stop_simulation()
+        self.stop_algorithm()
+
         self.logger.info("Nettoyage des objets de l'ancienne vue...")
         self.disable_aircraft_interactions()
         

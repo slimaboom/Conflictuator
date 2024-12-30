@@ -23,6 +23,7 @@ class Recuit:
 
         # Sauvegarde des datas
         self._data_saved = [deepcopy(d) for d in data]
+        self._isrunning = False
 
     def get_initial_data(self) -> List[ISimulatedObject]:
         return self._data_saved
@@ -53,7 +54,7 @@ class Recuit:
         xi = Etat(self.data)
         xj = Etat(self.data)
 
-        while accept_rate < self._heat_up_accept: # 80% of transifition must be accepted
+        while accept_rate < self._heat_up_accept and self.is_running(): # 80% of transifition must be accepted
             accept_counter    = 0
             for k in range(self._nb_transitions):
 
@@ -88,7 +89,7 @@ class Recuit:
 
         xj = Etat(self.data)
         best_state = Etat(self.data)
-        while temperature > 0.1 * initial_temperature:
+        while temperature > 0.1 * initial_temperature and self.is_running():
             for k in range(self._nb_transitions):
                 xj.copy(xi)
                 xj.generate_neighborhood()
@@ -111,15 +112,31 @@ class Recuit:
         self.logger.info(f"End of colling - Before restoring: Best {best_state}")
         best_state.restore_state(best_state)
         self.logger.info(f"End of colling - After restoring: Best {best_state}")
+        self._isrunning = False
         return best_state
     
-    def run(self) -> Etat:
+    def _reinitialize_data(self) -> None:
+        for isimulatedobject, initial_isimulatedobject in zip(self.data, self.get_initial_data()):
+            isimulatedobject.update(initial_isimulatedobject.get_data_storage().speed)
+
+    def _run(self) -> Etat:
+        self._isrunning = True
         # Heat up
         initial_temperature = self.heat_up_loop()
         best = self.cooling_loop(initial_temperature) # Cooling
         
         self.logger.info(f"Before setting initial value {best}")
-        for isimulatedobject, initial_isimulatedobject in zip(self.data, self.get_initial_data()):
-            isimulatedobject.update(initial_isimulatedobject.get_data_storage().speed)
+        self._reinitialize_data()
         self.logger.info(f"After setting initial value {best}")
+        self._isrunning = False
         return best
+
+    def start(self) -> Etat:
+        return self._run()
+    
+    def stop(self) -> None:
+        if self.is_running():
+            self._isrunning = False
+            self._reinitialize_data()
+    
+    def is_running(self) -> bool: return self._isrunning
