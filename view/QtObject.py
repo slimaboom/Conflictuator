@@ -208,6 +208,7 @@ class QtAircraft(QGraphicsPolygonItem):
         heading = round(self.aircraft.get_heading(in_aero=True), 2)
         x, y, z = self.aircraft.get_position().getXYZ()
         time = sec_to_time(self.aircraft.get_time())
+        takeoff = sec_to_time(self.aircraft.get_take_off_time())
         # Mettre à jour le texte de l'info-bulle
         tooltip_text = f"""
 <div style="font-size: 10pt; color: black;">
@@ -216,6 +217,7 @@ class QtAircraft(QGraphicsPolygonItem):
     V: <span style="color: blue;"><b>{speed}</b> unité/s</span>
     Hdg: <span style="color: blue;"><b>{heading} ° </b></span>
     Time: <span style="color: blue;"><b>{time}</b></span>
+    Take Off: <span style="color: blue";"><b>{takeoff}</b></span>
 </div>"""
         
         self.tooltip.setHtml(tooltip_text)

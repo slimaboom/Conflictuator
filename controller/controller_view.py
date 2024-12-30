@@ -137,8 +137,14 @@ class SimulationViewController(QObject):
         """Redessiner les avions qui bougent"""
         speed_factor = self.simulation.get_speed_factor()
         for qtaircraft in self.qt_aircrafts.values():
-            qtaircraft.draw_aircraft()
-            qtaircraft.draw_history(speed_factor)
+            if qtaircraft.get_aircraft().get_take_off_time() <= self.simulation.get_time_elapsed():
+                if not qtaircraft.isVisible():
+                    qtaircraft.setVisible(True)
+
+                qtaircraft.draw_aircraft()
+                qtaircraft.draw_history(speed_factor)
+            else:
+                qtaircraft.setVisible(False)
 
     def draw_boundary_rectangle(self) -> None:
         """Ajoute un rectangle pour délimiter la zone d'évolution des avions."""

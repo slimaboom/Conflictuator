@@ -5,7 +5,7 @@ from model.utils import rad_to_deg_aero
 from model.collector import Collector
 from logging_config import setup_logging
 
-from typing import List, Dict, TYPE_CHECKING
+from typing import List, Dict, TYPE_CHECKING, Optional
 from copy import deepcopy
 from weakref import WeakSet
 from enum import Enum
@@ -49,7 +49,7 @@ class Aircraft:
     position: Point = field(init=False)
     time: float = field(init=False)
     flight_time: float = field(init=False)
-    take_off_time: float = field(init=False)
+    take_off_time: Optional[float] = 0 
     heading: float = field(init=False)
     flight_plan_timed: Dict[str, float] = field(init=False) # Dictionnaire avec le nom de la balise en clé et le temps de passage en valeur
     id: int = field(init=False)  # L'attribut `id` sera défini dans `__post_init__`
@@ -89,7 +89,6 @@ class Aircraft:
         self.position = self.generate_position_near_balise(self.flight_plan[self.current_target_index])
         self.time     = 0.
         self.flight_time = 0.
-        self.take_off_time = 0.
         object.__setattr__(self, 'heading',  self.calculate_heading(self.position, self.flight_plan[self.current_target_index]))
 
         # Enregistrer les temps de passage prévu par le plan de vol
