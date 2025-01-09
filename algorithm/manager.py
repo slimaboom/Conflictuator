@@ -1,6 +1,7 @@
 from threading import Thread
 from queue import Queue
 from typing import Any, List
+from algorithm.algo_gen.genetique import GeneticAlgorithm
 
 from algorithm.type import AlgoType
 from algorithm.recuit.recuit import Recuit
@@ -35,7 +36,9 @@ class AlgorithmManager:
             self.instance = Recuit(data_to_recuit, is_minimise=False) 
 
         elif self._algorithm == AlgoType.GENETIQUE:
-            pass
+            # Transformer les avions en objets pour l'algorithme génétique
+            data_to_genetic = [SimulatedAircraftImplemented(aircraft) for aircraft in self._data]
+            self.instance = GeneticAlgorithm(data_to_genetic, population_size=50, generations=100)
 
         else:
             pass
