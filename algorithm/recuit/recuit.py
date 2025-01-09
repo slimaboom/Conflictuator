@@ -1,17 +1,20 @@
 from algorithm.recuit.etat import Etat
 from algorithm.recuit.data import ISimulatedObject
 from logging_config import setup_logging
+from model.utils import sec_to_time
 
 from copy import deepcopy
+import time
 import numpy as np
 
 from typing import List
 
 class Recuit:
-    def __init__(self, data: List[ISimulatedObject], is_minimise: bool = True):
+    def __init__(self, data: List[ISimulatedObject], is_minimise: bool = True, verbose: bool = False):
         self.data = data
         self.is_minimise = is_minimise
         self.generator   = np.random.default_rng(seed=len(data))
+        self.verbose = verbose
 
         self.logger = setup_logging(self.__class__.__name__)
 
@@ -24,6 +27,13 @@ class Recuit:
         # Sauvegarde des datas
         self._data_saved = [deepcopy(d) for d in data]
         self._isrunning = False
+
+        # Timeout
+        self._timeout = 120
+        self._starttime = None
+
+        # Progression
+        self._progress = 0.
 
     def get_initial_data(self) -> List[ISimulatedObject]:
         return self._data_saved
@@ -80,34 +90,42 @@ class Recuit:
 
     def cooling_loop(self, initial_temperature: float) -> Etat:
         """Coolling loop of temperature"""
+        self._starttime = time.time()
         self.logger.info(f"Start colling at temperature: {initial_temperature}")
 
-        temperature = initial_temperature
         xi = Etat(self.data)
         xi.initialize_random()
         yi = xi.calcul_critere()
 
         xj = Etat(self.data)
         best_state = Etat(self.data)
-        while temperature > 0.1 * initial_temperature and self.is_running():
-            for k in range(self._nb_transitions):
-                xj.copy(xi)
-                xj.generate_neighborhood()
-                yj = xj.calcul_critere()
 
-                if self._accept(yi, yj, temperature):
-                    _buffer = xi
-                    xi.copy(xj)
-                    best_state.save_state(xi)
+        temperatures = self._get_all_temperatures(initial_temperature)
+        for i, temperature in enumerate(temperatures):
+            self._progress = round(100*(i+1)/len(temperatures), 4)
 
-                    xj = _buffer
-                    yi = yj
+            if not self.is_running() or self.is_timeout():
+                break
+            
+            else:
+                for k in range(self._nb_transitions):
+                    xj.copy(xi)
+                    xj.generate_neighborhood()
+                    yj = xj.calcul_critere()
 
-                    msg = f"Iteration {k}/{self._nb_transitions} - Temperature: {temperature} - critere: {yi}"
-                    self.logger.info(msg)
-                    self.logger.info(f"Etat: {best_state.display()}")            
+                    if self._accept(yi, yj, temperature):
+                        _buffer = xi
+                        xi.copy(xj)
+                        best_state.save_state(xi)
 
-            temperature *= self._cooling_rate
+                        xj = _buffer
+                        yi = yj
+
+                        if self.verbose:
+                            msg = f"Iteration {k}/{self._nb_transitions} - Temperature: {temperature} - critere: {yi}"
+                            self.logger.info(msg)
+                            self.logger.info(f"Etat: {best_state.display()}")
+
 
         self.logger.info(f"End of colling - Before restoring: Best {best_state}")
         best_state.restore_state(best_state)
@@ -140,3 +158,23 @@ class Recuit:
             self._reinitialize_data()
     
     def is_running(self) -> bool: return self._isrunning
+
+    def get_timeout(self) -> float: return self._timeout
+    def set_timeout(self, timeout: float) -> None: 
+        self._timeout = timeout
+    
+    def is_timeout(self) -> bool:
+        _is_timeout = self._starttime == None or (time.time() - self._starttime) >= self._timeout
+        if _is_timeout:
+            msgtimeout = f"Timeout: {sec_to_time(self.get_timeout())}, running for {sec_to_time(time.time() - self._starttime)}"
+            self.logger.info(msgtimeout)
+        return _is_timeout
+
+    def _get_all_temperatures(self, initial: float) -> List[float]:
+        # Tf=self._cooling_rate**n * T0 = 0.1*T0
+        n = int(np.ceil(np.log(0.1)/np.log(self._cooling_rate)))
+        temperatures = [initial*self._cooling_rate**i for i in range(n)]
+        return temperatures
+
+    def get_progress(self) -> float:
+        return self._progress

@@ -243,3 +243,6 @@ class SimulationModel:
     
     def stop_algorithm(self) -> None:
         self._algorithm_manager.stop_algorithm()
+    
+    def progress_algorithm(self) -> float:
+        return self._algorithm_manager.progress()

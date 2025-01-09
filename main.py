@@ -152,7 +152,7 @@ class MainWindow(QMainWindow):
 
         msg = f"Lauch {selected_text}"
         self.logger.info(msg)
-        if algo == AlgoType.RECUIT or algo.GENETIQUE:
+        if algo == AlgoType.RECUIT or algo == algo.GENETIQUE:
             # Marquer le changement comme interne
             self.is_internal_change = True
             self.combobox.setCurrentIndex(index.row())  # S'assurer que l'élément sélectionné reste visible
@@ -168,6 +168,9 @@ class MainWindow(QMainWindow):
             # Lancer l'algorithme
             self.toggle_simulation(checked=False)
             self.simulation_controller.simulation.start_algorithm(algo)
+
+            # Creation de la barre de progression
+            self.simulation_controller.simulation.signal.algorithm_progress.connect(self.update_progress_bar)
 
 
     def update_time_label(self, time_seconds: float):
@@ -188,7 +191,6 @@ class MainWindow(QMainWindow):
         
         # Connexion lors de la fin d'un algorithm pour re-enable les elements d'interactions
         simulation_controller.simulation.signal.algorithm_terminated.connect(self.connect_elements)
-        
         simulation_controller.algorithm_terminated.connect(self.notify_algorithm_termination)
 
         return simulation_controller
@@ -330,8 +332,11 @@ class MainWindow(QMainWindow):
         self.conflict_window.close()
         
         self.play_button.setDisabled(False)
+
         self.combobox.setDisabled(False)
         self.combobox.setCurrentIndex(0)
+        self.combobox.setStyleSheet("background-color: none;")
+
         self.speed_spin.setDisabled(False)
 
     def connect_elements(self):
@@ -364,6 +369,10 @@ class MainWindow(QMainWindow):
     
     def notify_algorithm_termination(self):
         """Notifie l'utilisateur que l'algorithme est terminé."""
+        self.combobox.setStyleSheet("background-color: none;")
+        self.combobox.setEnabled(True)
+        self.combobox.setEditable(False)
+
         msg_box = QMessageBox()
         msg_box.setIcon(QMessageBox.Information)
         msg_box.setWindowTitle("Algorithme Terminé")
@@ -371,6 +380,41 @@ class MainWindow(QMainWindow):
         msg_box.setStandardButtons(QMessageBox.Ok)
         msg_box.exec_()
 
+    def update_progress_bar(self, value: float) -> None:
+        """
+        Met à jour le style de la combobox en fonction de l'avancement de l'algorithme.
+        :param value: Pourcentage d'avancement (0.0 à 100.0)
+        """
+        # Limiter le pourcentage entre 0 et 100
+        percentage = max(0, min(100, value)) / 100.0
+        # Si 0: processus de chauffage si algo recuit
+        # Sinon: descente de temperature si algo recuit
+        color = "red" if percentage <= 0 else "blue"
+        stop_final = 1 if percentage <= 0 else percentage  # Si le pourcentage <= 0, stop = 1, sinon stop = percentage
+
+        # Gradient pour le fond de la combobox
+        gradient = (
+            f"QComboBox {{"
+            f"border: 1px solid gray;"
+            f"border-radius: 3px;"
+            f"padding: 5px;"
+            f"background: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, "
+            f"stop:0 {color}, "  # color au début
+            f"stop:{stop_final:.2f} {color}, "  # color jusqu'au pourcentage
+            f"stop:{stop_final:.2f} transparent, "  # Blanc au pourcentage
+            f"stop:1 transparent);"  # Blanc jusqu'à la fin
+            f"color: black;"  # Texte noir (même si la combobox est désactivée)            
+            f"}}"
+        )
+
+        # Appliquer le style à la combobox
+        self.combobox.setStyleSheet(gradient)
+
+        # Appliquer le text
+        txt = f"{value} % - {self.simulation_controller.simulation.get_algorithm().value}"
+        self.combobox.setEditable(True)
+        self.combobox.setCurrentText(txt)
+        self.combobox.setEnabled(False)  # Assurez-vous qu'elle reste désactivée
 #----------------------------------------------------------------------------
 #---------------------   MAIN PART  -----------------------------------------
 #----------------------------------------------------------------------------

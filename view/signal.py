@@ -6,3 +6,4 @@ class SignalEmitter(QObject):
     clicked = pyqtSignal(object)
     aircrafts_moved = pyqtSignal()
     algorithm_terminated = pyqtSignal(object)
+    algorithm_progress = pyqtSignal(float)

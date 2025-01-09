@@ -50,3 +50,6 @@ class SimulationModelNotifier(SimulationModel):
             self.logger.info("Watch queue launch")
             self.signal.algorithm_terminated.emit(self._queue)
             self.qtimer.stop()
+        
+        progression = self.progress_algorithm()
+        self.signal.algorithm_progress.emit(progression)

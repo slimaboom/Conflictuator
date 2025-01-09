@@ -70,3 +70,6 @@ class AlgorithmManager:
         if self._thread and self._thread.is_alive():
             self.instance.stop()
             self.logger.info(f"Stopping {self.instance}")
+    
+    def progress(self) -> float:
+        return self.instance.get_progress()
