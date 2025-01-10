@@ -3,6 +3,8 @@ import random
 from algorithm.recuit.data import DataStorage, ISimulatedObject
 from typing import List, Optional
 
+from logging_config import setup_logging
+
 class GeneticAlgorithm:
     def __init__(self, data: List[ISimulatedObject], population_size: int = 50, generations: int = 100, mutation_rate: float = 0.1, crossover_rate: float = 0.8):
         self.data = data
@@ -14,21 +16,10 @@ class GeneticAlgorithm:
         self._best_solution: Optional[List[DataStorage]] = None 
         self.possible_speeds = [0.001, 0.002, 0.003, 0.0012]
 
-        self.logger = self.setup_logger()
+        self.logger = setup_logging(self.__class__.__name__)
         self._isrunning: bool = False 
-        self._progress: int = 0
+        self._progress: float = 0
 
-    @staticmethod
-    def setup_logger():
-        import logging
-        logger = logging.getLogger("GeneticAlgorithm")
-        if not logger.hasHandlers():
-            handler = logging.StreamHandler()
-            formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-            handler.setFormatter(formatter)
-            logger.addHandler(handler)
-        logger.setLevel(logging.INFO)
-        return logger
 
     def get_initial_data(self) -> List[ISimulatedObject]:
         return self._data_saved
@@ -44,7 +35,7 @@ class GeneticAlgorithm:
         self.logger.info(f"Initial Population: {population}")
         return population
 
-    def evaluate_fitness(self, individual: List[DataStorage], data: List[ISimulatedObject]) -> int:
+    def evaluate_fitness(self, individual: List[DataStorage], data: List[ISimulatedObject]) -> float:
         conflicts = 0
         for i, obj in enumerate(data):
             obj.update(individual[i].speed)
@@ -134,7 +125,7 @@ class GeneticAlgorithm:
     def is_running(self) -> bool:
         return self._isrunning
 
-    def get_progress(self) -> int:
+    def get_progress(self) -> float:
         return self._progress
 
     def _reinitialize_data(self) -> None:
