@@ -49,7 +49,7 @@ class GeneticAlgorithm:
         for i, obj in enumerate(data):
             obj.update(individual[i].speed)
             conflicts += obj.evaluate()
-        return conflicts
+        return conflicts/2
 
     def select_parents(self, population: List[List[DataStorage]], fitnesses: List[int]) -> List[List[DataStorage]]:
         total_fitness = sum(fitnesses)
