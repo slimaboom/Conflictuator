@@ -35,7 +35,8 @@ class SimulationModelNotifier(SimulationModel):
         super().start_algorithm(queue)
     
         self._queue = queue
-        self.qtimer.start(1000) # msec
+        interval = 100 if AlgoType.GENETIQUE else 1000
+        self.qtimer.start(interval) # msec
 
     def stop_algorithm(self) -> None:
         super().stop_algorithm()
