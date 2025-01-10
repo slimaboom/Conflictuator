@@ -82,7 +82,7 @@ class GeneticAlgorithm:
         self._progress = 0
         population = self.generate_initial_population(self.data)
         best_individual = None
-        best_fitness = -1
+        best_fitness = 0
 
         for generation in range(self.generations):
             if not self._isrunning:
@@ -120,6 +120,7 @@ class GeneticAlgorithm:
 
     def start(self) -> 'GeneticAlgorithm':
         self.run()
+        self._reinitialize_data()
         return self
 
     def get(self) -> List[DataStorage]:
@@ -135,3 +136,7 @@ class GeneticAlgorithm:
 
     def get_progress(self) -> int:
         return self._progress
+
+    def _reinitialize_data(self) -> None:
+        for isimulatedobject, initial_isimulatedobject in zip(self.data, self.get_initial_data()):
+            isimulatedobject.update(initial_isimulatedobject.get_data_storage().speed)

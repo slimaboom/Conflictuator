@@ -1,12 +1,9 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from model.aircraft import Aircraft, SpeedValue
-import numpy as np
+from algorithm.storage import DataStorage
 
-@dataclass(frozen=True)
-class DataStorage:
-    speed: float
-    id: int
+import numpy as np
 
 class ISimulatedObject(ABC):
     """Classe d'interface pour l'objet utilisé lors du recuit simulé"""

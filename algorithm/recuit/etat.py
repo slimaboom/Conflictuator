@@ -1,4 +1,5 @@
-from algorithm.recuit.data import ISimulatedObject, DataStorage
+from algorithm.recuit.data import ISimulatedObject
+from algorithm.storage import DataStorage
 import numpy as np
 from typing import List
 from logging_config import setup_logging
@@ -46,7 +47,7 @@ class Etat:
         critere = 0.
         for obj in self.data:
             critere += obj.evaluate()
-        return critere
+        return critere/2 # Compter 2 fois chaque conflit
     
     def copy(self, copy_from: 'Etat') -> None:
         self.vector    = copy_from.vector[:]

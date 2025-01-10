@@ -58,6 +58,7 @@ class ConflictManager:
         self.balises = {}
         self.time_threshold = time_threshold
         self.time_simulation = None
+        self.conflicts: List[ConflictInformation] = []
 
     def register_aircraft(self, aircraft: 'Aircraft') -> None:
         """Enregistre un avion dans le gestionnaire."""
@@ -142,9 +143,26 @@ class ConflictManager:
                         # Ajouter les conflits aux avions
                         aircraft1.set_conflicts(conflict_info_one)
                         aircraft2.set_conflicts(conflict_info_two)
+
+                        if time1 < time2:
+                            self.add_conflicts(conflict_info_one)
+                        else:
+                            self.add_conflicts(conflict_info_two)
                 
                 if len(conflicts) > 0 :
                     #self.logger.info(f"Manager: conflicts detected for balise: {balise_name}")
                     self.balises.get(balise_name).add_conflicts(conflicts)
-
         return None
+    
+    def add_conflicts(self, conflict: ConflictInformation) -> None:
+        if not conflict in self.conflicts:
+            self.conflicts.append(conflict)
+    
+    def delete_conflicts(self, conflict: ConflictInformation) -> None:
+        try:
+            self.conflicts.remove(conflict)
+        except ValueError:
+            pass
+    
+    def get_conflicts(self) -> List[ConflictInformation]:
+        return list(sorted(self.conflicts, key=lambda c: c.get_conflict_time_one()))

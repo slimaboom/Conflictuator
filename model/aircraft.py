@@ -4,6 +4,7 @@ from model.balise import Balise
 from model.utils import rad_to_deg_aero
 from model.collector import Collector
 from logging_config import setup_logging
+from algorithm.storage import DataStorage
 
 from typing import List, Dict, TYPE_CHECKING, Optional
 from copy import deepcopy
@@ -60,7 +61,7 @@ class Aircraft:
     history: Dict[float, Information] = field(default_factory=dict, init=False) # Gestion d'un dictionnaire car recherche de point par cle en O(1)
     _is_finished: bool = field(init=False) # La trajectoire est-elle terminee ?
     _conflict_dict: Collector[List['ConflictInformation']] = field(init=False) # Dictionnaire de conflict entre self et les autres: cle=id_autre, valeur=liste des dates conflicts
-
+    commands: List[DataStorage] = field(init=False)
     # Attribut de classe pour suivre le nombre d'instances
     __COUNTER: int = 0
 
@@ -96,6 +97,7 @@ class Aircraft:
         self.calculate_estimated_times()
 
         self._conflict_dict = Collector() # Dictionnaire vide au depart
+        self.commands = []
 
     def deepcopy(self) -> 'Aircraft':
         new_aircraft = deepcopy(self)
@@ -141,6 +143,8 @@ class Aircraft:
         Calcule les temps estimés de passage de l'avion pour chaque balise.
         Le Range dans l'attribut flight_time_timed
         """
+        # TO DO
+        # A modifier pour prendre en compte les changements de vitesse de l'avion
         current_position = self.position
         current_time = self.take_off_time
 
@@ -309,6 +313,36 @@ class Aircraft:
         """Notifier les observateurs d'un changement dans un avion."""
         for observer in cls._observers:
             observer.update_aircraft_conflicts(aircraft)
+
+    def get_position_from_time(self, time: float) -> Point:
+        """ Renvoie la position de l'avion au temps <time>"""
+        return self.__find_position_position(time=time)
+
+    def __find_position_position(self, time: float) -> Point:
+        #TO DO
+        """ Calcul la position de l'avion au temps <time> 
+        NB: position futur si time > self.time 
+            position passee si time < self.time (recherche dans historique ?)
+        """
+        # La methode doit faire "comme" update mais sans toucher au attribut
+        # Une fois implemente, essayer de modifier update pour utiliser __find_psition_position
+            # et mettre a jour les attributs
+
+        dt = 0.1
+        return NotImplemented
+    
+    def set_command(self, commands: List[DataStorage]) -> None:
+        """ Set la liste de commande a l'avion (DataStorage)"""
+        # TO DO
+    
+    def check_commands(self) -> None:
+        """ Verifie la liste de commande pour realiser la prochaine commands si c'est le moment"""
+        # TO DO
+        # A appeler dans __find_position/update: 
+        # Oui car pour trouver la position a un temps T, il faut appliquer virtuellement les commands 
+        # puis remettre l'etat de l'avion a la fin...
+        # Attention si utiliser dans __find_position il faudra remettre les attributs (etat de l'avion) 
+        # correctement
 
 
 class AircraftCollector(Collector):

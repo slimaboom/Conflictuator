@@ -247,7 +247,7 @@ ROUTES.add(
 #--------- Definition  des avions:  -------------------------------------------
 #------------------------------------------------------------------------------
 AIRCRAFTS = AircraftCollector() # Gestion d'un dictionnaire car recherche en O(1)
-AIRCRAFTS.add_aircraft(Aircraft(speed=0.003, #0.001 # Conflit 5:48
+AIRCRAFTS.add_aircraft(Aircraft(speed=0.003, # Conflit 5:48 #0.003
                                 flight_plan=Airway.transform(ROUTES.get_from_key("NO-SE1"), BALISES))
                     )
 AIRCRAFTS.add_aircraft(Aircraft(speed=0.002, 
