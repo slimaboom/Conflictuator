@@ -2,6 +2,7 @@ from threading import Thread
 from queue import Queue
 from typing import Any, List
 from algorithm.algo_gen.genetique import GeneticAlgorithm
+from algorithm.objective_function.conflict_objective import ConflictEvaluationStrategy
 
 from algorithm.type import AlgoType
 from algorithm.recuit.recuit import Recuit
@@ -39,6 +40,11 @@ class AlgorithmManager:
             # Transformer les avions en objets pour l'algorithme génétique
             data_to_genetic = [SimulatedAircraftImplemented(aircraft) for aircraft in self._data]
             self.instance = GeneticAlgorithm(data_to_genetic, population_size=50, generations=30)
+
+            # Creation de l'instance fonction object
+            function_objectif = ConflictEvaluationStrategy()
+            # Envoie de l'instance dans l'algorithme genetique
+            self.instance.set_objective_function(function_objectif)
 
         else:
             pass

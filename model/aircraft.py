@@ -428,6 +428,8 @@ class Aircraft:
     def set_commands(self, commands: List[DataStorage]) -> None:
         """ Set la liste de commande a l'avion (DataStorage) et recalcule les conflit en consequence"""
         self.commands = commands
+        if self.commands:
+            self.set_take_off_time(commands[0].time)
 
         # Recalculer les conflicts
         self.update_conflicts()

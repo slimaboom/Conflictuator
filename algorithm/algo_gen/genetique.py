@@ -80,8 +80,7 @@ class GeneticAlgorithm:
         return population
 
     
-    def evaluate_fitness(self, individual: List[List[DataStorage]], data: List[ISimulatedObject]) -> float:
-        
+    def evaluate_fitness(self, data: List[ISimulatedObject]) -> float:
         return self.objective_function.evaluate(data)
 
 
@@ -145,7 +144,24 @@ class GeneticAlgorithm:
             if not self._isrunning:
                 break  
 
-            fitnesses = [self.evaluate_fitness(ind, self.data) for ind in population]
+            # Maj des datas
+            fitnesses = []
+            for individual in population:
+                for i, aircraft_sim in enumerate(self.data):
+                    trajectory = individual[i]
+                    aircraft_sim.update_commands(trajectory) # la liste des commandes est envoyer a l'avion et celui-ci met a jour son attribut et ton TakeOffTime (premier element de la liste)
+
+                    # Appliquer les commandes pour évaluer les conflits
+                    # On doit juste set les commands c'est tout.
+                    # Les commandes s'appliqueront quand elle le doivent
+                    #aircraft.set_take_off_time(trajectory[0].time)
+                    #aircraft.set_speed(trajectory[0].speed)
+                    #aircraft.set_commands(trajectory)
+                    #total_conflicts = aircraft_sim.evaluate()  # Ajouter les conflits
+                # A calculer apres avoir changer chaque avion 
+                fitnesses.append(self.evaluate_fitness(self.data))
+
+            #fitnesses = [self.evaluate_fitness(ind, self.data) for ind in population]
 
             self.loggerer.info(f"Generation {generation + 1} Fitnesses: {fitnesses}")
 
@@ -158,7 +174,10 @@ class GeneticAlgorithm:
 
             next_population = []
             for _ in range(self.population_size // 2):
-                parent1, parent2 = self.select_parents(population, fitnesses)
+                try:
+                    parent1, parent2 = self.select_parents(population, fitnesses)
+                except:
+                    print("select parent error")
                 offspring1 = self.crossover(parent1, parent2)
                 offspring2 = self.crossover(parent2, parent1)
                 next_population.append(self.mutate(offspring1))
