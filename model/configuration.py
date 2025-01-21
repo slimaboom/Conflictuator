@@ -1,3 +1,5 @@
+from generator.airways_generator import AirwaysGenerator
+from generator.traffic import TrafficGenerator
 from model.sector import Sector
 from model.point import Point
 from model.balise import Balise, DatabaseBalise
@@ -246,7 +248,7 @@ ROUTES.add(
 #------------------------------------------------------------------------------
 #--------- Definition  des avions:  -------------------------------------------
 #------------------------------------------------------------------------------
-AIRCRAFTS = AircraftCollector() # Gestion d'un dictionnaire car recherche en O(1)
+"""AIRCRAFTS = AircraftCollector() # Gestion d'un dictionnaire car recherche en O(1)
 AIRCRAFTS.add_aircraft(Aircraft(speed=0.003, # Conflit 5:48 #0.003
                                 flight_plan=Airway.transform(ROUTES.get_from_key("NO-SE1"), BALISES))
                     )
@@ -259,8 +261,24 @@ AIRCRAFTS.add_aircraft(Aircraft(speed=0.001,
 )
 AIRCRAFTS.add_aircraft(Aircraft(speed=0.0012, 
                                 flight_plan=Airway.transform(["MAJOR", "MTL", "MINDI", "CFA", "ETAMO"], BALISES))
-)
+)"""
 #0.001, 0.002, 0.002, 0.001 conflit LSE (1-2) + MTL (3-4)
 #0.003, 0.002 0.001, 0.0012 pas de conflit
 #Solution propose par recuit:
 #[DataStorage(speed=0.002, id=1), DataStorage(speed=0.003, id=2), DataStorage(speed=0.003, id=3), DataStorage(speed=0.003, id=4)]
+
+all_balises = BALISES
+AIRCRAFTS = AircraftCollector()
+
+# Instancier le générateur de routes aériennes
+airways_generator = AirwaysGenerator(all_balises)
+
+# Initialiser le générateur de trafic
+traffic_generator = TrafficGenerator(airways_generator, interval=100, max_aircraft=1)
+
+# Générer des avions pour 2 heures (7200 secondes)
+aircraft_list = traffic_generator.generate_aircraft(start_time=0, duration=7200)
+
+# Afficher les avions générés
+for aircraft in aircraft_list:
+    AIRCRAFTS.add_aircraft(aircraft)

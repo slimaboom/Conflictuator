@@ -44,10 +44,17 @@ class Point:
         - y: ordonnée normalisée entre -1 et 1.
         - altitude: Altitude normalisée entre 0 et 1.
         """
+        
         if not (PointValue.MinX.value <= x <= PointValue.MaxX.value):
-            raise ValueError("abscisse normalisée doit être entre 0 et 1.")
+            if x < 2 : 
+                round(x,1)
+            else:
+                raise ValueError("abscisse normalisée doit être entre 0 et 1.")
         if not (PointValue.MinY.value <= y <= PointValue.MaxY.value):
-            raise ValueError("ordonnée normalisée doit être entre 0 et 1.")
+            if y < 2 : 
+                round(y,1)
+            else:
+                raise ValueError("ordonnée normalisée doit être entre 0 et 1.")
         if not (PointValue.MinZ.value <= z <= PointValue.MaxZ.value):
             raise ValueError("Altitude normalisée doit être entre 0 et 1.")
         self.x = x
