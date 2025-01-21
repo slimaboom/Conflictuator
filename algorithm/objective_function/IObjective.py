@@ -7,6 +7,9 @@ from typing import List, Optional
 class IObjective(ABC):
 
     @abstractmethod
-    def evaluate(self, data: List[ISimulatedObject], individual: Optional[List[List[DataStorage]]] = None) -> float:
-        """Calcule la fitness d'un individu."""
+    def evaluate(self, data: List[ISimulatedObject]) -> float:
+        """Calcule la fonction objectif a partir de data (generique)."""
         pass
+
+class ObjectiveError(Exception):
+    pass
