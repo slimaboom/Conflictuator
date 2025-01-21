@@ -6,21 +6,11 @@ from model.configuration import BALISES
 
 class AirwaysGenerator:
     def __init__(self, database_balise: 'DatabaseBalise', sector_margin=0.1):
-        """
-        Initialisation du générateur d'airways.
-        :param database_balise: Base de données des balises.
-        :param sector_margin: Largeur des bandes au bord du secteur.
-        """
         self.database_balise = database_balise
-        self.sector_margin = sector_margin  # Largeur des bandes aux extrémités
-        self.graph = self.build_graph()  # Graphe des balises connectées
+        self.sector_margin = sector_margin 
+        self.graph = self.build_graph() 
 
     def build_graph(self) -> Dict[str, List[Tuple[str, float]]]:
-        """
-        Construit un graphe représentant les connexions entre balises.
-        Les connexions sont restreintes à celles visibles sur l'image fournie.
-        Les poids correspondent aux distances euclidiennes.
-        """
         # Liste des connexions valides extraites de l'image
         valid_connections = {
             "GAI": ["GWENA", "LOBOS", "ONGHI"],
@@ -59,9 +49,9 @@ class AirwaysGenerator:
             "RAPID": ["SEVET"],
             "MEN" : ["CFA", "ETORI", "LANZA", "LOBOS"],
             "ONGHI": ["ETORI", "GAI"],
-            "SICIL": ["JAMBI"]
-            
-
+            "SICIL": ["JAMBI", "SODRI"],
+            "SODRI" : ["SICIL"]
+        
         }
 
         graph = {}
@@ -82,9 +72,6 @@ class AirwaysGenerator:
         return graph
 
     def dijkstra(self, start: Balise, end: Balise) -> List[Balise]:
-        """
-        Implémentation de l'algorithme de Dijkstra pour trouver le chemin le plus court entre deux balises.
-        """
         start_name = start.get_name()
         end_name = end.get_name()
 
@@ -93,11 +80,9 @@ class AirwaysGenerator:
 
         print(f"Recherche du chemin de {start_name} à {end_name}")
 
-        # File de priorité pour Dijkstra (distance cumulée, balise actuelle, chemin jusqu'à cette balise)
         queue = [(0, start_name, [])]
         visited = set()
 
-        # Stocker les distances minimales
         distances = {balise: float('inf') for balise in self.graph}
         distances[start_name] = 0
 
@@ -126,7 +111,7 @@ class AirwaysGenerator:
                         heapq.heappush(queue, (new_distance, neighbor_name, path))
 
         print("Aucun chemin trouvé")
-        return []  # Aucun chemin trouvé
+        return []
 
     def get_directional_balises(self) -> Dict[str, List[Balise]]:
         """
@@ -141,15 +126,12 @@ class AirwaysGenerator:
         mid_x = (min_x + max_x) / 2
         mid_y = (min_y + max_y) / 2
 
-        margin_threshold = 0.05  # Ajustez la marge pour définir les balises "centrales"
-
         directions = {dir_: [] for dir_ in ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]}
 
         for balise in self.database_balise.get_all().values():
             x, y = balise.getX(), balise.getY()
-
-            # Exclure les balises proches du centre
-            if abs(x - mid_x) < margin_threshold and abs(y - mid_y) < margin_threshold:
+            distance_from_center = ((x - mid_x)**2 + (y - mid_y)**2)**0.5
+            if distance_from_center < 0.4: # Favoriser les balises éloignées du centre
                 continue
 
             if y >= mid_y:  # Nord
@@ -174,8 +156,6 @@ class AirwaysGenerator:
 
         return directions
 
-        return directions
-
     def generate_route_between_different_quadrants(self, min_balises: int = random.randint(5,10)) -> List[Balise]:
         """
         Génère une route entre deux balises dans des directions différentes,
@@ -196,20 +176,17 @@ class AirwaysGenerator:
         start_balise = random.choice(directions[start_direction])
         end_balise = random.choice(directions[end_direction])
 
-        # Utiliser Dijkstra pour trouver le chemin initial
+        # Dijkstra 
         path = self.dijkstra(start_balise, end_balise)
 
-        # Vérifier si le chemin respecte le nombre minimum de balises
+        """# Vérifier si chemin respecte le nombre minimum de balises
         if len(path) < min_balises:
             print(f"Chemin trop court ({len(path)} balises). Ajout de balises intermédiaires.")
-            path = self.add_intermediate_balises(path, min_balises)
+            path = self.add_intermediate_balises(path, min_balises)"""
 
         return path
 
-    def add_intermediate_balises(self, path: List[Balise], min_balises: int) -> List[Balise]:
-        """
-        Ajoute des balises intermédiaires pour atteindre le nombre minimum de balises requis.
-        """
+    """def add_intermediate_balises(self, path: List[Balise], min_balises: int) -> List[Balise]:
         remaining_balises = [balise for balise in self.database_balise.get_all().values() if balise not in path]
         new_path = []
 
@@ -228,7 +205,7 @@ class AirwaysGenerator:
         while len(new_path) < min_balises and remaining_balises:
             new_path.insert(-1, random.choice(remaining_balises))
 
-        return new_path
+        return new_path"""
 
 
 

@@ -420,21 +420,22 @@ class MainWindow(QMainWindow):
 #----------------------------------------------------------------------------
 #---------------------   MAIN PART  -----------------------------------------
 #----------------------------------------------------------------------------
-from model.airways_generator import AirwaysGenerator
+from generator.airways_generator import AirwaysGenerator
 def main():
-    """ # Récupérer toutes les balises
+    """# Récupérer toutes les balises
     all_balises = BALISES
 
     # Instancier le générateur de routes aériennes
     airways_generator = AirwaysGenerator(all_balises)
 
-    # Générer une route entre des balises dans des quadrants différents
-    route = airways_generator.generate_route_between_different_quadrants()
+    for _ in range(5):
+        # Générer une route entre des balises dans des quadrants différents
+        route = airways_generator.generate_route_between_different_quadrants()
 
-    # Afficher la route générée
-    print("Route générée :")
-    for balise in route:
-        print(f"- {balise.get_name()} ({balise.getX():.2f}, {balise.getY():.2f})")"""
+        # Afficher la route générée
+        print("Route générée :")
+        for balise in route:
+            print(f"- {balise.get_name()} ({balise.getX():.2f}, {balise.getY():.2f})")"""
 
 
     # platforme_name: Linux | Darwin | Windows
