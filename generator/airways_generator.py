@@ -2,7 +2,6 @@ import heapq
 import random
 from typing import Dict, Tuple, List
 from model.balise import Balise, DatabaseBalise
-from model.configuration import BALISES
 
 class AirwaysGenerator:
     def __init__(self, database_balise: 'DatabaseBalise', sector_margin=0.1):
