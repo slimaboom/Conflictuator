@@ -2,8 +2,8 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from model.aircraft import Aircraft, SpeedValue
 from algorithm.storage import DataStorage
+from typing import List
 
-import numpy as np
 
 class ISimulatedObject(ABC):
     """Classe d'interface pour l'objet utilisé lors du recuit simulé"""
@@ -11,6 +11,10 @@ class ISimulatedObject(ABC):
     @abstractmethod
     def update(self, value: float) -> None:
         """Met à jour l'objet pour le recuit"""
+        pass
+
+    @abstractmethod 
+    def update_commands(self, commands:List[DataStorage]):
         pass
     
     @abstractmethod
@@ -41,11 +45,15 @@ class SimulatedAircraftImplemented(ISimulatedObject):
         self.aircraft = aircraft
         self.random_generator = self.aircraft.get_random_generator()
 
-        self.possible_speeds = [0.001, 0.002, 0.003, 0.0012]#np.linspace(SpeedValue.MIN.value, SpeedValue.MAX.value, 20)
+        self.possible_speeds = [0.001, 0.002, 0.003, 0.0012] #np.linspace(SpeedValue.MIN.value, SpeedValue.MAX.value, 20)
 
     def update(self, value: float) -> None:
         """Mise à jour de la vitesse dans le cadre du recuit"""
         self.aircraft.set_speed(value)
+
+    def update_commands(self, commands:List[DataStorage]) -> None:
+        "Mise a jour des commande de l'avion et recalcule les conflits"
+        self.aircraft.set_commands(commands)
     
     def generate_neighbor(self) -> None:
         """Génère un voisin pour l'avion simulé"""
@@ -64,3 +72,5 @@ class SimulatedAircraftImplemented(ISimulatedObject):
     def get_data_storage(self) -> DataStorage:
         """Storage des donnees de l'objet necessaire lors du recuit simulé"""
         return DataStorage(self.aircraft.get_speed(), self.aircraft.get_id_aircraft())
+    
+

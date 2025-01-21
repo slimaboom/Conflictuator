@@ -44,11 +44,11 @@ class SimulationModelNotifier(SimulationModel):
             self.qtimer.stop()
 
     def _watch_queue(self) -> None:
-        self.logger.info("Watch queue launch")
+        #self.logger.info("Watch queue launch")
         if self._queue.qsize() != 0:
             # Emission du signal pour signifier que l'algorithme a terminé
             # Le file d'attente est envoyee dans le signal
-            self.logger.info("Watch queue launch")
+            #self.logger.info("Watch queue launch")
             self.signal.algorithm_terminated.emit(self._queue)
             self.qtimer.stop()
         

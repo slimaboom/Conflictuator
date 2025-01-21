@@ -244,6 +244,8 @@ class SimulationViewController(QObject):
         for qtaircraft in self.qt_aircrafts.values():
             aircraft = qtaircraft.get_aircraft().deepcopy()
             aircraft.set_aircraft_id(-aircraft.get_id_aircraft())
+            #Fantome sans commandes
+            aircraft.commands = None
 
             qt_aircraft = QtAircraft(aircraft, parent=self.scene, qcolor=Qt.gray)
             new_qtaircrafts.append(qt_aircraft)
@@ -253,50 +255,79 @@ class SimulationViewController(QObject):
 
     def update_view_with_algorithm(self, queue: 'Queue'):
         self.logger.info(queue)
-        final = queue.get_nowait()
         
+        try:
+            final = queue.get_nowait()
+        except Exception as e:
+            self.logger.error(f"Impossible de récupérer les résultats dans la queue : {e}")
+            return
+
+        # Vérification de la structure de final
+        if not isinstance(final, list) or not all(isinstance(sublist, list) for sublist in final):
+            self.logger.error(f"Structure inattendue dans final : {type(final)} - {final}")
+            return
+
         qt_aircrafts_copies = self.copy_qtaircrafts()
 
         # Mise à jour des avions optimaux
-        self.logger.info(f"Type de final : {type(final)}, Contenu : {final}")
-        for datastorage in final:
-            id, speed = datastorage.id, datastorage.speed
-            
-            qtaircraft = self.qt_aircrafts.get(id)
-            aircraft = qtaircraft.get_aircraft()
+        for aircraft_commands in final:  # Parcourt chaque liste de DataStorage pour un avion
+            if not isinstance(aircraft_commands, list):
+                self.logger.error(f"Expected list of DataStorage, got {type(aircraft_commands)}")
+                continue
 
-            # Vérifier si l'avion est déjà dans la scène
-            if qtaircraft not in self.scene.items():
-                self.logger.warning(f"Avion manquant dans la scène : {aircraft.get_id_aircraft()} (recréation possible)")
-                self.scene.addItem(qtaircraft)
+            # Récupérer l'identifiant et appliquer les commandes
+            if aircraft_commands:
+                id = aircraft_commands[0].id  # Les commandes sont associées à un avion par leur ID
+                qtaircraft = self.qt_aircrafts.get(id)
+                if qtaircraft is None:
+                    self.logger.warning(f"Aucun avion trouvé pour l'ID : {id}")
+                    continue
 
-            # Mettre à jour les paramètres de l'avion
-            aircraft.set_speed(speed)
-            self.logger.info(f"Avion {aircraft.get_id_aircraft()} mis à jour, vitesse : {speed}")
+                aircraft = qtaircraft.get_aircraft()
 
-            # Assurer un Z-index élevé pour les avions originaux
-            qtaircraft.setZValue(2)
+                # Vérifier si l'avion est déjà dans la scène
+                if qtaircraft not in self.scene.items():
+                    #self.logger.warning(f"Avion manquant dans la scène : {aircraft.get_id_aircraft()} (recréation possible)")
+                    self.scene.addItem(qtaircraft)
+                
+                # Mettre à jour le temps de départ et la vitesse initiale de l'avion
+                aircraft.set_speed(aircraft_commands[0].speed)
+                aircraft.set_take_off_time(aircraft_commands[0].time)  # Mise à jour explicite
+
+                self.logger.info(f"Take-off time de l'avion {aircraft.get_id_aircraft()} mis à jour à {aircraft_commands[0].time}")
+
+                # Mettre à jour les commandes de l'avion
+                aircraft.set_commands(aircraft_commands)
+                self.logger.info(f"Avion {aircraft.get_id_aircraft()} mis à jour avec {len(aircraft_commands)} commandes")
+
+                # Assurer un Z-index élevé pour les avions originaux
+                qtaircraft.setZValue(2)
         
         self.enable_original_aircraft_interactions()
 
         # Ajouter les copies des avions (optimaux) à la scène
         for qtaircraft_copy in qt_aircrafts_copies:
-            # Rendre les copies distinctes visuellement
             qtaircraft_copy.setOpacity(0.4)
             qtaircraft_copy.setZValue(1)  # Z-index inférieur pour apparaître sous les originaux
             self.logger.info(f"Add {qtaircraft_copy} to dictionnary")
 
-
-            # Ajouter à la scène et les listes internes
             self.qt_aircrafts[qtaircraft_copy.get_aircraft().get_id_aircraft()] = qtaircraft_copy
             self.simulation.add_aircraft(qtaircraft_copy.get_aircraft(), register_to_manager=False)
-            
             self.scene.addItem(qtaircraft_copy)
+
+        # Mettre à jour les couleurs des balises en fonction des conflits
+        for qtbalise in self.qt_balises:
+            balise = qtbalise.get_balise()
+            conflicts = balise.get_conflicts()
+            if conflicts:
+                qtbalise.setBrush(QColor("red"))  # Rouge si conflits
+            else:
+                qtbalise.setBrush(QColor("green"))  # Vert sinon
 
         self.logger.info(self.qt_aircrafts)
 
-        # Emission du signal de terminaison
         self.algorithm_terminated.emit()
+
 
     def cleanup(self) -> None:
         self.stop_simulation()

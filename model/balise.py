@@ -1,3 +1,4 @@
+from cmath import sqrt
 from dataclasses import dataclass
 from typing import List, Dict
 from model.point import Point
@@ -14,7 +15,17 @@ class Balise(Point):
         self.conflits = []
         self.logger = setup_logging(__class__.__name__)
 
+    def __hash__(self):
+        return hash((self.x, self.y, self.z, self.name))
+
+    def __eq__(self, other):
+        if not isinstance(other, Balise):
+            return False
+        return (self.x, self.y, self.z, self.name) == (other.x, other.y, other.z, other.name)
+
     def get_name(self) -> str: return self.name
+
+    def get_point(self) -> Point: return Point(self.x, self.y, self.z) 
 
     def __repr__(self):
         repr = super().__repr__()
@@ -41,7 +52,10 @@ class Balise(Point):
     
     def deepcopy(self) -> 'Balise':
         new_balise = deepcopy(self)
-        return new_balise        
+        return new_balise       
+
+
+        
 
 class DatabaseBalise(Collector[Balise]):
     def __init__(self, balises: List[Balise] = []):
@@ -49,3 +63,4 @@ class DatabaseBalise(Collector[Balise]):
         for balise in balises:
             self.add(key=balise.get_name(),
                      value=balise) # association cle/valeur
+            
