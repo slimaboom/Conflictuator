@@ -2,13 +2,17 @@ from copy import deepcopy
 import random
 from algorithm.recuit.data import DataStorage, ISimulatedObject
 from typing import List, Optional
-from algorithm.evaluation_strategy import EvaluationStrategy
+from algorithm.objective_function.IObjective import IObjective
 
 from logging_config import setup_logging
 
 class GeneticAlgorithm:
     def __init__(self, data: List[ISimulatedObject], 
-                 evaluation_strategy: EvaluationStrategy, population_size: int = 50, generations: int = 100, mutation_rate: float = 0.1, crossover_rate: float = 0.8):
+                 evaluation_strategy: IObjective, 
+                 population_size: int = 50, 
+                 generations: int = 100, 
+                 mutation_rate: float = 0.1, 
+                 crossover_rate: float = 0.8):
         self.data = data
         self._data_saved = [deepcopy(d) for d in data]
         self.population_size: int = population_size

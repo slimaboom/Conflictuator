@@ -1,40 +1,18 @@
-from abc import ABC, abstractmethod
+
 from typing import List
 from algorithm.recuit.data import ISimulatedObject
 from algorithm.storage import DataStorage
+from objective_function import IObjective
 
-# Interface 
-class EvaluationStrategy(ABC):
 
-    @abstractmethod
-    def evaluate(self, individual: List[List[DataStorage]], data: List[ISimulatedObject]) -> float:
-        """Calcule la fitness d'un individu."""
-        pass
-
-#-------------------------------------------------#
-# Implementation de l'interface 
-    
-# Evaluation par le nombre de conflit    
-class ConflictEvaluationStrategy(EvaluationStrategy):
-    def evaluate(self, individual: List[List[DataStorage]], data: List[ISimulatedObject]) -> float:
-        total_conflicts = 0
-        for i, aircraft_sim in enumerate(data):
-            trajectory = individual[i]
-            aircraft = aircraft_sim.aircraft
-            aircraft.set_take_off_time(trajectory[0].time)
-            aircraft.set_speed(trajectory[0].speed)
-            aircraft.set_commands(trajectory)
-            total_conflicts += aircraft_sim.evaluate()
-        return total_conflicts
-    
 # Evaluation combiné 
-class CombinedEvaluationStrategy(EvaluationStrategy):
+class CombinedEvaluationStrategy(IObjective):
     """ On maximise le nombre de conflit mais pour un meme nombre de conflit
     on va preferé ceux qui minimise le nombre de changement,
     qui reduit la variation de vitesse, 
     qui penalise les commandes trop proche en temps
     qui reduit le temps de croisement aux points de conflits """
-    def evaluate(self, individual: List[List[DataStorage]], data: List[ISimulatedObject]) -> float:
+    def evaluate(self, data: List[ISimulatedObject], individual: List[List[DataStorage]]) -> float:
         # Critères
         total_conflicts = 0
         total_shared_time_bonus = 0
