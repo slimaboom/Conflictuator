@@ -71,8 +71,8 @@ class PTrafficGenerator:
 
         return aircrafts
 
-"""
-# Chargement des routes et des balises
+
+"""# Chargement des routes et des balises
 routes = ROUTES  # Objets Airway définis dans configuration.py
 balises = BALISES  # Objets DatabaseBalise définis dans configuration.py
 AIRCRAFTS = AircraftCollector()
@@ -83,7 +83,7 @@ traffic_generator = PTrafficGenerator(routes, balises, max_duration)
 
 # Définition des taux de génération (lambda) pour toutes les routes
 for route_key in routes:
-    traffic_generator.set_poisson_rate(route_key, random.uniform(0.00025, 0.0025))  # Exemple : lambda aléatoire entre 0.01 et 0.1
+    traffic_generator.set_poisson_rate(route_key, random.uniform(0.00025, 0.005))  # Exemple : lambda aléatoire entre 0.01 et 0.1
 
 # Génération du trafic
 aircrafts = traffic_generator.generate_traffic()
@@ -94,22 +94,21 @@ for aircraft in aircrafts:
     print(f"Avion généré: vitesse={aircraft.speed}, départ={aircraft.take_off_time}, route={aircraft.flight_plan}")
 print("c'est fini avec : ", len(aircrafts))
 """
+
+#------------------------------------------------------------------------------
+#--------- Definition  des avions:  -------------------------------------------
+#------------------------------------------------------------------------------
 AIRCRAFTS = AircraftCollector() # Gestion d'un dictionnaire car recherche en O(1)
-AIRCRAFTS.add_aircraft(Aircraft(speed=0.003, # Conflit 5:48 #0.003
-                                flight_plan=Airway.transform(["ATN", "BURGO", "BOJOL", "LSE", "LTP", "GRENA", "SANTO", "JAMBI", "SICIL", "SODRI"], BALISES))
+AIRCRAFTS.add_aircraft(Aircraft(speed=0.003, #0.001 # Conflit 5:48
+                                flight_plan=Airway.transform(ROUTES.get_from_key("NO-SE1"), BALISES))
                     )
 AIRCRAFTS.add_aircraft(Aircraft(speed=0.002, 
-                                flight_plan=Airway.transform(["ATN", "BURGO", "BOJOL", "LSE", "MINDI", "LANZA", "MEN", "GAI"], BALISES, reverse=True),
-                                take_off_time=0)
+                                flight_plan=Airway.transform(ROUTES.get_from_key("NO-SO1"), BALISES, reverse=True),
+                                take_off_time=20)
 )
 AIRCRAFTS.add_aircraft(Aircraft(speed=0.001, 
-                                flight_plan=Airway.transform(["FRI", "MELKA", "PAS", "LIMAN", "LSE", "LTP", "GRENA", "SANTO", "JAMBI"], BALISES))
+                                flight_plan=Airway.transform(ROUTES.get_from_key("SE-NE1"), BALISES))
 )
 AIRCRAFTS.add_aircraft(Aircraft(speed=0.0012, 
-                                flight_plan=Airway.transform(["MAJOR", "MTL", "MINDI", "CFA", "ETAMO"], BALISES)))
-
-
-#0.001, 0.002, 0.002, 0.001 conflit LSE (1-2) + MTL (3-4)
-#0.003, 0.002 0.001, 0.0012 pas de conflit
-#Solution propose par recuit:
-#[DataStorage(speed=0.002, id=1), DataStorage(speed=0.003, id=2), DataStorage(speed=0.003, id=3), DataStorage(speed=0.003, id=4)]
+                                flight_plan=Airway.transform(["MAJOR", "MTL", "MINDI", "CFA", "ETAMO"], BALISES))
+)
