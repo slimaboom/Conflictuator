@@ -1,0 +1,95 @@
+import random
+import numpy as np
+from model.configuration import BALISES, ROUTES
+from model.route import Airway
+from model.balise import DatabaseBalise
+from model.aircraft import Aircraft, AircraftCollector
+from typing import List
+
+class PTrafficGenerator:
+    def __init__(self, routes: Airway, balises: DatabaseBalise, max_duration: int):
+        """
+        Initialise le générateur de trafic aérien.
+
+        :param routes: Les routes aériennes disponibles.
+        :param balises: Les balises associées.
+        :param max_duration: Durée maximale de la simulation (en secondes ou minutes).
+        """
+        self.routes = routes
+        self.balises = balises
+        self.max_duration = max_duration
+        self.route_rates = {}  # Stocke les paramètres lambda pour chaque route
+
+    def set_poisson_rate(self, route_key: str, rate: float):
+        """
+        Définit le taux de génération pour une route en ajustant par le nombre de routes avec la même balise de départ.
+
+        :param route_key: Clé de la route.
+        :param rate: Paramètre lambda pour la loi de Poisson.
+        """
+        route = self.routes.get_from_key(route_key)
+        if not route:
+            return
+
+        # Identifier la balise de départ
+        start_balise = route[0]
+
+        # Compter les routes partageant la même balise de départ
+        shared_routes = [key for key in self.routes if self.routes.get_from_key(key) and self.routes.get_from_key(key)[0] == start_balise]
+        adjustment_factor = len(shared_routes)
+
+        # Ajuster le taux lambda
+        adjusted_rate = rate / adjustment_factor if adjustment_factor > 0 else rate
+        self.route_rates[route_key] = adjusted_rate
+
+    def generate_traffic(self) -> List[Aircraft]:
+        """
+        Génère le trafic aérien en fonction des lois de Poisson pour chaque route.
+
+        :return: Liste d'objets Aircraft générés.
+        """
+        aircrafts = []
+        for route_key, rate in self.route_rates.items():
+            route = self.routes.get_from_key(route_key)
+            if not route:
+                continue
+
+            # Points de la route transformés en balises
+            flight_plan = Airway.transform(route, self.balises)
+            time = 0
+            while time < self.max_duration:
+                # Génère un intervalle suivant une loi de Poisson
+                interval = np.random.poisson(1 / rate)
+                time += interval
+                if time > self.max_duration:
+                    break
+
+                # Crée un avion avec une vitesse aléatoire
+                speed = random.uniform(0.001, 0.0015)  # Exemple d'intervalle de vitesse
+                aircraft = Aircraft(speed=speed, flight_plan=flight_plan, take_off_time=time)
+                aircrafts.append(aircraft)
+
+        return aircrafts
+
+
+# Chargement des routes et des balises
+routes = ROUTES  # Objets Airway définis dans configuration.py
+balises = BALISES  # Objets DatabaseBalise définis dans configuration.py
+AIRCRAFTS = AircraftCollector()
+max_duration = 3600  # Une heure de simulation
+
+# Initialisation du générateur de trafic
+traffic_generator = PTrafficGenerator(routes, balises, max_duration)
+
+# Définition des taux de génération (lambda) pour toutes les routes
+for route_key in routes:
+    traffic_generator.set_poisson_rate(route_key, random.uniform(0.00025, 0.0025))  # Exemple : lambda aléatoire entre 0.01 et 0.1
+
+# Génération du trafic
+aircrafts = traffic_generator.generate_traffic()
+
+# Affichage des avions générés
+for aircraft in aircrafts:
+    AIRCRAFTS.add_aircraft(aircraft)
+    print(f"Avion généré: vitesse={aircraft.speed}, départ={aircraft.take_off_time}, route={aircraft.flight_plan}")
+print("c'est fini avec : ", len(aircrafts))

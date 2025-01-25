@@ -398,7 +398,7 @@ class MainWindow(QMainWindow):
             f"border: 1px solid gray;"
             f"border-radius: 3px;"
             f"padding: 5px;"
-            f"background: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, "
+            f"background: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0,"
             f"stop:0 {color}, "  # color au début
             f"stop:{stop_final:.2f} {color}, "  # color jusqu'au pourcentage
             f"stop:{stop_final:.2f} transparent, "  # Blanc au pourcentage

@@ -18,7 +18,7 @@ from model.point import Point
 from model.balise import Balise
 from model.aircraft import Aircraft
 from model.utils import sec_to_time
-from model.configuration import AIRCRAFTS
+from generator.traffic_generator import AIRCRAFTS
 from view.signal import SignalEmitter
 
 class QtSector(QGraphicsPolygonItem):

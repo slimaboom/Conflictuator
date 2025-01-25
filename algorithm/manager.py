@@ -39,7 +39,7 @@ class AlgorithmManager:
         elif self._algorithm == AlgoType.GENETIQUE:
             # Transformer les avions en objets pour l'algorithme génétique
             data_to_genetic = [SimulatedAircraftImplemented(aircraft) for aircraft in self._data]
-            self.instance = GeneticAlgorithm(data_to_genetic, population_size=50, generations=30)
+            self.instance = GeneticAlgorithm(data_to_genetic, population_size=30, generations=15)
 
             # Creation de l'instance fonction object
             function_objectif = ConflictEvaluationStrategy()

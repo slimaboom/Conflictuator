@@ -1,10 +1,7 @@
-from generator.airways_generator import AirwaysGenerator
-from generator.traffic import TrafficGenerator
 from model.sector import Sector
 from model.point import Point
 from model.balise import Balise, DatabaseBalise
 from model.route import Airway
-from model.aircraft import Aircraft, AircraftCollector
 
 #------------------------------------------------------------------------------
 #--------- Definition  des secteurs: principal et secondaires -----------------
@@ -169,80 +166,302 @@ BALISES = DatabaseBalise([
 #--------- Definition  des routes aeriennes:  ---------------------------------
 #------------------------------------------------------------------------------
 ROUTES = Airway()
-ROUTES.add(key="NO-SE1", 
-           value=["ATN", "BURGO", "BOJOL", "LSE", "LTP", "GRENA", "SANTO", "JAMBI", "SICIL", "SODRI"]
+
+#----------------nord sud ---------------------
+#DIRMO
+
+ROUTES.add(
+    key="NORTHSOUTH1",
+    value=["DIRMO", "ETAMO", "CFA", "MEN", "LOBOS", "GAI"]
 )
 
 ROUTES.add(
-    key="NO-SE2", 
+    key="NORTHSOUTH2",
+    value=["DIRMO", "ETAMO", "CFA", "MEN", "ETORI"]
+)
+
+"""ROUTES.add(
+    key="NORTHSOUTH3",
+    value=["DIRMO", "ETAMO", "CFA", "MEN", "ETORI", "SPIDY", "MTL", "GRENA", "SANTO", "JAMBI"]
+)"""
+
+"""ROUTES.add(
+    key="NORTHSOUTH4",
+    value=["DIRMO", "ETAMO", "CFA", "MEN", "ETORI", "SPIDY", "MTL", "GRENA", "SANTO", "SAMOS"]
+)"""
+
+"""ROUTES.add(
+    key="NORTHSOUTH5",
+    value=["DIRMO", "ETAMO", "CFA", "MEN", "ETORI", "SPIDY", "MTL", "GRENA", "BOSUA", "JUVEN"]
+)"""
+
+"""ROUTES.add(
+    key="NORTHSOUTH6",
+    value=["DIRMO", "ETAMO", "CFA", "MEN", "ETORI", "SPIDY", "MTL", "GRENA", "BOSUA", "JUVEN", "BIELA"]
+)"""
+
+#ATN
+
+ROUTES.add(
+    key="NORTHSOUTH7",
+    value=["ATN", "BURGO", "BOJOL", "LSE", "MINDI", "LANZA", "MEN", "LOBOS", "GAI"]
+)
+
+ROUTES.add(
+    key="NORTHSOUTH8",
+    value=["ATN", "BURGO", "BOJOL", "LSE", "MINDI", "LANZA", "MEN", "ETORI"]
+)
+
+"""ROUTES.add(
+    key="NORTHSOUTH11",
+    value=["ATN", "BURGO", "BOJOL", "LSE", "MINDI", "LANZA", "MEN", "ETORI", "ONGHI", "GAI"]
+)"""
+
+ROUTES.add(
+    key="NORTHSOUTH9",
+    value=["ATN", "BURGO", "BOJOL", "LSE", "LTP", "GRENA", "SANTO", "JAMBI"]
+)
+
+ROUTES.add(
+    key="NORTHSOUTH10",
     value=["ATN", "BURGO", "BOJOL", "LSE", "LTP", "GRENA", "SANTO", "SAMOS"]
 )
 
-ROUTES.add(key="NO-SO1",
-           value=["ATN", "BURGO", "BOJOL", "LSE", "MINDI", "LANZA", "MEN", "GAI"]
+"""ROUTES.add(
+    key="NORTHSOUTH11",
+    value=["ATN", "BURGO", "BOJOL", "LSE", "LTP", "GRENA", "BOSUA", "JUVEN"]
+)"""
+
+"""ROUTES.add(
+    key="NORTHSOUTH12",
+    value=["ATN", "BURGO", "BOJOL", "LSE", "LTP", "GRENA", "BOSUA", "JUVEN", "BIELA"]
+)"""
+
+ROUTES.add(
+    key="NORTHSOUTH13",
+    value=["ATN", "BURGO", "BOJOL", "LSE", "LTP", "GRENA", "MTL", "SPIDY", "ETORI", "ONGHI", "GAI"]
+)
+
+#VEYRI
+ROUTES.add(
+    key="NORTHSOUTH14",
+    value=["VEYRI", "MELKA", "PAS", "LIMAN", "LSE", "MINDI", "LANZA", "MEN", "LOBOS", "GAI"]
 )
 
 ROUTES.add(
-    key="NE-SO1",
-    value=["FRI", "MELKA", "PAS", "LIMAN", "LSE", "MINDI", "LANZA", "MEN", "GAI"]
+    key="NORTHSOUTH15",
+    value=["VEYRI", "MELKA", "PAS", "LIMAN", "LSE", "MINDI", "LANZA", "MEN", "ETORI"]
+)
+
+"""ROUTES.add(
+    key="NORTHSOUTH15bis",
+    value=["VEYRI", "MELKA", "PAS", "LIMAN", "LSE", "MINDI", "LANZA", "MEN", "ETORI", "ONGHI", "GAI"]
+)"""
+
+ROUTES.add(
+    key="NORTHSOUTH16",
+    value=["VEYRI", "MELKA", "PAS", "LIMAN", "LSE", "LTP", "GRENA", "SANTO", "JAMBI"]
 )
 
 ROUTES.add(
-    key="NE-SE1",
+    key="NORTHSOUTH17",
+    value=["VEYRI", "MELKA", "PAS", "LIMAN", "LSE", "LTP", "GRENA", "SANTO", "SAMOS"]
+)
+
+ROUTES.add(
+    key="NORTHSOUTH18",
+    value=["VEYRI", "MELKA", "SEVET", "JUVEN"]
+)
+
+"""ROUTES.add(
+    key="NORTHSOUTH19",
+    value=["VEYRI", "MELKA", "SEVET", "JUVEN", "BIELA"]
+)"""
+
+ROUTES.add(
+    key="NORTHSOUTH20",
+    value=["VEYRI", "MELKA", "SEVET", "JUVEN", "BOSUA", "GRENA", "MTL", "SPIDY", "ETORI", "ONGHI", "GAI" ] 
+)
+
+"""ROUTES.add(
+    key="NORTHSOUTH20bis",
+    value=["VEYRI", "MELKA", "SEVET", "JUVEN", "BOSUA", "GRENA", "SANTO", "JAMBI" ] 
+)"""
+
+"""ROUTES.add(
+    key="NORTHSOUTH20tri",
+    value=["VEYRI", "MELKA", "SEVET", "JUVEN", "BOSUA", "GRENA", "SANTO", "SAMOS" ] 
+)"""
+
+#FRI
+
+ROUTES.add(
+    key="NORTHSOUTH21",
+    value=["FRI", "MELKA", "PAS", "LIMAN", "LSE", "MINDI", "LANZA", "MEN", "LOBOS", "GAI"]
+)
+
+ROUTES.add(
+    key="NORTHSOUTH22",
+    value=["FRI", "MELKA", "PAS", "LIMAN", "LSE", "MINDI", "LANZA", "MEN", "ETORI"]
+)
+
+ROUTES.add(
+    key="NORTHSOUTH23",
     value=["FRI", "MELKA", "PAS", "LIMAN", "LSE", "LTP", "GRENA", "SANTO", "JAMBI"]
 )
 
 ROUTES.add(
-    key="NE-SE2",
+    key="NORTHSOUTH24",
     value=["FRI", "MELKA", "PAS", "LIMAN", "LSE", "LTP", "GRENA", "SANTO", "SAMOS"]
 )
 
 ROUTES.add(
-    key="SE-NE1", 
-    value=["JAMBI", "MTL", "LTP", "MOZAO", "SEVET", "RAPID"]
+    key="NORTHSOUTH25",
+    value=["FRI", "MELKA", "SEVET", "JUVEN"]
 )
 
-ROUTES.add(
-    key="SE-NO1", 
-    value=["JAMBI", "MTL", "MINDI", "CFA", "VULCA"]
-)
+"""ROUTES.add(
+    key="NORTHSOUTH26",
+    value=["FRI", "MELKA", "PAS", "LIMAN", "LSE", "LTP", "GRENA", "MTL", "SPIDY", "ETORI", "ONGHI", "GAI"]
+)"""
 
 ROUTES.add(
-    key="SE-SO1",
-     value=["JAMBI", "MTL", "SPIDY", "ETORI", "ONGHI", "GAI"]
+    key="NORTHSOUTH26",
+    value=["FRI", "MELKA", "SEVET", "JUVEN", "BOSUA", "GRENA", "MTL", "SPIDY", "ETORI", "ONGHI", "GAI"]
 )
 
-ROUTES.add(
-    key="S-E1",
-    value=["MAJOR", "MTL", "GRENA", "BOSUA", "JUVEN", "BIELA"]
-)
+#BIELA
 
 ROUTES.add(
-    key="S-NE1", 
-    value=["MAJOR", "MTL", "LTP", "MOZAO", "SEVET", "RAPID"]
+    key="NORTHSOUTH34",
+    value=["BIELA", "JUVEN", "BOSUA", "GRENA", "MTL", "SPIDY", "ETORI", "ONGHI", "GAI"]
 )
 
+
+"""ROUTES.add(
+    key="NORTHSOUTH36",
+    value=["BIELA", "JUVEN", "BOSUA", "GRENA", "SANTO", "JAMBI"]
+)"""
+
+"""ROUTES.add(
+    key="NORTHSOUTH37",
+    value=["BIELA", "JUVEN", "BOSUA", "GRENA", "SANTO", "SAMOS"]
+)"""
+
+
+#--------------------sud nord ------------------------------
+#MAJOR
+
 ROUTES.add(
-    key="S-NO1",
+    key="SOUTHNORTH41",
     value=["MAJOR", "MTL", "MINDI", "CFA", "VULCA"]
 )
 
 ROUTES.add(
-    key="NO-SO2",
-    value=["DIRMO", "ETAMO", "CFA", "MEN", "ETORI"] 
+    key="SOUTHNORTH42",
+    value=["MAJOR", "MTL", "MINDI", "CFA", "VULCA", "BURGO", "VEYRI"]
 )
+
 ROUTES.add(
-    key="NO-SO3",
-    value=["DIRMO", "GWENA", "GAI"]
+    key="SOUTHNORTH43",
+    value=["MAJOR", "MTL", "LTP", "MOZAO", "SEVET", "RAPID"]
 )
+
 ROUTES.add(
-    key="O-E1",
-    value=["GWENA", "VULCA", "BURGO", "VEYRI"]
+    key="SOUTHNORTH44",
+    value=["MAJOR", "MTL", "GRENA", "BOSUA", "JUVEN", "BIELA"]
 )
+
+#SODRI
+
 ROUTES.add(
-    key="NE-NO1",
-    value=["VEYRI", "MELKA", "SEVET", "JUVEN"]
+    key="SOUTHNORTH46",
+    value=["SODRI", "SICIL", "JAMBI", "MTL", "MINDI", "CFA", "VULCA"]
 )
+
+ROUTES.add(
+    key="SOUTHNORTH47",
+    value=["SODRI", "SICIL", "JAMBI", "MTL", "MINDI", "CFA", "VULCA", "BURGO", "VEYRI"]
+)
+
+ROUTES.add(
+    key="SOUTHNORTH48",
+    value=["SODRI", "SICIL", "JAMBI", "MTL", "LTP", "MOZAO", "SEVET", "RAPID"]
+)
+
+#GAI
+
+ROUTES.add(
+    key="SOUTHNORTH50",
+    value=["GAI", "GWENA", "DIRMO"]
+)
+
+ROUTES.add(
+    key="SOUTHNORTH51",
+    value=["GAI", "GWENA", "VULCA"]
+)
+
+ROUTES.add(
+    key="SOUTHNORTH52",
+    value=["GAI", "GWENA", "VULCA", "BURGO", "VEYRI"]
+)
+
+ROUTES.add(
+    key="SOUTHNORTH53",
+    value=["GAI", "ONGHI", "ETORI", "SPIDY", "MTL", "LTP", "MOZAO", "SEVET", "RAPID"]
+)
+
+ROUTES.add(
+    key="SOUTHNORTH54",
+    value=["GAI", "ONGHI", "ETORI", "SPIDY", "MTL", "GRENA", "BOSUA", "JUVEN", "BIELA"]
+)
+
+
+#------------------------------------------------------------------------------
+#--------- Definition  des balise de departs et d'arrivées: -------------------
+#------------------------------------------------------------------------------
+
+
+START_BALISE = {
+    "NORTH-SOUTH": ["DIRMO", "ATN", "VEYRI", "FRI", "BIELA"],
+    "SOUTH-NORTH": ["MAJOR", "SODRI", "GAI"]
+}
+
+END_BALISE = {
+    "NORTH-SOUTH": ["GAI", "ETORI", "JAMBI", "SAMOS", "JUVEN", "BIELA"],
+    "SOUTH-NORTH": ["DIRMO", "VULCA", "VEYRI", "RAPID", "BIELA"]
+}
+
+
+#------------------------------------------------------------------------------
+#--------- Definition  des segment: -------------------------------------------
+#------------------------------------------------------------------------------
+
+DIRECTED_SEGMENT = {
+    "NORTH-SOUTH": [
+        ["DIRMO", "ETAMO"], ["ETAMO", "CFA"], ["CFA", "MEN"], ["MEN", "ETORI"],
+        ["LANZA", "MEN"], ["LANZA", "MINDI"], ["LSE", "MINDI"], ["LSE", "LTP"],
+        ["LSE", "BOJOL"], ["BOJOL", "BURGO"], ["BURGO", "ATN"], ["LSE", "LIMAN"],
+        ["LIMAN", "PAS"], ["PAS", "MELKA"], ["MELKA", "VEYRI"], ["MELKA", "FRI"],
+        ["MELKA", "SEVET"], ["SEVET", "JUVEN"], ["LTP", "GRENA"], ["GRENA", "SANTO"],
+        ["SANTO", "JAMBI"], ["SANTO", "SAMOS"]
+    ],
+    "SOUTH-NORTH": [
+        ["GAI", "GWENA"], ["GWENA", "DIRMO"], ["GWENA", "VULCA"], ["VULCA", "BURGO"],
+        ["BURGO", "VEYRI"], ["CFA", "VULCA"], ["CFA", "MINDI"], ["MINDI", "MTL"],
+        ["MTL", "LTP"], ["MTL", "JAMBI"], ["JAMBI", "SICIL"], ["SICIL", "SODRI"],
+        ["LTP", "MOZAO"], ["MOZAO", "SEVET"], ["SEVET", "RAPID"]
+    ],
+    "BOTH": [
+        ["GAI", "LOBOS"], ["LOBOS", "MEN"], ["GAI", "ONGHI"], ["ONGHI", "ETORI"],
+        ["ETORI", "SPIDY"], ["SPIDY", "MTL"], ["MTL", "MAJOR"], ["MTL", "GRENA"],
+        ["GRENA", "BOSUA"], ["BOSUA", "JUVEN"], ["JUVEN", "BIELA"]
+    ]
+}
+
+
+
+
 
 
 #------------------------------------------------------------------------------
@@ -267,18 +486,4 @@ AIRCRAFTS.add_aircraft(Aircraft(speed=0.0012,
 #Solution propose par recuit:
 #[DataStorage(speed=0.002, id=1), DataStorage(speed=0.003, id=2), DataStorage(speed=0.003, id=3), DataStorage(speed=0.003, id=4)]
 
-all_balises = BALISES
-AIRCRAFTS = AircraftCollector()
 
-# Instancier le générateur de routes aériennes
-airways_generator = AirwaysGenerator(all_balises)
-
-# Initialiser le générateur de trafic
-traffic_generator = TrafficGenerator(airways_generator, interval=100, max_aircraft=1)
-
-# Générer des avions pour 2 heures (7200 secondes)
-aircraft_list = traffic_generator.generate_aircraft(start_time=0, duration=7200)
-
-# Afficher les avions générés
-for aircraft in aircraft_list:
-    AIRCRAFTS.add_aircraft(aircraft)

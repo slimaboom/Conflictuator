@@ -2,7 +2,7 @@
 from typing import List
 from algorithm.recuit.data import ISimulatedObject
 from algorithm.storage import DataStorage
-from objective_function.IObjective import IObjective, ObjectiveError
+from algorithm.objective_function.IObjective import IObjective, ObjectiveError
 
 
 # Evaluation combiné 
@@ -42,9 +42,9 @@ class CombinedEvaluationStrategy(IObjective):
             aircraft = aircraft_sim.aircraft
 
             # Appliquer les commandes pour évaluer les conflits
-            aircraft.set_take_off_time(trajectory[0].time)
-            aircraft.set_speed(trajectory[0].speed)
-            aircraft.set_commands(trajectory)
+            #aircraft.set_take_off_time(trajectory[0].time)
+            #aircraft.set_speed(trajectory[0].speed)
+            #aircraft.set_commands(trajectory)
             total_conflicts = aircraft_sim.evaluate()  # Ajouter les conflits
 
             # Critères restants (comme avant)

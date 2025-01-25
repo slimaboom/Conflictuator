@@ -229,6 +229,7 @@ class Aircraft:
                     self.flight_time += timestep
                 else:
                     self._is_finished = True
+                    #TO DO on continue en ligne droite jusqu'a sortie du secteur 
                     #print(f"Aircraft {self.id} has reached the final waypoint.")
                     return
             else:
