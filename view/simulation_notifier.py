@@ -2,7 +2,7 @@ from model.simulation import SimulationModel
 from view.signal import SignalEmitter
 from logging_config import setup_logging
 from algorithm.type import AlgoType
-from algorithm.recuit.data import DataStorage
+from algorithm.data import DataStorage
 
 from queue import Queue, Empty
 from PyQt5.QtCore import QTimer

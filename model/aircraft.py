@@ -50,20 +50,22 @@ class Aircraft:
     position: Point = field(init=False)
     time: float = field(init=False)
     flight_time: float = field(init=False)
-    take_off_time: Optional[float] = 0 
+    take_off_time: Optional[float] = 0.
+
     heading: float = field(init=False)
     flight_plan_timed: Dict[str, float] = field(init=False) # Dictionnaire avec le nom de la balise en clé et le temps de passage en valeur
     id: int = field(init=False)  # L'attribut `id` sera défini dans `__post_init__`
     rng: np.random.Generator = field(init=False)
     
-
     current_target_index: int = field(init=False)  # Indice de la balise cible actuelle
     # Historique des positions de l'avion: key=time et value=Information(position, time, speed, heading)
     history: Dict[float, Information] = field(default_factory=dict, init=False) # Gestion d'un dictionnaire car recherche de point par cle en O(1)
     _is_finished: bool = field(init=False) # La trajectoire est-elle terminee ?
     _conflict_dict: Collector[List['ConflictInformation']] = field(init=False) # Dictionnaire de conflict entre self et les autres: cle=id_autre, valeur=liste des dates conflicts
+    
     commands: List[DataStorage] = field(init=False)
-    next_command: DataStorage = None
+    next_command: DataStorage = field(init=False)
+
     # Attribut de classe pour suivre le nombre d'instances
     __COUNTER: int = 0
 
@@ -92,14 +94,19 @@ class Aircraft:
         self.position = self.generate_position_near_balise(self.flight_plan[self.current_target_index])
         self.time     = 0.
         self.flight_time = 0.
+
         object.__setattr__(self, 'heading',  self.calculate_heading(self.position, self.flight_plan[self.current_target_index]))
 
         # Enregistrer les temps de passage prévu par le plan de vol
         self.flight_plan_timed = {} # Initialisation du dictionnaire rempli par calculate_estimated_times
-        self.calculate_estimated_times()
+        #self.calculate_estimated_times()
 
         self._conflict_dict = Collector() # Dictionnaire vide au depart
-        self.commands = []
+        self.commands = [DataStorage(id=self.id, time=self.take_off_time,
+                                     speed=self.speed, heading=self.heading)
+                        ]
+        
+        self.next_command = self.set_next_command()
 
     def deepcopy(self) -> 'Aircraft':
         new_aircraft = deepcopy(self)
@@ -145,14 +152,13 @@ class Aircraft:
         Calcule les temps estimés de passage de l'avion pour chaque balise.
         Le Range dans l'attribut flight_time_timed
         """
-        # TO DO
         # A modifier pour prendre en compte les changements de vitesse de l'avion
         current_position = self.position
         current_time = self.take_off_time
 
         for balise in self.flight_plan[self.current_target_index:]:
             distance_to_balise = current_position.distance_horizontale(balise)
-            time_to_balise = distance_to_balise / self.speed
+            time_to_balise = distance_to_balise / self.commands[0].speed
             current_time += time_to_balise
             self.flight_plan_timed[balise.get_name()] = round(current_time, 2)
             current_position = balise  # Simuler que l'avion atteint la balise
@@ -168,24 +174,25 @@ class Aircraft:
         current_speed = self.speed
 
         # Pas de temps pour la simulation (plus petit = plus précis)
-        timestep = 1 
-
+        timestep = 1
         #gourmand selon la precision ...
         for balise in self.flight_plan[self.current_target_index:]:
-            while current_position.distance_horizontale(balise) > 0.0025: #determinant pour la vitesse de recherche des algo et la precision
+            approximation = 1.1 * timestep * current_speed
+            while current_position.distance_horizontale(balise) > approximation:#0.0025: #determinant pour la vitesse de recherche des algo et la precision
                 # Vérifier si une commande doit être exécutée à ce pas de temps
                 next_command = next((cmd for cmd in self.commands if cmd.time + self.take_off_time > current_time), None)
                 if next_command and next_command.time + self.take_off_time <= current_time + timestep:
                     # Ajuster la vitesse au moment exact de la commande
-                    current_time += next_command.time + self.take_off_time - current_time
+                    current_time += next_command.time + self.take_off_time #- current_time #+/- current_time = 0
                     current_speed = next_command.speed
+                    approximation = 1.1 * timestep * current_speed
 
                 # Déplacer l'avion en fonction de la vitesse actuelle
                 distance_to_balise = current_position.distance_horizontale(balise)
                 proportion = (current_speed * timestep) / distance_to_balise
                 new_x = current_position.getX() + proportion * (balise.getX() - current_position.getX())
                 new_y = current_position.getY() + proportion * (balise.getY() - current_position.getY())
-                new_z = current_position.getZ() + proportion * (balise.getZ() - current_position.getZ())
+                new_z = current_position.getZ() #+ proportion * (balise.getZ() - current_position.getZ())
                 current_position = Point(new_x, new_y, new_z)
 
                 # Mettre à jour le temps
@@ -289,9 +296,6 @@ class Aircraft:
     def set_speed(self, speed: float) -> None:
         """ Modifie la vitesse de l'avion et recalcul les conflits futurs """
         self.speed = speed
-
-        # Recalculer les conflicts
-        #self.update_conflicts()
     
     def set_heading(self, hdg: float) -> None:
         #self.__class__.logger.info(f"Set heading to aircraft {self.id}: from {self.heading} to {hdg}")
@@ -350,8 +354,8 @@ class Aircraft:
         
         # Recalculer le plan de vol
         self.flight_plan_timed = self.clear_flight_plan_timed()
-        self.calculate_estimated_times_commands()
-
+        #self.calculate_estimated_times_commands()
+        self.calculate_estimated_times()
         # Effacer tous les conflicts de self
         self.clear_conflicts()
 
@@ -431,6 +435,8 @@ class Aircraft:
         self.commands = commands
         if self.commands:
             self.set_take_off_time(commands[0].time)
+            self.set_speed(commands[0].speed)
+            self.set_heading(commands[0].heading)
 
         # Recalculer les conflicts
         self.update_conflicts()
@@ -457,7 +463,7 @@ class Aircraft:
 
 
 
-class AircraftCollector(Collector):
+class AircraftCollector(Collector[Aircraft]):
     def __init__(self, value: Aircraft = None):
         super().__init__()
         if value: self.add(value)

@@ -464,26 +464,21 @@ DIRECTED_SEGMENT = {
 
 
 
-#------------------------------------------------------------------------------
+"""#------------------------------------------------------------------------------
 #--------- Definition  des avions:  -------------------------------------------
 #------------------------------------------------------------------------------
-"""AIRCRAFTS = AircraftCollector() # Gestion d'un dictionnaire car recherche en O(1)
+AIRCRAFTS = AircraftCollector() # Gestion d'un dictionnaire car recherche en O(1)
 AIRCRAFTS.add_aircraft(Aircraft(speed=0.003, # Conflit 5:48 #0.003
                                 flight_plan=Airway.transform(ROUTES.get_from_key("NO-SE1"), BALISES))
                     )
 AIRCRAFTS.add_aircraft(Aircraft(speed=0.002, 
                                 flight_plan=Airway.transform(ROUTES.get_from_key("NO-SO1"), BALISES, reverse=True),
-                                take_off_time=20)
+                                take_off_time=0)
 )
 AIRCRAFTS.add_aircraft(Aircraft(speed=0.001, 
                                 flight_plan=Airway.transform(ROUTES.get_from_key("SE-NE1"), BALISES))
 )
 AIRCRAFTS.add_aircraft(Aircraft(speed=0.0012, 
-                                flight_plan=Airway.transform(["MAJOR", "MTL", "MINDI", "CFA", "ETAMO"], BALISES))
-)"""
-#0.001, 0.002, 0.002, 0.001 conflit LSE (1-2) + MTL (3-4)
-#0.003, 0.002 0.001, 0.0012 pas de conflit
-#Solution propose par recuit:
-#[DataStorage(speed=0.002, id=1), DataStorage(speed=0.003, id=2), DataStorage(speed=0.003, id=3), DataStorage(speed=0.003, id=4)]
+                                flight_plan=Airway.transform(["MAJOR", "MTL", "MINDI", "CFA", "ETAMO"], BALISES)))"""
 
 

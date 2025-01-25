@@ -46,7 +46,7 @@ class ConflictInformation:
         id_two = self.aircraft_two.get_id_aircraft()
         speed_one = self.aircraft_one.get_speed()
         speed_two = self.aircraft_two.get_speed()
-        return f"Conflict(id_one={id_one} (v={speed_one}), id_two={id_two} (v={speed_two}), time_one={self.conflict_time_one}, time_two={self.conflict_time_two}, location=\'{self.location.get_name()}\')"
+        return f"ConflictInformation(id_one={id_one} (v={speed_one}), id_two={id_two} (v={speed_two}), time_one={self.conflict_time_one}, time_two={self.conflict_time_two}, location=\'{self.location.get_name()}\')"
 
 
 class ConflictManager:

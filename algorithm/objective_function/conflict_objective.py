@@ -1,20 +1,23 @@
-from typing import List
-from algorithm.recuit.data import ISimulatedObject
-from algorithm.objective_function.IObjective import IObjective
+from algorithm.interface.IObjective import AObjective
+from algorithm.interface.ISimulatedObject import ASimulatedAircraft
 
+from typing import List
+from typing_extensions import override
 #-------------------------------------------------#
-# Implementation de l'interface 
+# Implementation de l'interface des fonctions objectives
     
-# Evaluation par le nombre de conflit    
-class ConflictEvaluationStrategy(IObjective):
-    def evaluate(self, data: List[ISimulatedObject]) -> float:
+# Evaluation par le nombre de conflit
+class ObjectiveFunctionMaxConflict(AObjective):
+    
+    @override
+    def evaluate(self, data: List[ASimulatedAircraft]) -> float:
         total_conflicts = 0
+        nc = 0.
         for _, aircraft_sim in enumerate(data):
-          #  trajectory = self.individual[i]
-          #  aircraft = aircraft_sim.aircraft
-          #  aircraft.set_take_off_time(trajectory[0].time)
-          #  aircraft.set_speed(trajectory[0].speed)
-          #  aircraft.set_commands(trajectory)
-            total_conflicts += aircraft_sim.evaluate()
-        return total_conflicts
+            nc = len(aircraft_sim.get_object().get_conflicts())
+            total_conflicts += nc
+        return total_conflicts * 0.5
     
+    @override
+    def name(self) -> str:
+        return f"{self.__class__.__name__}"
