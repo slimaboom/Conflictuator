@@ -1,6 +1,6 @@
 from threading import Thread
 from queue import Queue
-from typing import Any, List
+from typing import Any, List, Tuple
 from algorithm.genetic.genetique import AlgorithmGenetic
 from algorithm.objective_function.conflict_objective import ObjectiveFunctionMaxConflict
 
@@ -85,5 +85,11 @@ class AlgorithmManager:
             self.instance.stop()
             self.logger.info(f"Stopping {self.instance}")
     
-    def progress(self) -> float:
+    def progress_algorithm(self) -> float:
         return self.instance.get_progress()
+
+    def process_time_algorithm(self) -> Tuple[float, float]:
+        return self.instance.get_process_time(), self.instance.get_timeout_value()
+    
+    def has_algorithm_reach_timeout(self) -> bool:
+        return self.instance.has_timeout_occurred()

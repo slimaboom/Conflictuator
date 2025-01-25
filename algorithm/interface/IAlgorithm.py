@@ -11,8 +11,15 @@ from typing import List
 from typing_extensions import override
 from copy import deepcopy
 from time import time
+from enum import Enum
 
 import numpy as np
+
+class AlgorithmState(Enum):
+    TIMEOUT = "timeout"
+    RUNNING = "running"
+    FINISHED = "finished"
+    NOT_STARTED = "not_started"  # Algorithme initialisé mais non démarré
 
 class IAlgorithm(ABC):
     """Interface pour un algorithme prenant une liste de ISimulatedObject"""
@@ -84,12 +91,11 @@ class AAlgorithm(IAlgorithm):
         self.__is_minimise= is_minimise
         self.__recorded_datastorage = [deepcopy(d.get_data_storages()) for d in data]
 
-        self.__running             = False
         self.__pourcentage_process = 0.
         self.__process_time        = 0.
         self.__timeout_value       = 120.
         self.__startime            = None
-
+        self.__state               = AlgorithmState.NOT_STARTED
         self.__generator = np.random.default_rng(seed=sum(d.get_object().get_id_aircraft() for d in data))
         self.__verbose   = verbose
 
@@ -106,18 +112,18 @@ class AAlgorithm(IAlgorithm):
         Partie commune : changement de l'état de `__running`.
         Partie spécifique : implémentée dans les classes dérivées.
         """
-        self.__running = True
+        self.set_state(AlgorithmState.RUNNING)
 
     @override
     def stop(self) -> None:
         """Stopper l'algorithme. Ne renvoie pas de solution"""
         if self.is_running():
-            self.__running = False
+            self.set_state(AlgorithmState.FINISHED)
 
     @override
     def is_running(self) -> bool:
         """Vérifier si l'algorithme est en cours d'exécution."""
-        return self.__running
+        return self.get_state() == AlgorithmState.RUNNING
 
     def is_minimisation(self) -> bool:
         """Retourne si l'objectif de l'algorithme est la minimisation du critere"""
@@ -186,6 +192,7 @@ class AAlgorithm(IAlgorithm):
         if _is_timeout:
             msgtimeout = f"Timeout: {sec_to_time(self.get_timeout_value())}, running for {sec_to_time(dt)}"
             self.logger.info(msgtimeout)
+            self.set_state(AlgorithmState.TIMEOUT)
         return _is_timeout
     
     def get_generator(self) -> np.random.Generator:
@@ -210,3 +217,15 @@ class AAlgorithm(IAlgorithm):
     def is_verbose(self) -> bool:
         """Renvoie vrai si la verbosite est mise en place"""
         return self.__verbose
+
+    def set_state(self, state: AlgorithmState) -> None:
+        """Mise à jour de l'état de l'algorithme."""
+        self.__state = state
+    
+    def get_state(self) -> AlgorithmState:
+        """Récupère l'état actuel de l'algorithme."""
+        return self.__state
+
+    def has_timeout_occurred(self) -> bool:
+        """Retourne True si un timeout a été déclenché, sinon False."""
+        return self.get_state() == AlgorithmState.TIMEOUT

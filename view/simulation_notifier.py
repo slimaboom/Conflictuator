@@ -51,6 +51,11 @@ class SimulationModelNotifier(SimulationModel):
             #self.logger.info("Watch queue launch")
             self.signal.algorithm_terminated.emit(self._queue)
             self.qtimer.stop()
+            self.signal.algorithm_has_reach_timeout.emit(self.has_algorithm_reach_time())
         
-        progression = self.progress_algorithm()
+        progression = self.get_progress_algorithm()
+        elasped, timeout = self.get_process_time_algorithm()
+        
         self.signal.algorithm_progress.emit(progression)
+        self.signal.algorithm_elapsed.emit(elasped)
+        self.signal.algorithm_timeout_value.emit(timeout)

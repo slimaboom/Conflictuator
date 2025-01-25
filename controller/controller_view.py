@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 class SimulationViewController(QObject):
     # Signal qui transmet le temps écoulé (en secondes)
     chronometer = pyqtSignal(float)
-    algorithm_terminated = pyqtSignal()
+    algorithm_terminated = pyqtSignal(bool)
     
     def __init__(self, scene: QGraphicsScene):
         super().__init__()
@@ -323,7 +323,8 @@ class SimulationViewController(QObject):
 
         self.logger.info(self.qt_aircrafts)
 
-        self.algorithm_terminated.emit()
+        self.logger.info(self.simulation.has_algorithm_reach_time())
+        self.algorithm_terminated.emit(self.simulation.has_algorithm_reach_time())
 
     def cleanup(self) -> None:
         self.stop_simulation()

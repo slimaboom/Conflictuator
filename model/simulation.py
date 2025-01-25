@@ -8,6 +8,7 @@ from model.conflict_manager import ConflictManager
 
 from algorithm.type import AlgoType
 from algorithm.manager import AlgorithmManager
+from algorithm.interface.IAlgorithm import AlgorithmState
 from logging_config import setup_logging
 
 from PyQt5.QtCore import QTimer
@@ -248,5 +249,11 @@ class SimulationModel:
     def stop_algorithm(self) -> None:
         self._algorithm_manager.stop_algorithm()
     
-    def progress_algorithm(self) -> float:
-        return self._algorithm_manager.progress()
+    def get_progress_algorithm(self) -> float:
+        return self._algorithm_manager.progress_algorithm()
+
+    def get_process_time_algorithm(self) -> Tuple[float, float]:
+        return self._algorithm_manager.process_time_algorithm()
+
+    def has_algorithm_reach_time(self) -> bool:
+        return self._algorithm_manager.has_algorithm_reach_timeout()

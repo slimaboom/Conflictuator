@@ -5,7 +5,8 @@ from PyQt5.QtWidgets import (QMainWindow, QVBoxLayout,
                              QGraphicsView, QGraphicsScene,
                              QMenu, QAction, 
                              QInputDialog, QDialog, 
-                             QDoubleSpinBox, QDialogButtonBox
+                             QDoubleSpinBox, QDialogButtonBox,
+                             QProgressBar, QLayoutItem
 )
 
 from PyQt5.QtCore import Qt, QModelIndex
@@ -118,7 +119,14 @@ class MainWindow(QMainWindow):
         speed_container.setLayout(speed_layout)
 
         # ComboBox pour les differents algorithmes
+        self.algobox_container = QWidget()
         self.combobox = QComboBox()
+        
+        self.algobox = QVBoxLayout(self.algobox_container)
+        self.algobox.addWidget(self.combobox)
+
+        self.algobox_container.setLayout(self.algobox)
+
         self.combo_options = [algotype.value for algotype in AlgoType]
         self.combobox.addItems(self.combo_options)
         
@@ -134,7 +142,7 @@ class MainWindow(QMainWindow):
         layout.addWidget(self.time_label)  # Ajouter le QLabel au panneau
         layout.addWidget(self.speed_label)
         layout.addWidget(speed_container)
-        layout.addWidget(self.combobox)
+        layout.addWidget(self.algobox_container)
         
         return control_panel
 
@@ -167,14 +175,115 @@ class MainWindow(QMainWindow):
 
             # Lancer l'algorithme
             self.toggle_simulation(checked=False)
+
+            self.create_algorithm_panel()
             self.simulation_controller.simulation.start_algorithm(algo)
 
-            # Creation de la barre de progression
-            self.simulation_controller.simulation.signal.algorithm_progress.connect(self.update_progress_bar)
+    def create_algorithm_panel(self) -> None:
+        self.progress_bar = QProgressBar()
+        self.progress_bar.setRange(0, 100)
+        self.progress_bar.setValue(0)
+        self.algobox.addWidget(self.progress_bar)
+        
+        self.simulation_controller.simulation.signal.algorithm_progress.connect(self.update_algo_progress_bar)
+
+        # Créer un layout horizontal pour les deux QLCDNumber
+        time_layout = QHBoxLayout()
+
+        # Temps écoulé pour l'algorithme
+        elapsed_time_algo_label = QLabel("Elapsed Algorithm")
+        elapsed_time_algo_label.setAlignment(Qt.AlignCenter)  # Centrer le texte horizontalement et verticalement
+        style_elapsed_label = """
+            QLabel {
+                background-color: lightgray;
+                color: black;
+                border: 2px solid #8f8f91;
+                border-radius: 5px;
+                font-size: 15px;
+                padding: 5px;
+            }
+        """
+        elapsed_time_algo_label.setStyleSheet(style_elapsed_label)
+
+        # QLabel pour le temps écoulé HH:MM:SS
+        self.elapsed_time_display = QLabel("00:00:00")
+        self.elapsed_time_display.setAlignment(Qt.AlignCenter)
+        style_elapsed_display = """
+            QLabel {
+                background-color: lightgray;
+                color: blue;
+                border: 2px solid #8f8f91;
+                border-radius: 5px;
+                font-size: 15px;
+                padding: 5px;
+                font-weight: bold;
+            }
+        """
+        self.elapsed_time_display.setStyleSheet(style_elapsed_display)
+
+        time_layout.addWidget(elapsed_time_algo_label)
+        time_layout.addWidget(self.elapsed_time_display)
+
+        self.simulation_controller.simulation.signal.algorithm_elapsed.connect(self.update_algo_elapsed)
+
+        # Tiemout pour l'algorithme
+        timeout_algo_label = QLabel("Timeout threshold")
+        timeout_algo_label.setAlignment(Qt.AlignCenter)  # Centrer le texte horizontalement et verticalement
+        style_timeout_label = elapsed_time_algo_label.styleSheet() # Le meme style que elapsed_time_algo_label
+        timeout_algo_label.setStyleSheet(style_timeout_label)
+
+        # QLabel pour le timeout HH:MM:SS
+        self.timeout_display = QLabel("00:00:00")
+        self.timeout_display.setAlignment(Qt.AlignCenter)
+        self.timeout_display.setStyleSheet("""
+            QLabel {
+                background-color: lightgray;
+                color: red;
+                border: 2px solid #8f8f91;
+                border-radius: 5px;
+                font-size: 15px;
+                padding: 5px;
+            }
+        """)
+        time_layout.addWidget(timeout_algo_label)
+        time_layout.addWidget(self.timeout_display)
+
+        self.simulation_controller.simulation.signal.algorithm_timeout_value.connect(self.update_algo_timeout)
+
+        # Ajouter le layout horizontal à algobox
+        self.algobox.addLayout(time_layout)
+
+    def clear_algorithm_panel(self):
+        """Supprime tous les widgets et layouts sauf le premier (la ComboBox) du panneau d'algorithme."""
+        while self.algobox.count() > 1:  # Conserve le premier widget (ComboBox)
+            item = self.algobox.takeAt(1)  # Commence à partir du deuxième widget
+            widget_or_layout = item.widget()  # Récupère le widget (ou layout si c'est un layout)
+
+            if widget_or_layout is not None:
+                # Si c'est un widget, on le supprime proprement
+                widget_or_layout.deleteLater()  # Supprime le widget proprement
+            else:
+                # Si c'est un layout, on le supprime proprement
+                layout = item.layout()
+                if layout:
+                    # Si le layout contient des widgets, on les supprime aussi
+                    for i in range(layout.count()):
+                        child_item = layout.itemAt(i)
+                        child_widget = child_item.widget()
+                        if child_widget is not None:
+                            child_widget.deleteLater()  # Supprime le widget enfant
+                        else:
+                            child_layout = child_item.layout()
+                            if child_layout is not None:
+                                child_layout.deleteLater()  # Supprime le layout enfant
+                    layout.deleteLater()  # Supprime le layout principal
+
+        # Après avoir vidé le layout, on appelle update() pour réinitialiser l'affichage
+        self.algobox.update()
 
 
     def update_time_label(self, time_seconds: float):
-        """Met à jour le QLabel avec le temps écoulé."""
+        """Met à jour le QLabel avec le temps écoulé pour la simulation hors algorithme."""
         txt = f"Elapsed Time: {sec_to_time(time_seconds)}"
         self.time_label.setText(txt)
 
@@ -192,7 +301,7 @@ class MainWindow(QMainWindow):
         # Connexion lors de la fin d'un algorithm pour re-enable les elements d'interactions
         simulation_controller.simulation.signal.algorithm_terminated.connect(self.connect_elements)
         simulation_controller.algorithm_terminated.connect(self.notify_algorithm_termination)
-
+        
         return simulation_controller
     
 
@@ -336,6 +445,7 @@ class MainWindow(QMainWindow):
         self.combobox.setDisabled(False)
         self.combobox.setCurrentIndex(0)
         self.combobox.setStyleSheet("background-color: none;")
+        self.clear_algorithm_panel()
 
         self.speed_spin.setDisabled(False)
 
@@ -367,26 +477,66 @@ class MainWindow(QMainWindow):
         self.conflict_window.update_conflicts(qtbalise)
         self.conflict_window.show()
     
-    def notify_algorithm_termination(self):
+    def notify_algorithm_termination(self, timeout_occurred: bool):
         """Notifie l'utilisateur que l'algorithme est terminé."""
         self.combobox.setStyleSheet("background-color: none;")
         self.combobox.setEnabled(True)
         self.combobox.setEditable(False)
 
+
+        # Message à afficher en fonction du timeout
+        if timeout_occurred:
+            msg_text = "L'algorithme a terminé son exécution avec un timeout."
+        else:
+            msg_text = "L'algorithme a terminé son exécution avec succès."
+
         msg_box = QMessageBox()
         msg_box.setIcon(QMessageBox.Information)
         msg_box.setWindowTitle("Algorithme Terminé")
-        msg_box.setText("L'algorithme a terminé son exécution avec succès.")
+
+        msg_box.setText(msg_text)
         msg_box.setStandardButtons(QMessageBox.Ok)
+
+        # Récupérer le bouton OK et connecter son signal
+        ok_button = msg_box.button(QMessageBox.Ok)
+        ok_button.clicked.connect(self.clear_algorithm_panel)  # Connecter au nettoyage
+
+        # Afficher la boîte de dialogue
         msg_box.exec_()
 
-    def update_progress_bar(self, value: float) -> None:
+    def update_algo_progress_bar(self, value: float) -> None:
         """
         Met à jour le style de la combobox en fonction de l'avancement de l'algorithme.
         :param value: Pourcentage d'avancement (0.0 à 100.0)
         """
         # Limiter le pourcentage entre 0 et 100
-        percentage = max(0, min(100, value)) / 100.0
+        percentage = max(0, min(100, value))
+        fmt        = f"{percentage:.1f}%"
+        # Changer la couleur en fonction de la progression
+        if value <= 0:
+            bcolor = "red"  # Vert
+            color = "red"
+        else:
+            bcolor = "white"
+            color = "blue"  # Rouge
+
+        style = f"""
+            QProgressBar {{
+                border: 2px solid #8f8f91;
+                border-radius: 5px;
+                text-align: center;
+                background-color: {bcolor};  /* Fond bcolor */
+            }}
+            QProgressBar::chunk {{
+                background-color: {color};
+                width: 20px;
+            }}"""
+
+        self.progress_bar.setStyleSheet(style)
+        self.progress_bar.setValue(int(percentage))
+        self.progress_bar.setFormat(fmt)
+
+        """"
         # Si 0: processus de chauffage si algo recuit
         # Sinon: descente de temperature si algo recuit
         color = "red" if percentage <= 0 else "blue"
@@ -415,6 +565,16 @@ class MainWindow(QMainWindow):
         self.combobox.setEditable(True)
         self.combobox.setCurrentText(txt)
         self.combobox.setEnabled(False)  # Assurez-vous qu'elle reste désactivée
+        """
+
+    def update_algo_elapsed(self, elapsed: float) -> None:
+        elapsed_fmt = sec_to_time(seconds=elapsed)
+        self.elapsed_time_display.setText(elapsed_fmt)
+
+
+    def update_algo_timeout(self, timeout: float) -> None:
+        timeout_fmt = sec_to_time(seconds=timeout)
+        self.timeout_display.setText(timeout_fmt)
 #----------------------------------------------------------------------------
 #---------------------   MAIN PART  -----------------------------------------
 #----------------------------------------------------------------------------

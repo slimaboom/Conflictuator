@@ -7,3 +7,6 @@ class SignalEmitter(QObject):
     aircrafts_moved = pyqtSignal()
     algorithm_terminated = pyqtSignal(object)
     algorithm_progress = pyqtSignal(float)
+    algorithm_elapsed = pyqtSignal(float)
+    algorithm_timeout_value = pyqtSignal(float)
+    algorithm_has_reach_timeout = pyqtSignal(bool)
