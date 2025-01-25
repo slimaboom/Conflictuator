@@ -1,12 +1,12 @@
 
 from typing import List
-from algorithm.recuit.data import ISimulatedObject
 from algorithm.storage import DataStorage
-from objective_function.IObjective import IObjective, ObjectiveError
+from algorithm.interface.IObjective import AObjective
+from algorithm.interface.ISimulatedObject import ASimulatedAircraft
 
 
 # Evaluation combiné 
-class CombinedEvaluationStrategy(IObjective):
+class CombinedEvaluationStrategy(AObjective):
     """ On maximise le nombre de conflit mais pour un meme nombre de conflit
     on va preferé ceux qui minimise le nombre de changement,
     qui reduit la variation de vitesse, 
@@ -18,7 +18,7 @@ class CombinedEvaluationStrategy(IObjective):
     def set_individual(self, individu: List[List[DataStorage]]) -> None:
         self.individual = individu
 
-    def evaluate(self, data: List[ISimulatedObject]) -> float:
+    def evaluate(self, data: List[ASimulatedAircraft]) -> float:
         if self.individual == None:
             msg = f"{self.__class__.__name__} attribute individual not set, please use set_individual method before using evaluate method"
             raise ObjectiveError(msg)

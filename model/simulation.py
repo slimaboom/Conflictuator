@@ -17,7 +17,7 @@ from typing import Dict, List, Callable, TYPE_CHECKING, Tuple
 if TYPE_CHECKING:
     from model.point import Point
     from model.balise import Balise
-    from algorithm.recuit.data import DataStorage
+    from algorithm.data import DataStorage
 
 class SimulationModel:
     """Classe responsable de la logique de la simulation."""    
@@ -33,6 +33,7 @@ class SimulationModel:
         self.balises: Dict[str, 'Balise']      = {}
         self.routes: Dict[str, List['Balise']] = {}
         self.aircrafts: Dict[int, Aircraft]  = {}
+        self.__aircraft_to_algo: Dict[int, Aircraft]  = {}
 
         # Gestion de la simulation
         self.time_elapsed = 0 # En secondes
@@ -100,13 +101,14 @@ class SimulationModel:
 
         for aircraft in self.aircrafts.values():
             # Declencher la creation des conflicts
-            aircraft.set_speed(aircraft.get_speed())
+            #aircraft.set_speed(aircraft.get_speed())
+            aircraft.set_commands(aircraft.get_commands())
 
     def get_algorithm(self) -> AlgoType: return self._algorithm_manager.get_algorithm()
 
     def set_algorithm(self, algo: AlgoType) -> None: 
         self._algorithm_manager.set_algorithm(algo)
-        self._algorithm_manager.set_data(list(self.aircrafts.values()))
+        self._algorithm_manager.set_data(self.__aircraft_to_algo.values())
 
     def get_aircrafts(self) -> Dict[int, Aircraft]: return self.aircrafts
     def get_sectors(self) -> Dict[SectorType, Dict[str, List['Point']]]: return self.sectors
@@ -120,6 +122,7 @@ class SimulationModel:
         self.aircrafts[aircraft.get_id_aircraft()] = aircraft
         if register_to_manager:
             self.conflict_manager.register_aircraft(aircraft)
+            self.__aircraft_to_algo[aircraft.get_id_aircraft()] = aircraft
 
     def delete_aircraft(self, aircraft: Aircraft) -> bool:
         aircraft_key = aircraft.get_id_aircraft()

@@ -264,7 +264,9 @@ class SimulationViewController(QObject):
 
         # Vérification de la structure de final
         if not isinstance(final, list) or not all(isinstance(sublist, list) for sublist in final):
-            self.logger.error(f"Structure inattendue dans final : {type(final)} - {final}")
+            msg = f"Structure inattendue dans la file d'attente : {final}"
+            msg += f"\nExpected List[DataStorage] or List[List[DataStorage]], got {type(final)}"
+            self.logger.error(msg)
             return
 
         qt_aircrafts_copies = self.copy_qtaircrafts()
@@ -279,7 +281,7 @@ class SimulationViewController(QObject):
             if aircraft_commands:
                 id = aircraft_commands[0].id  # Les commandes sont associées à un avion par leur ID
                 qtaircraft = self.qt_aircrafts.get(id)
-                if qtaircraft is None:
+                if qtaircraft == None:
                     self.logger.warning(f"Aucun avion trouvé pour l'ID : {id}")
                     continue
 
@@ -290,15 +292,10 @@ class SimulationViewController(QObject):
                     #self.logger.warning(f"Avion manquant dans la scène : {aircraft.get_id_aircraft()} (recréation possible)")
                     self.scene.addItem(qtaircraft)
                 
-                # Mettre à jour le temps de départ et la vitesse initiale de l'avion
-                aircraft.set_speed(aircraft_commands[0].speed)
-                aircraft.set_take_off_time(aircraft_commands[0].time)  # Mise à jour explicite
-
-                self.logger.info(f"Take-off time de l'avion {aircraft.get_id_aircraft()} mis à jour à {aircraft_commands[0].time}")
-
                 # Mettre à jour les commandes de l'avion
                 aircraft.set_commands(aircraft_commands)
-                self.logger.info(f"Avion {aircraft.get_id_aircraft()} mis à jour avec {len(aircraft_commands)} commandes")
+                msg = f"Avion {aircraft.get_id_aircraft()} mis à jour avec {len(aircraft_commands)} commandes:\n{aircraft_commands}"
+                self.logger.info(msg)
 
                 # Assurer un Z-index élevé pour les avions originaux
                 qtaircraft.setZValue(2)
@@ -327,7 +324,6 @@ class SimulationViewController(QObject):
         self.logger.info(self.qt_aircrafts)
 
         self.algorithm_terminated.emit()
-
 
     def cleanup(self) -> None:
         self.stop_simulation()

@@ -1,12 +1,12 @@
 from threading import Thread
 from queue import Queue
 from typing import Any, List
-from algorithm.algo_gen.genetique import GeneticAlgorithm
-from algorithm.objective_function.conflict_objective import ConflictEvaluationStrategy
+from algorithm.genetic.genetique import AlgorithmGenetic
+from algorithm.objective_function.conflict_objective import ObjectiveFunctionMaxConflict
 
 from algorithm.type import AlgoType
-from algorithm.recuit.recuit import Recuit
-from algorithm.recuit.data import SimulatedAircraftImplemented
+from algorithm.recuit.recuit import AlgorithmRecuit
+from algorithm.data import SimulatedAircraftImplemented
 
 from logging_config import setup_logging
 
@@ -34,15 +34,20 @@ class AlgorithmManager:
         if self._algorithm == AlgoType.RECUIT:
             # Transformer les avions en objets pour le recuit
             data_to_recuit = [SimulatedAircraftImplemented(aircraft) for aircraft in self._data]
-            self.instance = Recuit(data_to_recuit, is_minimise=False) 
+            self.instance = AlgorithmRecuit(data_to_recuit, is_minimise=False) 
+
+            # Creation de l'instance fonction objective
+            function_objectif = ObjectiveFunctionMaxConflict()
+            # Envoie de l'instance dans l'algorithme genetique
+            self.instance.set_objective_function(function_objectif)
 
         elif self._algorithm == AlgoType.GENETIQUE:
             # Transformer les avions en objets pour l'algorithme génétique
             data_to_genetic = [SimulatedAircraftImplemented(aircraft) for aircraft in self._data]
-            self.instance = GeneticAlgorithm(data_to_genetic, population_size=50, generations=30)
+            self.instance = AlgorithmGenetic(data_to_genetic, is_minimise=False, population_size=50, generations=30)
 
-            # Creation de l'instance fonction object
-            function_objectif = ConflictEvaluationStrategy()
+            # Creation de l'instance fonction objective
+            function_objectif = ObjectiveFunctionMaxConflict()
             # Envoie de l'instance dans l'algorithme genetique
             self.instance.set_objective_function(function_objectif)
 
@@ -68,7 +73,7 @@ class AlgorithmManager:
         """
         try:
             # Exécuter l'algorithme (par exemple recuit simulé)
-            result = self.instance.start().get()
+            result = self.instance.start()
             #result = [DataStorage(speed=0.002, id=1), DataStorage(speed=0.003, id=2), DataStorage(speed=0.003, id=3), DataStorage(speed=0.003, id=4)]
             result_queue.put(result)  # Mettre le résultat dans la Queue
         except Exception as e:
