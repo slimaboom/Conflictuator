@@ -2,7 +2,7 @@ from algorithm.interface.ISimulatedObject import ISimulatedObject, ASimulatedAir
 from algorithm.interface.IObjective import IObjective, AObjective
 from algorithm.storage import DataStorage
 
-from model.utils import sec_to_time
+from utils.conversion import sec_to_time
 
 from logging_config import setup_logging
 
@@ -16,10 +16,14 @@ from enum import Enum
 import numpy as np
 
 class AlgorithmState(Enum):
-    TIMEOUT = "timeout"
-    RUNNING = "running"
-    FINISHED = "finished"
-    NOT_STARTED = "not_started"  # Algorithme initialisé mais non démarré
+    STARTED  = "STARTED"
+    STOPPED  = "STOPPED"
+    FINISHED = "FINISHED"
+    TIMEOUT  = "TIMEOUT"
+    ERROR    = "ERROR"
+    NOT_STARTED = "NOT_STARTED"
+    ALREADY_LAUNCH = "ALREADY_LAUNCH"
+    
 
 class IAlgorithm(ABC):
     """Interface pour un algorithme prenant une liste de ISimulatedObject"""
@@ -38,6 +42,10 @@ class IAlgorithm(ABC):
     def stop(self) -> None:
         """Stopper l'algorithme. Ne renvoie pas de solution"""
         pass
+
+    @abstractmethod
+    def run(self) -> List[List[DataStorage]]:
+        """Logique d'implementation de l'algorithme qui renvoie la solution optimale"""
 
     @abstractmethod
     def is_running(self) -> bool:
@@ -63,7 +71,6 @@ class IAlgorithm(ABC):
     def get_objective_function(self) -> IObjective:
         """Renvoie la fonction objective utilisee"""
         pass
-
 
 class AAlgorithm(IAlgorithm):
     """Classe abstraite pour un algorithme prenant une liste de ASimulatedAircraft"""
@@ -105,14 +112,19 @@ class AAlgorithm(IAlgorithm):
         """Renvoie la liste de ASimulatedAircraft stocker dans la classe"""
         return self.__data
 
-    @abstractmethod
+    @override
     def start(self) -> List[List[DataStorage]]:
         """
         Démarrer l'algorithme pour chercher une solution optimale.
-        Partie commune : changement de l'état de `__running`.
-        Partie spécifique : implémentée dans les classes dérivées.
         """
-        self.set_state(AlgorithmState.RUNNING)
+        self.set_state(AlgorithmState.STARTED)
+        try:
+            result = self.run()
+            self.set_state(AlgorithmState.FINISHED)
+            return result
+        except Exception as e:
+            self.set_state(AlgorithmState.ERROR)
+            return e
 
     @override
     def stop(self) -> None:
@@ -123,7 +135,7 @@ class AAlgorithm(IAlgorithm):
     @override
     def is_running(self) -> bool:
         """Vérifier si l'algorithme est en cours d'exécution."""
-        return self.get_state() == AlgorithmState.RUNNING
+        return self.get_state() == AlgorithmState.STARTED
 
     def is_minimisation(self) -> bool:
         """Retourne si l'objectif de l'algorithme est la minimisation du critere"""
@@ -225,7 +237,3 @@ class AAlgorithm(IAlgorithm):
     def get_state(self) -> AlgorithmState:
         """Récupère l'état actuel de l'algorithme."""
         return self.__state
-
-    def has_timeout_occurred(self) -> bool:
-        """Retourne True si un timeout a été déclenché, sinon False."""
-        return self.get_state() == AlgorithmState.TIMEOUT

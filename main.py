@@ -15,9 +15,10 @@ from PyQt5.QtWidgets import QMessageBox
 
 from controller.controller_view import SimulationViewController
 from view.QtObject import QtAircraft, ConflictWindow
-from model.utils import sec_to_time, deg_aero_to_rad
+from utils.conversion import sec_to_time, deg_aero_to_rad
 from model.aircraft import SpeedValue
 from algorithm.type import AlgoType
+from algorithm.interface.IAlgorithm import AlgorithmState
 from algorithm.data import DataStorage
 
 from logging_config import setup_logging
@@ -152,7 +153,24 @@ class MainWindow(QMainWindow):
         self.combobox.setCurrentIndex(0)  # Sélectionner toujours la première option
         self.combobox.view().scrollToTop()  # S'assurer que la vue commence au début
         QComboBox.showPopup(self.combobox)  # Appeler la méthode parent pour afficher le menu
+    
+    def freeze_interactions(self, freezing: bool) -> None:
+        # Marquer le changement comme interne
+        self.is_internal_change = freezing
+        self.combobox.setDisabled(freezing)  # Désactiver la combobox
+        self.is_internal_change = not freezing  # Réinitialiser le flag
+
+        self.play_button.setDisabled(freezing)
+        self.speed_spin.setDisabled(freezing)
         
+        # Désactiver les clics sur les avions
+        if freezing:
+            self.simulation_controller.disable_aircraft_interactions()
+        else:
+            self.simulation_controller.enable_original_aircraft_interactions()
+        if freezing:
+            self.toggle_simulation(checked=not freezing) # False
+        # Ne rien faire si freezing = False
 
     def on_combobox_item_clicked(self, index: QModelIndex) -> None:
         """Déclenche une action uniquement quand l'utilisateur clique sur une option."""
@@ -162,23 +180,16 @@ class MainWindow(QMainWindow):
         msg = f"Lauch {selected_text}"
         self.logger.info(msg)
         if algo == AlgoType.RECUIT or algo == algo.GENETIQUE:
-            # Marquer le changement comme interne
-            self.is_internal_change = True
-            self.combobox.setCurrentIndex(index.row())  # S'assurer que l'élément sélectionné reste visible
-            self.combobox.setDisabled(True)  # Désactiver la combobox
-            self.is_internal_change = False  # Réinitialiser le flag
+            # Ne lancer un algorithm que si c'est le premier
+            if not self.simulation_controller.simulation.get_algorithm_manager().has_been_lauch():
+                self.combobox.setCurrentIndex(index.row())  # S'assurer que l'élément sélectionné reste visible
 
-            self.play_button.setDisabled(True)
-            self.speed_spin.setDisabled(True)
-            
-            # Désactiver les clics sur les avions
-            self.simulation_controller.disable_aircraft_interactions()
+                self.freeze_interactions(True)
 
-            # Lancer l'algorithme
-            self.toggle_simulation(checked=False)
-
-            self.create_algorithm_panel()
-            self.simulation_controller.simulation.start_algorithm(algo)
+                self.create_algorithm_panel()
+                self.simulation_controller.simulation.start_algorithm(algo)
+            else:
+                self.notify_algorithm_termination(AlgorithmState.ALREADY_LAUNCH)
 
     def create_algorithm_panel(self) -> None:
         self.progress_bar = QProgressBar()
@@ -301,8 +312,9 @@ class MainWindow(QMainWindow):
         
         # Connexion lors de la fin d'un algorithm pour re-enable les elements d'interactions
         simulation_controller.simulation.signal.algorithm_terminated.connect(self.connect_elements)
+        simulation_controller.simulation.signal.algorithm_state.connect(self.notify_algorithm_termination)
         simulation_controller.algorithm_terminated.connect(self.notify_algorithm_termination)
-        
+
         return simulation_controller
     
 
@@ -488,18 +500,16 @@ class MainWindow(QMainWindow):
         self.conflict_window.update_conflicts(qtbalise)
         self.conflict_window.show()
     
-    def notify_algorithm_termination(self, timeout_occurred: bool):
+    def notify_algorithm_termination(self, algorithm_state: AlgorithmState):
         """Notifie l'utilisateur que l'algorithme est terminé."""
         self.combobox.setStyleSheet("background-color: none;")
         self.combobox.setEnabled(True)
-        self.combobox.setEditable(False)
 
-
-        # Message à afficher en fonction du timeout
-        if timeout_occurred:
-            msg_text = "L'algorithme a terminé son exécution avec un timeout."
+        if algorithm_state == AlgorithmState.ALREADY_LAUNCH:
+            msg_text = f"{algorithm_state.value}\n\nUn algorithme a déjà été exécuté. Le lancement d'une nouvelle exécution d'algorithme est bloqué."
         else:
-            msg_text = "L'algorithme a terminé son exécution avec succès."
+            # Message à afficher en fonction du timeout
+            msg_text = f"L'algorithme a terminé son exécution dans l'etat {algorithm_state.value}"
 
         msg_box = QMessageBox()
         msg_box.setIcon(QMessageBox.Information)
@@ -513,6 +523,12 @@ class MainWindow(QMainWindow):
         ok_button.clicked.connect(self.clear_algorithm_panel)  # Connecter au nettoyage
 
         # Afficher la boîte de dialogue
+        if algorithm_state != AlgorithmState.FINISHED:
+            # Reactiver l'interaction
+            def release_interaction():
+                self.freeze_interactions(False)
+                self.combobox.setCurrentIndex(0)
+                ok_button.clicked.connect(release_interaction)
         msg_box.exec_()
 
     def update_algo_progress_bar(self, value: float) -> None:

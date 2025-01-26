@@ -2,9 +2,9 @@ from model.simulation import SimulationModel
 from view.signal import SignalEmitter
 from logging_config import setup_logging
 from algorithm.type import AlgoType
-from algorithm.data import DataStorage
+from algorithm.interface.IAlgorithm import AlgorithmState
 
-from queue import Queue, Empty
+from queue import Queue
 from PyQt5.QtCore import QTimer
 
 from typing import List
@@ -49,9 +49,12 @@ class SimulationModelNotifier(SimulationModel):
             # Emission du signal pour signifier que l'algorithme a terminé
             # Le file d'attente est envoyee dans le signal
             #self.logger.info("Watch queue launch")
-            self.signal.algorithm_terminated.emit(self._queue)
+            state = self._algorithm_manager.get_algorithm_state()
+            if state == AlgorithmState.ERROR:
+                self.signal.algorithm_state.emit(state)
+            else:
+                self.signal.algorithm_terminated.emit(self._queue)
             self.qtimer.stop()
-            self.signal.algorithm_has_reach_timeout.emit(self.has_algorithm_reach_time())
         
         progression = self.get_progress_algorithm()
         elasped, timeout = self.get_process_time_algorithm()
@@ -59,3 +62,6 @@ class SimulationModelNotifier(SimulationModel):
         self.signal.algorithm_progress.emit(progression)
         self.signal.algorithm_elapsed.emit(elasped)
         self.signal.algorithm_timeout_value.emit(timeout)
+    
+    def disconnect(self) -> None:
+        self.signal.disconnect()

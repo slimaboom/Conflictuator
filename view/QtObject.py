@@ -18,7 +18,7 @@ from model.point import Point
 from model.balise import Balise
 from model.conflict_manager import ConflictInformation
 from model.aircraft import Aircraft
-from model.utils import sec_to_time
+from utils.conversion import sec_to_time
 from generator.traffic_generator import AIRCRAFTS
 from view.signal import SignalEmitter
 
@@ -304,18 +304,29 @@ class ConflictWindow(QWidget):
     def add_conflict_text(self, conflict: ConflictInformation, text1: str) -> str:
         aircraft_1 = conflict.get_aircraft_one()
         aircraft_2 = conflict.get_aircraft_two()
-        time1 = aircraft_1.get_flight_plan_timed()[conflict.get_location().get_name()]
-        time2 =  aircraft_2.get_flight_plan_timed()[conflict.get_location().get_name()]
-        location = conflict.get_location().get_name()
 
+        location_name = conflict.get_location().get_name()
+
+        time1 = aircraft_1.get_flight_plan_timed()[location_name]
+        time2 =  aircraft_2.get_flight_plan_timed()[location_name]
+
+        take_off_time_1 = aircraft_1.get_take_off_time()
+        take_off_time_2 = aircraft_2.get_take_off_time()
+
+        flight_time_1 = round(time1 - take_off_time_1, 2)
+        flight_time_2 = round(time2 - take_off_time_2, 2)
+    
         conflict_time = min(time1, time2)
         text = text1
         v1 = f"{aircraft_1.get_speed():.1e}".replace('.0', '')
         v2 = f"{aircraft_2.get_speed():.1e}".replace('.0', '')
         # Affichage par ordre d'arrive
-        #if time2 == conflict_time:
-            #aircraft_1, aircraft_2 = aircraft_2, aircraft_1
-         #   time1, time2 = time2, time1
+        if time2 == conflict_time:
+            aircraft_1, aircraft_2 = aircraft_2, aircraft_1
+            time1, time2 = time2, time1
+            flight_time_1, flight_time_2 = flight_time_2, flight_time_1
+            take_off_time_1, take_off_time_2 = take_off_time_2, take_off_time_1
+
         # Ajout du style CSS pour décaler légèrement le texte vers la gauche
         text += """
         <style>
@@ -328,23 +339,28 @@ class ConflictWindow(QWidget):
         text += f"""
             <b> Time : </b> {sec_to_time(conflict_time)}<br>({conflict_time} s)<br>
             <li>
-                <b>Avion 1 :</b> id={aircraft_1.get_id_aircraft()}<br>
+                <b>Avion 1 : </b> id={aircraft_1.get_id_aircraft()}<br>
+                <b>Décollage: </b> {sec_to_time(take_off_time_1)} ({take_off_time_1} s)<br>
                 <b>Arrive à :</b> {sec_to_time(time1)}<br>
                 <b>Position :</b> ({aircraft_1.get_position().getX():.3f}, 
                                     {aircraft_1.get_position().getY():.3f})<br>
                 <b>Vitesse :</b> {v1} unité/s<br>
                 <b>Cap :</b> {aircraft_1.get_heading(in_aero=True):.2f}°<br>
                 <b>Altitude :</b> {aircraft_1.get_position().getZ():.3f}<br>
+                <b>Temps de vol:</b> {flight_time_1}<br>{sec_to_time(flight_time_1)}<br>
+
                 <br>
                 <b>Avion 2 :</b> id={aircraft_2.get_id_aircraft()}<br>
+                <b>Décollage: </b> {sec_to_time(take_off_time_2)} ({take_off_time_2} s)<br>
                 <b>Arrive à:</b> {sec_to_time(time2)} <br>
                 <b>Position :</b> ({aircraft_2.get_position().getX():.2f}, 
                                     {aircraft_2.get_position().getY():.2f})<br>
                 <b>Vitesse :</b> {v2} unité/s<br>
                 <b>Cap :</b> {aircraft_2.get_heading(in_aero=True):.2f}°<br>
                 <b>Altitude :</b> {aircraft_2.get_position().getZ():.3f}<br>
+                <b>Temps de vol:</b> {flight_time_2}<br>{sec_to_time(flight_time_2)}<br>
                 <br>
-                </li>
+            </li>
         """
         text += "</div></ul>"
         return text

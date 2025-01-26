@@ -1,8 +1,6 @@
 from algorithm.interface.IAlgorithm import AAlgorithm
-from algorithm.interface.IObjective import AObjective
 from algorithm.interface.ISimulatedObject import ASimulatedAircraft
 from algorithm.storage import DataStorage
-
 from logging_config import setup_logging
 
 from typing import List
@@ -155,11 +153,10 @@ class AlgorithmGenetic(AAlgorithm):
         return next_population
 
     @override
-    def start(self) -> List[List[DataStorage]]:
+    def run(self) -> List[List[DataStorage]]:
         if self.is_verbose():
             self.logger.info(f"Il y a {len(self.get_data())} ASimulatedAircraft")
 
-        super().start()
         self.set_process(0.)
         self.set_start_time(start=time())
 

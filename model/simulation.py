@@ -255,5 +255,5 @@ class SimulationModel:
     def get_process_time_algorithm(self) -> Tuple[float, float]:
         return self._algorithm_manager.process_time_algorithm()
 
-    def has_algorithm_reach_time(self) -> bool:
-        return self._algorithm_manager.has_algorithm_reach_timeout()
+    def get_algorithm_manager(self) -> AlgorithmManager:
+        return self._algorithm_manager

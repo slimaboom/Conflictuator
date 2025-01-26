@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from model.point import Point, PointValue
 from model.balise import Balise
-from model.utils import rad_to_deg_aero
+from utils.conversion import rad_to_deg_aero
 from model.collector import Collector
 from logging_config import setup_logging
 from algorithm.storage import DataStorage
@@ -101,8 +101,7 @@ class Aircraft:
         object.__setattr__(self, 'heading',  self.calculate_heading(self.position, self.flight_plan[self.current_target_index]))
 
         # Enregistrer les temps de passage prévu par le plan de vol
-        self.flight_plan_timed = {} # Initialisation du dictionnaire rempli par calculate_estimated_times
-        #self.calculate_estimated_times()
+        self.flight_plan_timed = {} # Initialisation du dictionnaire rempli par calculate_estimated_times_commands
 
         self._conflict_dict = Collector() # Dictionnaire vide au depart
         self.commands = [DataStorage(id=self.id, time=self.take_off_time,
@@ -150,23 +149,6 @@ class Aircraft:
         heading = np.arctan2(dy, dx) % (2*np.pi) # modulo 2 pi
         return heading
     
-    def calculate_estimated_times(self) -> None:
-        """
-        Calcule les temps estimés de passage de l'avion pour chaque balise.
-        Le Range dans l'attribut flight_time_timed
-        """
-        # A modifier pour prendre en compte les changements de vitesse de l'avion
-        current_position = self.position
-        current_time = self.take_off_time
-
-        for balise in self.flight_plan[self.current_target_index:]:
-            distance_to_balise = current_position.distance_horizontale(balise)
-            time_to_balise = distance_to_balise / self.commands[0].speed
-            current_time += time_to_balise
-            self.flight_plan_timed[balise.get_name()] = round(current_time, 2)
-            current_position = balise  # Simuler que l'avion atteint la balise
-        return None
-    
     def calculate_estimated_times_commands(self) -> None:
         """
         Calcule les temps estimés de passage de l'avion pour chaque balise avec un pas adaptatif.
@@ -178,6 +160,7 @@ class Aircraft:
             current_speed = self.speed
             current_command_index = 0
             current_command = self.commands[current_command_index] if self.commands else None
+            current_flight_time = 0.
 
             # Initialisation des temps pour les balises
             self.flight_plan_timed = {}
@@ -207,9 +190,11 @@ class Aircraft:
                     # Vérifier si la balise est atteinte avec ce pas
                     if distance_to_balise <= current_speed * time_step:
                         # Balise atteinte
+                        dt = distance_to_balise / current_speed
                         current_time += distance_to_balise / current_speed
                         current_position = Point(balise.getX(), balise.getY(), current_position.getZ())
                         self.flight_plan_timed[balise.get_name()] = round(current_time, 2)
+                        current_flight_time += dt
                         break
                     else:
                         # Sinon, avancer d'un pas de temps
@@ -219,6 +204,7 @@ class Aircraft:
                         inter_y = current_position.getY() + proportion * (balise.getY() - current_position.getY())
                         inter_z = current_position.getZ()  # Altitude inchangée
                         current_position = Point(inter_x, inter_y, inter_z)
+                        current_flight_time += time_step
 
                     # Gérer les commandes de vitesse
                     if current_command and current_time >= current_command.time:
@@ -308,7 +294,7 @@ class Aircraft:
     def get_take_off_time(self): return self.take_off_time
     def get_speed(self): return self.speed
     def get_heading(self, in_aero: bool = False): 
-        if in_aero: return rad_to_deg_aero(self.heading)
+        if in_aero:return rad_to_deg_aero(self.heading)
         else: return self.heading
     def get_flight_plan(self): return self.flight_plan
     def get_next_target(self): return self.flight_plan[self.current_target_index]
@@ -381,7 +367,6 @@ class Aircraft:
         # Recalculer le plan de vol
         self.flight_plan_timed = self.clear_flight_plan_timed()
         self.calculate_estimated_times_commands()
-        #self.calculate_estimated_times()
         # Effacer tous les conflicts de self
         self.clear_conflicts()
 

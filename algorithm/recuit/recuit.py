@@ -1,5 +1,5 @@
 from algorithm.interface.ISimulatedObject import ASimulatedAircraft
-from algorithm.interface.IAlgorithm import AAlgorithm
+from algorithm.interface.IAlgorithm import AAlgorithm, AlgorithmState
 from algorithm.recuit.etat import Etat
 from algorithm.storage import DataStorage
 
@@ -140,9 +140,7 @@ class AlgorithmRecuit(AAlgorithm):
         return best_state
 
     @override
-    def start(self) -> List[List[DataStorage]]:
-        super().start() # Attribut prive running True
-
+    def run(self) -> List[List[DataStorage]]:
         # Initial Temperature
         initial_temperature = self.__heat_up_loop()
         # Cooling Temperature
