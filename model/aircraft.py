@@ -169,63 +169,66 @@ class Aircraft:
     
     def calculate_estimated_times_commands(self) -> None:
         """
-        Calcule les temps estimés de passage de l'avion pour chaque balise.
-        Utilise une méthode itérative pour intégrer les changements de vitesse.
+        Calcule les temps estimés de passage de l'avion pour chaque balise avec un pas adaptatif.
+        Le pas de temps devient plus petit à l'approche des balises ou d'un changement de vitesse.
         """
         if len(self.history) <= 0:  # L'avion n'a pas encore bougé.
-            current_position    = self.position
-            current_time        = self.take_off_time
-            current_speed       = self.speed
-            current_flight_time = self.flight_time
-            current_command_index = 0  # Première commande
-            current_command     = self.commands[current_command_index] if self.commands else None
+            current_position = self.position
+            current_time = self.take_off_time
+            current_speed = self.speed
+            current_command_index = 0
+            current_command = self.commands[current_command_index] if self.commands else None
 
-            # Fonction locale pour avancer jusqu'à une balise
-            def advance_to_balise(balise: Balise) -> None:
-                nonlocal current_position, current_time, current_flight_time, current_speed
-                distance_to_go = current_position.distance_horizontale(balise)
-                dt_to_go = distance_to_go / current_speed
-                current_time += dt_to_go
-                current_flight_time += dt_to_go
-                current_position = Point(balise.getX(), balise.getY(), current_position.getZ())
-                self.flight_plan_timed[balise.get_name()] = round(current_time, 2)
-                #self.logger.info(f"{balise.get_name()}: {round(current_time, 2)}")
+            # Initialisation des temps pour les balises
+            self.flight_plan_timed = {}
 
-            # Parcours des balises dans le plan de vol
             for balise in self.flight_plan:
-                distance_to_go = current_position.distance_horizontale(balise)
-                dt_to_go = distance_to_go / current_speed                
-                time_to_go = current_time + dt_to_go
-                print(f"Id: {self.id}, balise: {balise.get_name()}, distance_to_go:{distance_to_go}, time_to_do: {time_to_go} (duree: {dt_to_go})")
-                while current_command and time_to_go > current_command.time:
-                    print(f"Commande a execute entre position courante et balise:\n")
-                    print(f"Cmd: Id: {self.id}, balise: {balise.get_name()}, distance_to_go:{distance_to_go}, time_to_do: {time_to_go} (duree: {dt_to_go})")
+                while True:
+                    # Distance horizontale jusqu'à la balise
+                    distance_to_balise = current_position.distance_horizontale(balise)
 
-                    # L'avion avance jusqu'à la commande
-                    dt_command     = current_command.time - current_time
-                    distance_to_go = current_position.distance_horizontale(balise)
+                    # Temps jusqu'au changement de vitesse (si applicable)
+                    time_to_next_command = (
+                        current_command.time - current_time
+                        if current_command and current_command.time > current_time
+                        else float('inf')
+                    )
 
-                    proportion = (current_speed * dt_command) / current_position.distance_horizontale(balise)
+                    # Choix d'un pas adaptatif en fonction de la distance et du temps restant
+                    if distance_to_balise > 10 * self.speed and time_to_next_command > 10:  # Balise non atteinte avec un pas de 10 ou prochaine commandes dans plus de 10 sec
+                        time_step = 10
+                    elif distance_to_balise > self.speed or time_to_next_command > 1:  #  Balise non atteinte avec un pas de 1 ou prochaine commandes dans plus de 1 sec
+                        time_step = 1
+                    elif distance_to_balise > 0.1 * self.speed or time_to_next_command > 0.1:   #Balise non atteinte avec un pas de .1 ou prochaine commandes dans plus de .1 sec
+                        time_step = 0.1
+                    else:  # Très proche d'une balise ou d'un changement de vitesse
+                        time_step = 0.01
 
-                    inter_x = current_position.getX() + proportion * (balise.getX() - current_position.getX())
-                    inter_y = current_position.getY() + proportion * (balise.getY() - current_position.getY())
-                    inter_z = current_position.getZ()  # Pas de changement d'altitude ici
-
-                    # Mise à jour des paramètres à l'instant de la commande
-                    current_position = Point(inter_x, inter_y, inter_z)
-                    current_time     = current_command.time
-                    current_speed    = current_command.speed
-                    current_flight_time += dt_command
-
-                    # Passer à la commande suivante
-                    current_command_index += 1
-                    if current_command_index < len(self.commands):
-                        current_command = self.commands[current_command_index]
+                    # Vérifier si la balise est atteinte avec ce pas
+                    if distance_to_balise <= current_speed * time_step:
+                        # Balise atteinte
+                        current_time += distance_to_balise / current_speed
+                        current_position = Point(balise.getX(), balise.getY(), current_position.getZ())
+                        self.flight_plan_timed[balise.get_name()] = round(current_time, 2)
+                        break
                     else:
-                        current_command = None
+                        # Sinon, avancer d'un pas de temps
+                        current_time += time_step
+                        proportion = (current_speed * time_step) / distance_to_balise
+                        inter_x = current_position.getX() + proportion * (balise.getX() - current_position.getX())
+                        inter_y = current_position.getY() + proportion * (balise.getY() - current_position.getY())
+                        inter_z = current_position.getZ()  # Altitude inchangée
+                        current_position = Point(inter_x, inter_y, inter_z)
 
-                # Une fois sorties du while, avancer directement vers la balise
-                advance_to_balise(balise)
+                    # Gérer les commandes de vitesse
+                    if current_command and current_time >= current_command.time:
+                        current_speed = current_command.speed
+                        current_command_index += 1
+                        current_command = (
+                            self.commands[current_command_index]
+                            if current_command_index < len(self.commands)
+                            else None
+                        )
 
 
 
@@ -238,9 +241,10 @@ class Aircraft:
         self.history[self.time] = info
 
         #-----------------------------------------------------------------------
-        if self.time >= self.take_off_time:
-            #Vérifier si on doit faire une comande et la faire si besoin
-            self.check_commands()
+        if self.time >= self.take_off_time :
+            #Vérifier si on doit faire une commande et la faire si besoin
+            if self.id > 0 :
+                self.check_commands()
 
             # Mise a jour des informations
             target_balise = self.flight_plan[self.current_target_index]
@@ -445,7 +449,7 @@ class Aircraft:
             return None
 
         # Rechercher la première commande dont le temps est supérieur à l'heure actuelle
-        next_command = next((cmd for cmd in self.commands if cmd.time > self.time), None)
+        next_command = next((cmd for cmd in self.commands if (cmd.time > self.time and cmd.time > self.take_off_time)), None)
         return next_command
 
     

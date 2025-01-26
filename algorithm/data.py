@@ -22,7 +22,7 @@ class SimulatedAircraftImplemented(ASimulatedAircraft):
 
         self.__aircraft = self.get_object()
         self.__random_generator = aircraft.get_random_generator()
-        self.__possible_speeds  = [0.001, 0.002, 0.003, 0.0012] #np.round(np.linspace(SpeedValue.MIN.value, SpeedValue.MAX.value, self.NB_SPEEDS_POSSIBLE), self.PRECISION)
+        self.__possible_speeds  = [0.001, 0.0016, 0.0014, 0.0012] #np.round(np.linspace(SpeedValue.MIN.value, SpeedValue.MAX.value, self.NB_SPEEDS_POSSIBLE), self.PRECISION)
         
         self.__commands = aircraft.get_commands()
        # self.update_commands(commands=self.initialize())
