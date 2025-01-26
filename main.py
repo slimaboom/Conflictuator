@@ -18,6 +18,7 @@ from view.QtObject import QtAircraft, ConflictWindow
 from model.utils import sec_to_time, deg_aero_to_rad
 from model.aircraft import SpeedValue
 from algorithm.type import AlgoType
+from algorithm.data import DataStorage
 
 from logging_config import setup_logging
 
@@ -349,7 +350,12 @@ class MainWindow(QMainWindow):
         )
         if ok:
             nhdg = deg_aero_to_rad(new_heading)
-            qtaircraft.get_aircraft().set_heading(nhdg)
+            aircraft = qtaircraft.get_aircraft()
+            time     = aircraft.get_time()
+            speed    = aircraft.get_speed()
+            id       = aircraft.get_id_aircraft()
+            cmd      = DataStorage(id=id, time=time, speed=speed, heading=nhdg)
+            qtaircraft.get_aircraft().add_command(cmd)
             # Relancer la simulation
             self.toggle_simulation(True)
 
@@ -381,7 +387,12 @@ class MainWindow(QMainWindow):
         if dialog.exec_() == QDialog.Accepted:            
             # Si l'utilisateur valide la nouvelle vitesse
             new_speed = round(spin_box.value(), 5)
-            qtaircraft.get_aircraft().set_speed(new_speed)            
+            aircraft = qtaircraft.get_aircraft()
+            time     = aircraft.get_time()
+            id       = aircraft.get_id_aircraft()
+            heading  = aircraft.get_heading()
+            cmd      = DataStorage(id=id, time=time, speed=new_speed, heading=heading)
+            qtaircraft.get_aircraft().add_command(cmd)
             current_balise = self.conflict_window.current_balise
             if current_balise and self.conflict_window.isVisible():
                 self.conflict_window.close()

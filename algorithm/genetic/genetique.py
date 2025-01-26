@@ -54,11 +54,17 @@ class AlgorithmGenetic(AAlgorithm):
     def __select_parents(self, population: List[List[List[DataStorage]]], fitnesses: List[int]) -> List[List[List[DataStorage]]]:
         """Selection des parents dans la population en fonction des fitnesses"""
         total_fitness = sum(fitnesses)
-        if total_fitness == 0:
-            return self.get_generator().choice(population, size=2, replace=False).tolist() #np.random.sample(population, 2)
-        probabilities = [f / total_fitness for f in fitnesses]
-        return self.get_generator().choice(population, size=2, replace=False, p=probabilities).tolist()#random.choices(population, weights=probabilities, k=2)
+        n = len(population)
+        # Il faut au moins deux elements non nul pour tirer 2 elements
+        # Il faut au moins k elements non nuls pour tirer k elements
+        if fitnesses.count(0) >= n - 2:
+            selected_indices = self.get_generator().choice(n, size=2, replace=False).tolist()
+            return [population[i] for i in selected_indices] #np.random.sample(population, 2)
 
+        probabilities = [f / total_fitness for f in fitnesses]
+        selected_indices = self.get_generator().choice(n, size=2, replace=False, p=probabilities).tolist()#random.choices(population, weights=probabilities, k=2)
+        return [population[i] for i in selected_indices]
+    
     def __crossover(self, parent1: List[List[DataStorage]], parent2: List[List[DataStorage]]) -> List[List[DataStorage]]:
         """Croisement d'individus entre deux parents"""
         offspring = []
@@ -100,7 +106,18 @@ class AlgorithmGenetic(AAlgorithm):
                         #     time=data.time,
                         #     heading=data.heading
                         # )
-                        updated_data = asimulated_aircraft.generate_commands()[j]
+                        
+                        # trajectory est une liste de DataStorage representant des commandes pour l'asimulated_aircraft
+                        # L'asimulated_aircraft genere donc une nouvelle liste de taille egale a la precedante
+                        # mais data (element de trajectory) n'est pas forcement de la meme taille
+
+                        updated_datas = asimulated_aircraft.generate_commands()
+
+                        lower_bound   = max(min(len(updated_datas) - 1, 1), 0) # Tirage commande 1 ou plus si possible, 0 sinon
+                        upper_bound   = len(updated_datas)
+                        index_to_select = self.get_generator().integers(low=lower_bound, high=upper_bound, endpoint=False)
+                        updated_data = asimulated_aircraft.generate_commands()[index_to_select]
+
                         new_trajectory.append(updated_data)
                     else:
                         new_trajectory.append(data)
@@ -128,8 +145,8 @@ class AlgorithmGenetic(AAlgorithm):
         for _ in range(self.__population_size // 2):
             try:
                 parent1, parent2 = self.__select_parents(population, fitnesses)
-            except:
-                msg = f"Selection of parents in class {self.__class__.__name__} error"
+            except Exception as e:
+                msg = f"Selection of parents in class {self.__class__.__name__} error\n{e}"
                 self.logger.error(msg)
             offspring1 = self.__crossover(parent1, parent2)
             offspring2 = self.__crossover(parent2, parent1)

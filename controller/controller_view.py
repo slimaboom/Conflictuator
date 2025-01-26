@@ -244,8 +244,6 @@ class SimulationViewController(QObject):
         for qtaircraft in self.qt_aircrafts.values():
             aircraft = qtaircraft.get_aircraft().deepcopy()
             aircraft.set_aircraft_id(-aircraft.get_id_aircraft())
-            #Fantome sans commandes
-            aircraft.commands = None
 
             qt_aircraft = QtAircraft(aircraft, parent=self.scene, qcolor=Qt.gray)
             new_qtaircrafts.append(qt_aircraft)

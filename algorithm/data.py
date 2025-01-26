@@ -24,8 +24,8 @@ class SimulatedAircraftImplemented(ASimulatedAircraft):
         self.__random_generator = aircraft.get_random_generator()
         self.__possible_speeds  = [0.001, 0.002, 0.003, 0.0012] #np.round(np.linspace(SpeedValue.MIN.value, SpeedValue.MAX.value, self.NB_SPEEDS_POSSIBLE), self.PRECISION)
         
-        self.__commands = None
-        self.update_commands(commands=self.initialize())
+        self.__commands = aircraft.get_commands()
+       # self.update_commands(commands=self.initialize())
     
     @override
     def update_commands(self, commands: List[DataStorage]) -> None:
@@ -48,7 +48,7 @@ class SimulatedAircraftImplemented(ASimulatedAircraft):
                 ]
         # Générer les autres commandes
         current_time = departure_time
-        num_commands = 0#self.__random_generator.integers(1, self.NB_MAXIMUM_COMMANDS + 1) # Au moins un changement
+        num_commands = self.__random_generator.integers(1, self.NB_MAXIMUM_COMMANDS) # Au moins un changement
         for _ in range(num_commands):
             speed = self.__generate_random_speed()
             random_time = self.__generate_random_time(low=0., high=120.)
@@ -102,7 +102,7 @@ class SimulatedAircraftImplemented(ASimulatedAircraft):
         max_changes = min(len(self.__commands), self.NB_MAXIMUM_COMMANDS)
 
         # Nombre de commandes à modifier (au moins 1, jusqu'à max_changes)
-        num_changes = self.__random_generator.integers(1, max_changes+1)
+        num_changes = self.__random_generator.integers(1, max_changes)
 
         # Sélectionne aléatoirement les indices des commandes à modifier
         indexis = self.__random_generator.integers(0, max_changes, size=num_changes)
