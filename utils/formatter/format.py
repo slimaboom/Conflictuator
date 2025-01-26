@@ -4,7 +4,7 @@ from typing_extensions import override, TYPE_CHECKING
 import json
 
 if TYPE_CHECKING:
-    from model.aircraft import Aircraft, Information
+    from model.aircraft import Aircraft
 
 class JSONAircraftFormat(AFormat):
     @override
