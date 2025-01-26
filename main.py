@@ -492,7 +492,7 @@ class MainWindow(QMainWindow):
 
     def resizeEvent(self, event) -> None:
         """ Resize la fenetre principale et la scene et envoie la mise a jour au controller"""
-        self.logger.info(f"Fenetre principale redimensionnee width={self.width()}, height={self.height()}")
+        #self.logger.info(f"Fenetre principale redimensionnee width={self.width()}, height={self.height()}")
         self.view.fitInView(self.scene.sceneRect(), Qt.KeepAspectRatio)
 
     def show_conflicts_for_balise(self, qtbalise: 'QtBalise') -> None:

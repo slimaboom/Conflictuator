@@ -194,7 +194,7 @@ class Aircraft:
                         dt = distance_to_balise / current_speed
                         current_time += distance_to_balise / current_speed
                         current_position = Point(balise.getX(), balise.getY(), current_position.getZ())
-                        self.flight_plan_timed[balise.get_name()] = round(current_time, 2)
+                        self.flight_plan_timed[balise.get_name()] = self.__round(current_time)
                         current_flight_time += dt
                         break
                     else:
@@ -228,7 +228,14 @@ class Aircraft:
             self.time += timestep # incrementer le temps
         else:   #self.time >= self.take_off_time
             # Sauvegarde la position courante dans l'historique
-            info = Information(self.position, self.time, self.speed, self.heading, self.take_off_time, round(self.flight_time, 3))
+            self.time = self.__round(self.time)
+            info = Information(self.position, 
+                               self.time, 
+                               self.speed, 
+                               self.heading, 
+                               self.take_off_time, 
+                               self.__round(self.flight_time)
+                               )
             self.history[self.time] = info
             
             self.time += timestep
@@ -478,6 +485,8 @@ class Aircraft:
     def get_commands(self):
         return self.commands
 
+    def __round(self, value: float) -> float:
+        return round(value, 2)
 
 
 class AircraftCollector(Collector[Aircraft]):

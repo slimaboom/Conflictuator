@@ -47,7 +47,7 @@ class SimulationViewController(QObject):
 
         # Algorithme results
         self.simulation.signal.algorithm_terminated.connect(self.update_view_with_algorithm, type=Qt.QueuedConnection)  # Assure que le signal est traité dans le thread principal
-        self.logger.info(self.qt_aircrafts)
+        #self.logger.info(self.qt_aircrafts)
 
 
     def initialise_view(self) -> None:
@@ -181,7 +181,7 @@ class SimulationViewController(QObject):
             
             # Mettre le flag a vrai pour eviter de redessiner les items statics
             self.static_items_drawn = True  
-            self.logger.info("draw method call")
+
          # Toujours mettre a jour de facon dynamique
         self.moving_aircrafts()
 
