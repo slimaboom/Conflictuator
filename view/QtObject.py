@@ -12,10 +12,11 @@ from PyQt5.QtGui import QColor, QPainterPath
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QTextEdit
 from PyQt5.QtWidgets import QPushButton
 
-from typing import List, Dict
+from typing import List
 
 from model.point import Point
 from model.balise import Balise
+from model.conflict_manager import ConflictInformation
 from model.aircraft import Aircraft
 from model.utils import sec_to_time
 from generator.traffic_generator import AIRCRAFTS
@@ -300,17 +301,21 @@ class ConflictWindow(QWidget):
 
             self.conflict_display.setHtml(text)
     
-    def add_conflict_text(self, conflict: Dict[str, float], text1: str) -> str:
-        aircraft_id1 = conflict["aircraft_1"]
-        aircraft_1 = AIRCRAFTS.get_from_key(aircraft_id1)
-        aircraft_id2 = conflict["aircraft_2"]
-        aircraft_2 = AIRCRAFTS.get_from_key(aircraft_id2)
-        conflict_time = conflict["time_1"]
-        time2 = conflict['time_2']
+    def add_conflict_text(self, conflict: ConflictInformation, text1: str) -> str:
+        aircraft_1 = conflict.get_aircraft_one()
+        aircraft_2 = conflict.get_aircraft_two()
+        time1 = aircraft_1.get_flight_plan_timed()[conflict.get_location().get_name()]
+        time2 =  aircraft_2.get_flight_plan_timed()[conflict.get_location().get_name()]
+        location = conflict.get_location().get_name()
 
+        conflict_time = min(time1, time2)
         text = text1
         v1 = f"{aircraft_1.get_speed():.1e}".replace('.0', '')
         v2 = f"{aircraft_2.get_speed():.1e}".replace('.0', '')
+        # Affichage par ordre d'arrive
+        #if time2 == conflict_time:
+            #aircraft_1, aircraft_2 = aircraft_2, aircraft_1
+         #   time1, time2 = time2, time1
         # Ajout du style CSS pour décaler légèrement le texte vers la gauche
         text += """
         <style>
@@ -323,19 +328,21 @@ class ConflictWindow(QWidget):
         text += f"""
             <b> Time : </b> {sec_to_time(conflict_time)}<br>({conflict_time} s)<br>
             <li>
-                <b>Avion 1 :</b> {aircraft_id1}<br>
-                <b>Arrive à:</b> {sec_to_time(conflict_time)}<br>
-                <b>Position :</b> ({aircraft_1.get_position().getX():.2f}, 
-                                    {aircraft_1.get_position().getY():.2f})<br>
+                <b>Avion 1 :</b> id={aircraft_1.get_id_aircraft()}<br>
+                <b>Arrive à :</b> {sec_to_time(time1)}<br>
+                <b>Position :</b> ({aircraft_1.get_position().getX():.3f}, 
+                                    {aircraft_1.get_position().getY():.3f})<br>
                 <b>Vitesse :</b> {v1} unité/s<br>
                 <b>Cap :</b> {aircraft_1.get_heading(in_aero=True):.2f}°<br>
+                <b>Altitude :</b> {aircraft_1.get_position().getZ():.3f}<br>
                 <br>
-                <b>Avion 2 :</b> {aircraft_id2}<br>
+                <b>Avion 2 :</b> id={aircraft_2.get_id_aircraft()}<br>
                 <b>Arrive à:</b> {sec_to_time(time2)} <br>
                 <b>Position :</b> ({aircraft_2.get_position().getX():.2f}, 
                                     {aircraft_2.get_position().getY():.2f})<br>
-                <b>Vitesse :</b> {v2} unité/s/s<br>
+                <b>Vitesse :</b> {v2} unité/s<br>
                 <b>Cap :</b> {aircraft_2.get_heading(in_aero=True):.2f}°<br>
+                <b>Altitude :</b> {aircraft_2.get_position().getZ():.3f}<br>
                 <br>
                 </li>
         """

@@ -1,8 +1,8 @@
-from cmath import sqrt
 from dataclasses import dataclass
-from typing import List, Dict
+from typing import List
 from model.point import Point
 from model.collector import Collector
+from model.conflict_manager import ConflictInformation
 
 from copy import deepcopy
 from logging_config import setup_logging
@@ -12,7 +12,7 @@ class Balise(Point):
     def __init__(self, x: float, y: float, z: float = 0, name: str = None):
         super().__init__(x, y, z)
         self.name = name
-        self.conflits = []
+        self.conflits: List[ConflictInformation] = []
         self.logger = setup_logging(__class__.__name__)
 
     def __hash__(self):
@@ -32,19 +32,19 @@ class Balise(Point):
         repr = repr.replace('Point', 'Balise').replace(')', f", name='{self.name}')")
         return repr
     
-    def add_conflicts(self, conflicts) -> None:
+    def set_conflicts(self, conflicts: List[ConflictInformation]) -> None:
         #self.logger.info(f"Adding/Replacing conflict in balise: {self}\nfrom {self.conflits} to {conflicts}")
         self.conflits = conflicts # Ajoute les conflits
 
     
-    def get_conflicts(self) -> List[Dict[str, float]]: return self.conflits
+    def get_conflicts(self) -> List[ConflictInformation]: return self.conflits
 
     def clear_conflicts(self, time: float) -> None: 
         #self.logger.info(f"Clearing conflict in balise: {self}")
     
         filter_conflict = []
         for c in self.conflits:
-            time_of_conflict = float(c.get('time_1'))
+            time_of_conflict = min(c.get_conflict_time_one(), c.get_conflict_time_two())
             if time_of_conflict < time:
                 filter_conflict.append(c)
         

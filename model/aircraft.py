@@ -196,7 +196,11 @@ class Aircraft:
                 distance_to_go = current_position.distance_horizontale(balise)
                 dt_to_go = distance_to_go / current_speed                
                 time_to_go = current_time + dt_to_go
+                print(f"Id: {self.id}, balise: {balise.get_name()}, distance_to_go:{distance_to_go}, time_to_do: {time_to_go} (duree: {dt_to_go})")
                 while current_command and time_to_go > current_command.time:
+                    print(f"Commande a execute entre position courante et balise:\n")
+                    print(f"Cmd: Id: {self.id}, balise: {balise.get_name()}, distance_to_go:{distance_to_go}, time_to_do: {time_to_go} (duree: {dt_to_go})")
+
                     # L'avion avance jusqu'à la commande
                     dt_command     = current_command.time - current_time
                     distance_to_go = current_position.distance_horizontale(balise)
@@ -448,6 +452,7 @@ class Aircraft:
     def set_commands(self, commands: List[DataStorage]) -> None:
         """ Set la liste de commande a l'avion (DataStorage) et recalcule les conflit en consequence"""
         if commands:
+            commands.sort(key= lambda c: c.time)
             self.commands = commands
             
         if self.commands:

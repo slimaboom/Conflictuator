@@ -1,13 +1,12 @@
 from dataclasses import dataclass
 
-from model.balise import Balise
 from logging_config import setup_logging
 
 from typing import List, TYPE_CHECKING
-import pdb
 
 if TYPE_CHECKING:
     from aircraft import Aircraft
+    from model.balise import Balise
 
 @dataclass(frozen=True)
 class ConflictInformation:
@@ -15,7 +14,7 @@ class ConflictInformation:
     aircraft_two: 'Aircraft'
     conflict_time_one: float
     conflict_time_two: float
-    location: Balise
+    location: 'Balise'
 
     @property
     def time_difference(self) -> float:
@@ -38,7 +37,7 @@ class ConflictInformation:
     def get_conflict_time_one(self): return self.conflict_time_one
     def get_conflict_time_two(self): return self.conflict_time_two
     
-    def get_location(self): return self.location.get_conflicts()
+    def get_location(self): return self.location
     def get_time_difference(self): return self.time_difference
     
     def __repr__(self):
@@ -65,7 +64,7 @@ class ConflictManager:
         self.aircrafts[aircraft.get_id_aircraft()] = aircraft
         self.detect_conflicts(list(self.aircrafts.values()))  # recalculer les conflits car certains peuvent apparaitre
 
-    def register_balise(self, balise: Balise) -> None:
+    def register_balise(self, balise: 'Balise') -> None:
         """Enregistre une balise dans le gestionnaire."""
         self.balises[balise.get_name()] = balise
 
@@ -115,7 +114,7 @@ class ConflictManager:
 
                 # Trier les passages par temps
                 passages.sort(key=lambda x: x[1])
-                conflicts = []
+                conflicts: List[ConflictInformation] = []
 
                 # Vérifier les conflits
                 for i in range(len(passages)):
@@ -127,15 +126,15 @@ class ConflictManager:
 
                         #ajouter les conflit dans les balises et les trajectoires
                         if time2 - time1 <= self.time_threshold:
-                            conflicts.append({
-                                "aircraft_1": aircraft1.get_id_aircraft(),
-                                "speed_1": aircraft1.get_speed(),
-                                "aircraft_2": aircraft2.get_id_aircraft(),
-                                "speed_2": aircraft2.get_speed(),
-                                "time_1": time1,
-                                "time_2": time2,
-                                "time_difference": time2 - time1,
-                            })
+                            # conflicts.append({
+                            #     "aircraft_1": aircraft1.get_id_aircraft(),
+                            #     "speed_1": aircraft1.get_speed(),
+                            #     "aircraft_2": aircraft2.get_id_aircraft(),
+                            #     "speed_2": aircraft2.get_speed(),
+                            #     "time_1": time1,
+                            #     "time_2": time2,
+                            #     "time_difference": time2 - time1,
+                            # })
                             
                             conflict_info_one = ConflictInformation(aircraft1, aircraft2, time1, time2, self.balises.get(balise_name))
                             conflict_info_two = ConflictInformation(aircraft2, aircraft1, time2, time1, self.balises.get(balise_name))
@@ -147,6 +146,8 @@ class ConflictManager:
                             aircraft1.set_conflicts(conflict_info_one)
                             aircraft2.set_conflicts(conflict_info_two)
 
+                            conflicts.append(conflict_info_one)
+
                             if time1 < time2:
                                 self.add_conflicts(conflict_info_one)
                             else:
@@ -154,7 +155,7 @@ class ConflictManager:
                 
                 if len(conflicts) > 0 :
                     #self.logger.info(f"Manager: conflicts detected for balise: {balise_name}")
-                    self.balises.get(balise_name).add_conflicts(conflicts)
+                    self.balises.get(balise_name).set_conflicts(conflicts)
         return None
     
     def add_conflicts(self, conflict: ConflictInformation) -> None:
