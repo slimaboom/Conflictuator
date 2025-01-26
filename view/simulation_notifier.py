@@ -7,8 +7,7 @@ from algorithm.interface.IAlgorithm import AlgorithmState
 from queue import Queue
 from PyQt5.QtCore import QTimer
 
-from typing import List
-
+from typing_extensions import override
 
 class SimulationModelNotifier(SimulationModel):
     signal = SignalEmitter()
@@ -20,12 +19,14 @@ class SimulationModelNotifier(SimulationModel):
         self.qtimer = QTimer()
         self.qtimer.timeout.connect(self._watch_queue)
 
+    @override
     def run(self) -> None:
         """Permet d'executer la methode run de la classe parente
         et de notifier par un signal l'IHM"""
         super().run()
         self.signal.aircrafts_moved.emit()
 
+    @override
     def start_algorithm(self, algotype: 'AlgoType') -> 'Queue':
         """
         Démarre l'algorithme dans un thread séparé et connecte un signal pour notifier.
@@ -38,6 +39,7 @@ class SimulationModelNotifier(SimulationModel):
         interval = 100 if AlgoType.GENETIQUE else 1000
         self.qtimer.start(interval) # msec
 
+    @override
     def stop_algorithm(self) -> None:
         super().stop_algorithm()
         if self.qtimer and self.qtimer.isActive():

@@ -109,6 +109,7 @@ class Aircraft:
                         ]
         
         self.next_command = self.set_next_command()
+        self.calculate_estimated_times_commands()
 
     def deepcopy(self) -> 'Aircraft':
         new_aircraft = deepcopy(self)
@@ -222,12 +223,16 @@ class Aircraft:
         return {k:v for k, v in self.get_flight_plan_timed().items() if v < self.time}
 
     def update(self, timestep: float) -> None:
-        # Sauvegarde la position courante dans l'historique
-        info = Information(self.position, self.time, self.speed, self.heading, self.take_off_time, self.flight_time)
-        self.history[self.time] = info
-
         #-----------------------------------------------------------------------
-        if self.time >= self.take_off_time :
+        if self.time < self.take_off_time:
+            self.time += timestep # incrementer le temps
+        else:   #self.time >= self.take_off_time
+            # Sauvegarde la position courante dans l'historique
+            info = Information(self.position, self.time, self.speed, self.heading, self.take_off_time, round(self.flight_time, 3))
+            self.history[self.time] = info
+            
+            self.time += timestep
+
             #Vérifier si on doit faire une commande et la faire si besoin
             if self.id > 0 :
                 self.check_commands()
@@ -444,11 +449,11 @@ class Aircraft:
             commands.sort(key= lambda c: c.time)
             self.commands = commands
             
-        if self.commands:
-            cmd = commands[0]
-            self.set_take_off_time(cmd.time)
-            self.set_speed(cmd.speed)
-            self.set_heading(cmd.heading)
+            if self.commands:
+                cmd = commands[0]
+                self.set_take_off_time(cmd.time)
+                self.set_speed(cmd.speed)
+                self.set_heading(cmd.heading)
 
         # Recalculer les conflicts
         self.update_conflicts()
