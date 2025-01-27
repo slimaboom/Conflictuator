@@ -20,7 +20,7 @@ class AFormat(IFormat):
         super().__init__()
 
     @abstractmethod
-    def export(self, obj: List['Aircraft']) -> str:
+    def export(self, iterable: List['Aircraft']) -> str:
         """Renvoie l'export de la liste des Aircraft dans une chaine de caractère correspond au format souhaité"""
         pass
 

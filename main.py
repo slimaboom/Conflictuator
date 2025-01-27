@@ -15,8 +15,11 @@ from PyQt5.QtWidgets import QMessageBox
 
 from controller.controller_view import SimulationViewController
 from view.QtObject import QtAircraft, ConflictWindow
+from view.arrival_manager import ArrivalManagerWindow
+from view.record_dialog import RecordDialog
 from utils.conversion import sec_to_time, deg_aero_to_rad
 from model.aircraft import SpeedValue
+
 from algorithm.type import AlgoType
 from algorithm.interface.IAlgorithm import AlgorithmState
 from algorithm.data import DataStorage
@@ -28,7 +31,7 @@ import os
 from platform import system
 from enum import Enum
 
-from typing import Callable, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from view.QtObject import QtBalise
@@ -61,6 +64,9 @@ class MainWindow(QMainWindow):
         # Fenêtre des conflits
         self.conflict_window = ConflictWindow()
 
+        # Fenêtre des plans de vols
+        self.arrival_manager = ArrivalManagerWindow()
+
         # Mise en page principale
         main_layout = QVBoxLayout(container)  # Mise en page verticale principale
 
@@ -70,7 +76,8 @@ class MainWindow(QMainWindow):
         # Ajouter une disposition horizontale pour la fenêtre des conflits et la vue principale
         content_layout = QHBoxLayout()
         content_layout.addWidget(self.conflict_window)  # Fenêtre des conflits à gauche
-        content_layout.addWidget(self.view)  # Vue principale à droite
+        content_layout.addWidget(self.view)  # Vue principale au centre
+        content_layout.addWidget(self.arrival_manager) # Fenêtre de l'arrival manager à droite (A-MAN)
 
         # Ajouter la disposition horizontale au layout principal
         main_layout.addLayout(content_layout)
@@ -79,13 +86,27 @@ class MainWindow(QMainWindow):
 
         # Masquer la fenêtre des conflits au démarrage
         self.conflict_window.setVisible(False)
-        
+        # Masquer la fenêtre de l'A-MAN
+        self.arrival_manager.setVisible(True)
+
 
     def create_control_panel(self):
         """Crée la barre de contrôle avec les boutons et curseurs."""
+        # Créer le QWidget parent
         control_panel = QWidget()
-        layout = QHBoxLayout(control_panel)  # Disposition horizontale
+        # Layout principal vertical pour le control panel
+        vertical_layout = QVBoxLayout(control_panel)
+        control_panel.setLayout(vertical_layout)
 
+        # Première ligne : Horizontal Layout
+        layout_one = QHBoxLayout()  # Disposition horizontale
+        vertical_layout.addLayout(layout_one)
+        
+        # Deuxième ligne : Horizontal Layout
+        layout_two = QHBoxLayout()  # Disposition horizontale
+        vertical_layout.addLayout(layout_two)
+
+        # Première ligne : Ajout des QWidgets 
         # Bouton Play/Pause
         self.play_button = QPushButton("Play")
         self.play_button.setCheckable(True)
@@ -139,13 +160,27 @@ class MainWindow(QMainWindow):
         self.combobox.showPopup = self.show_popup_combox
         
         # Ajouter les widgets à la barre
-        layout.addWidget(self.play_button)
-        layout.addWidget(self.stop_button)
-        layout.addWidget(self.time_label)  # Ajouter le QLabel au panneau
-        layout.addWidget(self.speed_label)
-        layout.addWidget(speed_container)
-        layout.addWidget(self.algobox_container)
-        
+        layout_one.addWidget(self.play_button)
+        layout_one.addWidget(self.stop_button)
+        layout_one.addWidget(self.time_label)  # Ajouter le QLabel au panneau
+        layout_one.addWidget(self.speed_label)
+        layout_one.addWidget(speed_container)
+        layout_one.addWidget(self.algobox_container)
+
+        # Deuxième ligne : Ajout des QWidgets 
+        # Bouton enregistrement
+        self.record_sim_btn = QPushButton("Record Simulation")
+        self.record_sim_btn.setCheckable(True)
+        self.record_sim_btn.clicked.connect(self.record_simulation)
+
+        # Bouton arrival manager
+        self.arrival_manager_btn = QPushButton("Show A-MAN")
+        self.arrival_manager_btn.setCheckable(True)
+        self.arrival_manager_btn.clicked.connect(self.show_arrival_manager)
+
+        layout_two.addWidget(self.record_sim_btn)
+        layout_two.addWidget(self.arrival_manager_btn)
+
         return control_panel
 
     def show_popup_combox(self):
@@ -606,37 +641,7 @@ class MainWindow(QMainWindow):
         self.progress_bar.setValue(int(percentage))
         self.progress_bar.setFormat(fmt)
 
-        """"
-        # Si 0: processus de chauffage si algo recuit
-        # Sinon: descente de temperature si algo recuit
-        color = "red" if percentage <= 0 else "blue"
-        stop_final = 1 if percentage <= 0 else percentage  # Si le pourcentage <= 0, stop = 1, sinon stop = percentage
-
-        # Gradient pour le fond de la combobox
-        gradient = (
-            f"QComboBox {{"
-            f"border: 1px solid gray;"
-            f"border-radius: 3px;"
-            f"padding: 5px;"
-            f"background: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0,"
-            f"stop:0 {color}, "  # color au début
-            f"stop:{stop_final:.2f} {color}, "  # color jusqu'au pourcentage
-            f"stop:{stop_final:.2f} transparent, "  # Blanc au pourcentage
-            f"stop:1 transparent);"  # Blanc jusqu'à la fin
-            f"color: black;"  # Texte noir (même si la combobox est désactivée)            
-            f"}}"
-        )
-
-        # Appliquer le style à la combobox
-        self.combobox.setStyleSheet(gradient)
-
-        # Appliquer le text
-        txt = f"{value} % - {self.simulation_controller.simulation.get_algorithm().value}"
-        self.combobox.setEditable(True)
-        self.combobox.setCurrentText(txt)
-        self.combobox.setEnabled(False)  # Assurez-vous qu'elle reste désactivée
-        """
-
+        
     def update_algo_elapsed(self, elapsed: float) -> None:
         elapsed_fmt = sec_to_time(seconds=elapsed)
         self.elapsed_time_display.setText(elapsed_fmt)
@@ -645,6 +650,33 @@ class MainWindow(QMainWindow):
     def update_algo_timeout(self, timeout: float) -> None:
         timeout_fmt = sec_to_time(seconds=timeout)
         self.timeout_display.setText(timeout_fmt)
+
+    def record_simulation(self) -> None:
+        """ Enregistrer la simulation"""
+        # record_sim_btn
+        self.record_sim_btn.setChecked(True)
+
+        dialog = RecordDialog(parent=self)
+        if dialog.exec_() == QDialog.Accepted:
+            # Récupérer les choix de l'utilisateur
+            aformatter, awritter = dialog.get_selection()
+            self.logger.info(f"{aformatter}, {awritter}")
+
+            dialog.show_accepted_message(message='Recording')
+            if not self.simulation_controller.record_simulation(aformatter, awritter):
+                dialog.show_error_message(message='Failed Writting simulation')
+            else:
+                dialog.show_accepted_message(message='Recorded !!!')
+
+        # Desactiver le checked à la fin de l'enregistrement
+        self.record_sim_btn.setChecked(False)
+
+    def show_arrival_manager(self) -> None:
+        """Afficher l'arrival manager"""
+        # arrival_manager_btn
+        # arrival_manager
+        self.arrival_manager.setVisible(True)
+
 #----------------------------------------------------------------------------
 #---------------------   MAIN PART  -----------------------------------------
 #----------------------------------------------------------------------------

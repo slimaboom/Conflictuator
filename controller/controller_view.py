@@ -2,6 +2,9 @@ from model.sector import SectorType
 from view.simulation_notifier import SimulationModelNotifier
 from view.QtObject import QtSector, QtBalise, QtAirway, QtAircraft
 
+from utils.formatter.AFormat import AFormat
+from utils.writter.AWritter import AWritter
+
 from logging_config import setup_logging
 
 from PyQt5.QtWidgets import QGraphicsScene, QGraphicsRectItem
@@ -9,7 +12,6 @@ from PyQt5.QtGui import QColor, QPen
 from PyQt5.QtCore import QTimer, QObject, pyqtSignal, Qt
 
 from typing import Callable, List, TYPE_CHECKING, Dict
-from copy import deepcopy
 
 if TYPE_CHECKING:
     from algorithm.type import AlgoType
@@ -345,3 +347,14 @@ class SimulationViewController(QObject):
         # Déconnecter les signaux pour éviter les callbacks
         self.simulation.disconnect()
         self.disconnect()
+    
+    def record_simulation(self, aformatter: AFormat, awritter: AWritter) -> bool:
+        """"""
+        return False
+        # for a in self.simulation.get_aircrafts().values():
+        #     while not a.has_reached_final_point():
+        #         a.update(timestep=0.1)
+                
+        # filtered_positive_id = [a for a in self.simulation.get_aircrafts().values() if a.get_id_aircraft() > 0]
+        # formatted_data = aformatter.export(iterable=filtered_positive_id)
+        # return awritter.write(text=formatted_data)

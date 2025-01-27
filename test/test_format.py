@@ -31,5 +31,4 @@ for _ in range(61):
     aircraft.update(timestep=step)
     time += step
     
-print(formatter.export(aircraft))
-print(AFormat.get_available_formats())
+print(formatter.export([aircraft]))

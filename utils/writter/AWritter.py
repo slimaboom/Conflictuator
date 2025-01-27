@@ -52,7 +52,7 @@ class AWritter(IWritter):
             error = f"Writter: '{lower}' non supporté car non enregistré dans la classe {cls.__name__}"
             error += f"\nUtiliser @{cls.__name__}.register_writter('{lower}') en décoration de la classe dérivée pour enregistré le format."
             raise ValueError(error)
-        return cls.__registry[name](container.lower())
+        return cls.__registry[name](container)
 
     @classmethod
     def get_available_writter(cls) -> List[str]:
