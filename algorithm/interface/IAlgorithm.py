@@ -115,16 +115,7 @@ class AAlgorithm(IAlgorithm):
             return result
         except Exception as e:
             self.set_state(AlgorithmState.ERROR)
-            
-            import traceback
-            tb = traceback.format_exc()
-
-            # Construire un message d'erreur informatif
-            error_msg = (
-                f"Erreur dans la classe '{self.__class__.__name__}', méthode 'start':\n\n"
-                f"{tb}"
-            )
-            return Exception(error_msg) # Propager l'erreur avec le traceback
+            return e # Propager l'erreur avec le traceback
 
     @override
     def stop(self) -> None:

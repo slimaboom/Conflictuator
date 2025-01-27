@@ -192,7 +192,15 @@ class MainWindow(QMainWindow):
                 else:
                     self.notify_algorithm_termination(AlgorithmState.ALREADY_LAUNCH)
             except Exception as e:
-                self.notify_algorithm_error(AlgorithmState.ERROR, e)
+                import traceback
+                tb = traceback.format_exc()
+
+                # Construire un message d'erreur informatif
+                error_msg = (
+                    f"Erreur dans la classe '{self.__class__.__name__}' --> {self.on_combobox_item_clicked.__qualname__}:\n\n"
+                    f"{tb}"
+                )
+                self.notify_algorithm_error(AlgorithmState.ERROR, Exception(error_msg)) # Propager l'erreur avec le traceback 
 
     def create_algorithm_panel(self) -> None:
         self.progress_bar = QProgressBar()
