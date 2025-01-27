@@ -1,4 +1,5 @@
 from utils.formatter.AFormat import AFormat
+from typing import List
 from typing_extensions import override, TYPE_CHECKING
 
 import json
@@ -6,7 +7,9 @@ import json
 if TYPE_CHECKING:
     from model.aircraft import Aircraft
 
+@AFormat.register_format('JSON')
 class JSONAircraftFormat(AFormat):
+    """Classe concrète de format JSON"""
     @override
     def export(self, obj: 'Aircraft') -> str:
         """
