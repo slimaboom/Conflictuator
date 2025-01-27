@@ -3,6 +3,8 @@ from algorithm.interface.IAlgorithm import AAlgorithm, AlgorithmState
 from algorithm.recuit.etat import Etat
 from algorithm.storage import DataStorage
 
+from utils.controller.argument import method_control_type
+
 from logging_config import setup_logging
 
 from typing import List
@@ -12,6 +14,7 @@ import numpy as np
 from time import time
 
 class AlgorithmRecuit(AAlgorithm):
+    @method_control_type(List[ASimulatedAircraft])
     def __init__(self, data: List[ASimulatedAircraft], is_minimise: bool = True, 
                  verbose           : bool = False,
                  number_transitions: int = 2000,

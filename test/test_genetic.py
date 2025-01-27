@@ -15,7 +15,7 @@ def main():
     data = [SimulatedAircraftImplemented(aircraft) for aircraft in aircrafts.values()]
 
     # Critere est le nombre de conflits par avion: Maximisation
-    genetic = AlgorithmGenetic(data=data, is_minimise=False, verbose=True)
+    genetic = AlgorithmGenetic(data=data, is_minimise=False, verbose=False)
     # Critere
     function = ObjectiveFunctionMaxConflict()
     # Envoie de la fonction objective dans l'algorithme
@@ -30,6 +30,7 @@ def main():
     # Recherche solution
     for _ in range(1):
         optimal_solution = genetic.start()
+        print(optimal_solution)
         for i, sol in enumerate(optimal_solution):
             data[i].update_commands(sol)
             print(f"Maj commande {data[i]}")

@@ -51,9 +51,9 @@ class SimulationModelNotifier(SimulationModel):
             # Emission du signal pour signifier que l'algorithme a terminé
             # Le file d'attente est envoyee dans le signal
             #self.logger.info("Watch queue launch")
-            state = self._algorithm_manager.get_algorithm_state()
+            state = self.get_algorithm_manager().get_algorithm_state()
             if state == AlgorithmState.ERROR:
-                self.signal.algorithm_state.emit(state)
+                self.signal.algorithm_error.emit(state, self._queue.get_nowait())
             else:
                 self.signal.algorithm_terminated.emit(self._queue)
             self.qtimer.stop()

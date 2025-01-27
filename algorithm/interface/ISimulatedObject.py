@@ -3,6 +3,8 @@ from enum import Enum
 from algorithm.storage import DataStorage
 from model.aircraft import Aircraft
 
+from utils.controller.argument import method_control_type
+
 from typing import List, Any
 from typing_extensions import override
 class VariableName(Enum):
@@ -58,11 +60,9 @@ class ASimulatedAircraft(ISimulatedObject):
     """Classe abstraite pour l'objet utilisé lors d'un algorithme"""
 
     @override
+    @method_control_type(Aircraft)
     def __init__(self, aircraft: Aircraft):
         """Constructeur abstrait obligeant à passer un paramètre."""
-        if not isinstance(aircraft, Aircraft):
-            msg = f"Parameter of {self.__class__.__name__} must be type of {Aircraft}, got {type(aircraft)}"
-            raise TypeError(msg)
         self.__aircraft = aircraft
     
     @override

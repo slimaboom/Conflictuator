@@ -3,12 +3,16 @@ from algorithm.interface.ISimulatedObject import ASimulatedAircraft
 from algorithm.storage import DataStorage
 from logging_config import setup_logging
 
+from utils.controller.argument import method_control_type
+
+
 from typing import List
 from typing_extensions import override
 from copy import deepcopy
 from time import time
 
 class AlgorithmGenetic(AAlgorithm):
+    @method_control_type(List[ASimulatedAircraft])
     def __init__(self, data: List[ASimulatedAircraft], 
                  is_minimise: bool,
                  verbose    : bool = False,
@@ -35,6 +39,7 @@ class AlgorithmGenetic(AAlgorithm):
         """Generation d'un individu (commandes) pour chaque ASimulatedAircraft"""
         return list(map(lambda obj: obj.initialize(), data))
     
+    @method_control_type(List[ASimulatedAircraft])
     def __generate_initial_population(self, data: List[ASimulatedAircraft]) -> List[List[List[DataStorage]]]:
         """Generation d'une population initiale.
             C'est pour chaque element de data, il y a generation d'individus (de plusieurs jeux de commandes pour chaque ASimulatedAircraft)

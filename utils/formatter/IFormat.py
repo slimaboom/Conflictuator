@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any, TYPE_CHECKING
+from typing import Any
 
 class IFormat(ABC):
     @abstractmethod

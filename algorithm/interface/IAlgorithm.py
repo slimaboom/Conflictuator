@@ -3,7 +3,7 @@ from algorithm.interface.IObjective import IObjective, AObjective
 from algorithm.storage import DataStorage
 
 from utils.conversion import sec_to_time
-
+from utils.controller.argument import method_control_type
 from logging_config import setup_logging
 
 from abc import ABC, abstractmethod
@@ -74,8 +74,7 @@ class IAlgorithm(ABC):
 
 class AAlgorithm(IAlgorithm):
     """Classe abstraite pour un algorithme prenant une liste de ASimulatedAircraft"""
-
-    @override
+    @abstractmethod
     def __init__(self, data: List[ASimulatedAircraft], is_minimise: bool, verbose: bool = False):
         """Constructeur abstrait obligeant à passer:
             @param: data
@@ -85,14 +84,6 @@ class AAlgorithm(IAlgorithm):
             @param: verbose
                 booléen pour afficher des logs ou non
         """
-        if not all(isinstance(e, ASimulatedAircraft) for e in data):
-            dtype = "data is Empty" if not data else type(data[0])
-            msg = f"Structure inattendue dans le parametre data de la classe {self.__class__.__name__}"
-            msg += f"\nExpected List[ASimulatedAircraft], got data of type {type(data)}"
-            msg += f"[{dtype}]"
-            self.logger.error(msg)
-            raise TypeError(msg)
-
         self.__fobjective  = None
         self.__data        = data
         self.__is_minimise= is_minimise
@@ -124,7 +115,16 @@ class AAlgorithm(IAlgorithm):
             return result
         except Exception as e:
             self.set_state(AlgorithmState.ERROR)
-            return e
+            
+            import traceback
+            tb = traceback.format_exc()
+
+            # Construire un message d'erreur informatif
+            error_msg = (
+                f"Erreur dans la classe '{self.__class__.__name__}', méthode 'start':\n\n"
+                f"{tb}"
+            )
+            return Exception(error_msg) # Propager l'erreur avec le traceback
 
     @override
     def stop(self) -> None:
