@@ -180,16 +180,19 @@ class MainWindow(QMainWindow):
         msg = f"Lauch {selected_text}"
         self.logger.info(msg)
         if algo == AlgoType.RECUIT or algo == algo.GENETIQUE:
-            # Ne lancer un algorithm que si c'est le premier
-            if not self.simulation_controller.simulation.get_algorithm_manager().has_been_lauch():
-                self.combobox.setCurrentIndex(index.row())  # S'assurer que l'élément sélectionné reste visible
+            try:
+                # Ne lancer un algorithm que si c'est le premier
+                if not self.simulation_controller.simulation.get_algorithm_manager().has_been_lauch():
+                    self.combobox.setCurrentIndex(index.row())  # S'assurer que l'élément sélectionné reste visible
 
-                self.freeze_interactions(True)
+                    self.freeze_interactions(True)
 
-                self.create_algorithm_panel()
-                self.simulation_controller.simulation.start_algorithm(algo)
-            else:
-                self.notify_algorithm_termination(AlgorithmState.ALREADY_LAUNCH)
+                    self.create_algorithm_panel()
+                    self.simulation_controller.simulation.start_algorithm(algo)
+                else:
+                    self.notify_algorithm_termination(AlgorithmState.ALREADY_LAUNCH)
+            except Exception as e:
+                self.notify_algorithm_error(AlgorithmState.ERROR, e)
 
     def create_algorithm_panel(self) -> None:
         self.progress_bar = QProgressBar()
@@ -313,7 +316,6 @@ class MainWindow(QMainWindow):
         # Connexion lors de la fin d'un algorithm pour re-enable les elements d'interactions
         simulation_controller.simulation.signal.algorithm_terminated.connect(self.connect_elements)
         simulation_controller.algorithm_terminated.connect(self.notify_algorithm_termination)
-        simulation_controller.simulation.signal.algorithm_error.connect(self.notify_algorithm_error)
 
         return simulation_controller
     
@@ -539,7 +541,7 @@ class MainWindow(QMainWindow):
         """
         self.combobox.setStyleSheet("background-color: none;")
         self.combobox.setEnabled(True)
-        
+
         msg_box = QMessageBox()
         msg_box.setIcon(QMessageBox.Critical if is_error else QMessageBox.Information)
         msg_box.setWindowTitle(title)
