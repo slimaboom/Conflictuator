@@ -4,7 +4,7 @@ from typing import List, Dict, TypeVar, Generic, Union
 T= TypeVar('T')
 
 class Collector(Generic[T]):
-    def __init__(self, key: str = None, values: Union[List[T], T] = None):
+    def __init__(self, key: str = None, values: Union[T] = None):
         self._database = defaultdict(dict)
         if key: self.add(key, values)
     
@@ -22,10 +22,10 @@ class Collector(Generic[T]):
             msg = f"{self.__class__.__name__} with key: '{key} is not defined ! Skipped"
             print(msg)
     
-    def get_all(self) -> Dict[str, Union[List[T], T]]:
+    def get_all(self) -> Dict[str, Union[T]]:
         return self._database
     
-    def get_from_key(self, key: str) -> Union[List[T], T]:
+    def get_from_key(self, key: str) -> Union[T]:
         return self._database.get(key)
 
     def __repr__(self) -> str:
