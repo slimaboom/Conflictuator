@@ -1,4 +1,4 @@
-from threading import Lock, Thread, Event
+from threading import Thread, Event
 from time import time, sleep
 
 from logging_config import setup_logging

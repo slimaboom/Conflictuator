@@ -6,10 +6,10 @@ from PyQt5.QtWidgets import (QMainWindow, QVBoxLayout,
                              QMenu, QAction, 
                              QInputDialog, QDialog, 
                              QDoubleSpinBox, QDialogButtonBox,
-                             QProgressBar, QLayoutItem
+                             QProgressBar
 )
 
-from PyQt5.QtCore import Qt, QModelIndex
+from PyQt5.QtCore import Qt, QModelIndex, QTimer
 from PyQt5.QtGui import QCursor
 from PyQt5.QtWidgets import QMessageBox
 
@@ -42,10 +42,12 @@ class PlatformName(Enum):
     MACOS   = "Darwin"
 
 class MainWindow(QMainWindow):
+
     def __init__(self):
         super().__init__()
 
         self.logger = setup_logging(__class__.__name__)
+        
         self.setWindowTitle("Conflictuator")
         self.setGeometry(150, 80, 1500, 1100)
 
@@ -509,7 +511,9 @@ class MainWindow(QMainWindow):
 
         self.conflict_window.close()
         self.arrival_manager.reset()
-
+        self.record_sim_btn.setChecked(False)
+        self.arrival_manager_btn.setChecked(False)
+        
         self.play_button.setDisabled(False)
 
         self.combobox.setDisabled(False)
@@ -654,9 +658,13 @@ class MainWindow(QMainWindow):
         self.timeout_display.setText(timeout_fmt)
 
     def record_simulation(self) -> None:
-        """ Enregistrer la simulation"""
-        # record_sim_btn
+        """Enregistrer la simulation dans un thread séparé pour éviter le blocage."""
         self.record_sim_btn.setChecked(True)
+        arrival_open = self.arrival_manager_btn.isChecked()
+        if arrival_open:
+            self.arrival_manager.setVisible(False)
+
+        self.toggle_simulation(False)
 
         dialog = RecordDialog(parent=self)
         if dialog.exec_() == QDialog.Accepted:
@@ -664,14 +672,58 @@ class MainWindow(QMainWindow):
             aformatter, awritter = dialog.get_selection()
             self.logger.info(f"{aformatter}, {awritter}")
 
-            dialog.show_accepted_message(message='Recording')
-            if not self.simulation_controller.record_simulation(aformatter, awritter):
-                dialog.show_error_message(message='Failed Writting simulation')
-            else:
-                dialog.show_accepted_message(message='Recorded !!!')
+            # Afficher un message indiquant que l'enregistrement a commencé
 
-        # Desactiver le checked à la fin de l'enregistrement
+            dialog.show_accepted_message(message='Recording...\nSimulation will start')
+
+            # Connecter un slot temporaire pour l'enregistrement
+            def recorder(is_terminated: bool):
+                if is_terminated:
+                    is_okay = self.simulation_controller.record_simulation(aformatter, awritter)
+
+                    self.__on_simulation_finished(dialog, is_okay, container=awritter.get_container())
+                    # Déconnecter le signal après l'exécution
+                    self.simulation_controller.stop_simulation()
+                    self.simulation_controller.simulation.signal.simulation_finished.disconnect(recorder)
+
+                    self.simulation_controller.set_simulation_speed(1)
+                    self.freeze_interactions(False)
+                    self.toggle_simulation(False) # Démarre la simulation
+                    self.play_button.setDisabled(False) # Forcer le bouton a ne pas avoir d'interaction:
+                    self.arrival_manager.setVisible(False)
+                    if arrival_open:
+                        self.arrival_manager.setVisible(True)
+                        self.arrival_manager_btn.setChecked(True)
+                    else:
+                        self.arrival_manager_btn.setChecked(False)
+
+            # Connecter le signal `finished` à un slot temporaire
+            self.simulation_controller.simulation.signal.simulation_finished.connect(recorder)
+
+            # Lancer l'enregistrement
+            # self.simulation_controller.set_simulation_speed(100)
+            # 1h de simulation exécuté pendant l'interval du timer (0.1 sec par defaut)
+            # 1h de simulation --> 0.1 temps réeel : speed_factor = TpsSim/TpsRéel
+            self.simulation_controller.set_simulation_speed(36000)
+            self.freeze_interactions(True)
+            self.toggle_simulation(True) # Démarre la simulation
+            self.play_button.setDisabled(True) # Forcer le bouton a ne pas avoir d'interaction:
+            # (freeze_interactions): le bloque
+            # toggle_simulation: le reactive
+
+
+    def __on_simulation_finished(self, dialog: RecordDialog, is_okay: bool, container: str) -> None:
+        """Cette méthode est appelée lorsque la simulation est terminée"""
+        # Fermer le dialogue après que la simulation ait terminé
+        if is_okay:
+            msg = f'Recording Completed !\n{container}'
+        else:
+            msg = f'Recording Failed !\n{container}'
+        dialog.show_accepted_message(message=msg)  # Afficher un message de confirmation
+        dialog.accept()  # Fermer le dialogue
         self.record_sim_btn.setChecked(False)
+
+            
 
     def show_arrival_manager(self) -> None:
         """Afficher l'arrival manager"""

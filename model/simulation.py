@@ -200,17 +200,17 @@ class SimulationModel:
 
     def run(self) -> None:
         """Met à jour la simulation."""
-
         dt = self.timer.interval()/1000 # converti en secondes
         
         for _ in range(self._speed_factor):
-            self.time_elapsed += dt
-            for aircraft in self.aircrafts.values():
-                #self.logger.info(f"Avancement pour {aircraft.get_id_aircraft()} de {dt} seconds (elapsed: {self.time_elapsed})")
-                aircraft.update(timestep=dt)
+            if not self.is_finished():
+                self.time_elapsed += dt
+                for aircraft in self.aircrafts.values():
+                    #self.logger.info(f"Avancement pour {aircraft.get_id_aircraft()} de {dt} seconds (elapsed: {self.time_elapsed})")
+                    aircraft.update(timestep=dt)
 
-        # Mise a jour du temps de simulation dans le manager de conflict (necessaire pour filtrer)
-        self.conflict_manager.set_time_simulation(self.time_elapsed)
+                # Mise a jour du temps de simulation dans le manager de conflict (necessaire pour filtrer)
+                self.conflict_manager.set_time_simulation(self.time_elapsed)
 
 
     def toggle_running(self) -> None:
@@ -257,7 +257,9 @@ class SimulationModel:
 
     def get_interval_timer(self) -> float:
         """Retourne l'interval de déclenchement du timer en (s)"""
-        return self.timer.interval()/1000 # converti en secondes
+        interval = self.timer.interval()
+        interval = interval if interval else self.INTERVAL # si pas déclencher depuis IHM, mettre la valeur par default
+        return interval/1000 # converti en secondes
 
     def is_finished(self) -> bool:
         """Renvoie True si tous les avions ont atteints leur destination finale"""

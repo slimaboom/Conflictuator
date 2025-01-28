@@ -13,6 +13,9 @@ from PyQt5.QtGui import QColor, QPen
 from PyQt5.QtCore import QTimer, QObject, pyqtSignal, Qt
 
 from typing import Callable, List, TYPE_CHECKING, Dict
+from threading import Thread
+
+from time import sleep, time
 
 if TYPE_CHECKING:
     from algorithm.type import AlgoType
@@ -24,8 +27,10 @@ class SimulationViewController(QObject):
     # Signal qui transmet le temps écoulé (en secondes)
     chronometer = pyqtSignal(float)
     algorithm_terminated = pyqtSignal(object)
-
+    recording_terminated = pyqtSignal(bool)
     
+    ___THREADS: List[Thread] = []
+
     def __init__(self, scene: QGraphicsScene):
         super().__init__()
         # Logger pour logger et afficher des informations dans le terminal
@@ -356,12 +361,11 @@ class SimulationViewController(QObject):
         self.simulation.disconnect()
         self.disconnect()
     
-    def record_simulation(self, aformatter: AFormat, awritter: AWritter) -> bool:
+    def record_simulation(self, aformatter: AFormat, awritter: AWritter) -> None:
         """"""
-        for a in self.simulation.get_aircrafts().values():
-            while not a.has_reached_final_point():
-                a.update(timestep=self.simulation.get_interval_timer())
-                
+        """
+        La méthode pour enregistrer la simulation.
+        """
         filtered_positive_id = [a for a in self.simulation.get_aircrafts().values() if a.get_id_aircraft() > 0]
         formatted_data = aformatter.export(iterable=filtered_positive_id)
         return awritter.write(text=formatted_data)
@@ -370,3 +374,7 @@ class SimulationViewController(QObject):
         aircraft_to_show = [a for id, a in self.simulation.get_aircrafts().items() if id > 0]
         arrival_manager.set_refresh_interval(self.timer.interval())
         arrival_manager.show_aircrafts(aircraft_to_show)
+    
+    def stop_threads(self) -> None:
+        for thread in self.___THREADS:
+            thread.join()

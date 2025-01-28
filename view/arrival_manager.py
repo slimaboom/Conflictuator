@@ -49,6 +49,8 @@ class ArrivalManagerWindow(QWidget):
 
         # Stockage des boutons
         self.buttons: Dict[int, Tuple['Aircraft', QPushButton]] = {}
+        self.buttons_deleted: Dict[int, Tuple['Aircraft', QPushButton]] = {}
+
         # Timer pour declencher la mise a jour des couleurs des boutons
         self.timer = None
         self.aircraft_button_format = "Aircraft %s: %s"
@@ -183,9 +185,7 @@ class ArrivalManagerWindow(QWidget):
 
         if aircraft.has_reached_final_point():
             # Déconnecter les signaux et les slots du bouton avant de le supprimer
-            self.btns_layout.removeWidget(button)
-            button.deleteLater()
-            del self.buttons[aircraft_id]
+            self.buttons_deleted[aircraft_id] = (aircraft, button)
 
         btn_text = self.aircraft_button_format % (aircraft_id, sec_to_time(aircraft.get_take_off_time()))
         button.setText(btn_text)
@@ -197,7 +197,10 @@ class ArrivalManagerWindow(QWidget):
         elif take_off_time <= current_time + 120:  # 60 secondes avant le décollage
             button.setStyleSheet("background-color: orange;")  # Orange
         else:
-            button.setStyleSheet("")  # Pas de couleur, ou reset à l'état initial
+            if aircraft_id in self.buttons_deleted:
+                button.setStyleSheet("background-color: gray;")  # Gris
+            else:
+                button.setStyleSheet("")  # Pas de couleur, ou reset à l'état initial
 
 
     def set_refresh_interval(self, interval: int) -> None:
@@ -217,6 +220,13 @@ class ArrivalManagerWindow(QWidget):
             self.__update_button(aircraft, button)
             self.btns_layout.removeWidget(button)  # Retirer temporairement du layout
             self.btns_layout.insertWidget(i, button)  # Réinsérer dans l'ordre trié
+        
+        if len(self.buttons_deleted) != len(self.buttons): # Si ils doivent tous etre supprimés, on les garde
+            for aircraft_id, (_, button) in self.buttons_deleted.items():
+                self.btns_layout.removeWidget(button)
+                button.deleteLater()
+                del self.buttons[aircraft_id]
+
 
 
     def __remove_btns(self) -> None:
@@ -237,6 +247,7 @@ class ArrivalManagerWindow(QWidget):
             self.timer.stop()
             self.timer.deleteLater()
             self.timer = None
+        
 
     @override
     def disconnect(self) -> None:

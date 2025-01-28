@@ -24,6 +24,7 @@ class SimulationModelNotifier(SimulationModel):
         et de notifier par un signal l'IHM"""
         super().run()
         self.signal.aircrafts_moved.emit()
+        self.is_finished()
 
     @override
     def start_algorithm(self, algotype: 'AlgoType') -> 'Queue':
@@ -63,7 +64,9 @@ class SimulationModelNotifier(SimulationModel):
         self.signal.disconnect()
     
     @override
-    def is_finished(self) -> None:
+    def is_finished(self) -> bool:
         """Emet un signal si la simulation est terminée"""
-        if super().is_finished():
+        is_finished = super().is_finished()
+        if is_finished:
             self.signal.simulation_finished.emit(True)
+        return is_finished
