@@ -1,11 +1,11 @@
 from collections import defaultdict
-from typing import List, Dict, TypeVar, Generic, Union
+from typing import List, Dict, TypeVar, Generic
 
 T= TypeVar('T')
 
 class Collector(Generic[T]):
-    def __init__(self, key: str = None, values: Union[T] = None):
-        self._database = defaultdict(dict)
+    def __init__(self, key: str = None, values: T = None):
+        self._database = {}
         if key: self.add(key, values)
     
     def add(self, key: str, value: T) -> None:
@@ -22,10 +22,10 @@ class Collector(Generic[T]):
             msg = f"{self.__class__.__name__} with key: '{key} is not defined ! Skipped"
             print(msg)
     
-    def get_all(self) -> Dict[str, Union[T]]:
+    def get_all(self) -> Dict[str, T]:
         return self._database
     
-    def get_from_key(self, key: str) -> Union[T]:
+    def get_from_key(self, key: str) -> T:
         return self._database.get(key)
 
     def __repr__(self) -> str:

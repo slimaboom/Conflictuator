@@ -134,7 +134,7 @@ class SimulationViewController(QObject):
         """Ajouter les avions a la scene"""
         # Ajouter les avions en mouvement a la scene
         for qtaircraft in self.qt_aircrafts.values():
-            self.logger.info(f"{qtaircraft} added in the scene")
+            #self.logger.info(f"{qtaircraft} added in the scene")
             self.scene.addItem(qtaircraft)
 
     def moving_aircrafts(self) -> None:
@@ -188,6 +188,8 @@ class SimulationViewController(QObject):
 
          # Toujours mettre a jour de facon dynamique
         self.moving_aircrafts()
+        self.update_qt_balises_color()
+
 
 
     def update_view(self) -> None:
@@ -315,6 +317,14 @@ class SimulationViewController(QObject):
             self.simulation.add_aircraft(qtaircraft_copy.get_aircraft(), register_to_manager=False)
             self.scene.addItem(qtaircraft_copy)
 
+        self.update_qt_balises_color()
+
+        #self.logger.info(self.qt_aircrafts)
+
+        algostate = self.simulation.get_algorithm_manager().get_algorithm_state()
+        self.algorithm_terminated.emit(algostate)
+
+    def update_qt_balises_color(self) -> None:
         # Mettre à jour les couleurs des balises en fonction des conflits
         for qtbalise in self.qt_balises:
             balise = qtbalise.get_balise()
@@ -324,16 +334,11 @@ class SimulationViewController(QObject):
             else:
                 qtbalise.setBrush(QColor("green"))  # Vert sinon
 
-        self.logger.info(self.qt_aircrafts)
-
-        algostate = self.simulation.get_algorithm_manager().get_algorithm_state()
-        self.algorithm_terminated.emit(algostate)
-
     def cleanup(self) -> None:
         self.stop_simulation()
         self.stop_algorithm()
 
-        self.logger.info("Nettoyage des objets de l'ancienne vue...")
+        #self.logger.info("Nettoyage des objets de l'ancienne vue...")
         self.disable_aircraft_interactions()
         
         # Supprimer les avions de la scène

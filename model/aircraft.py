@@ -109,7 +109,7 @@ class Aircraft:
                         ]
         
         self.next_command = self.set_next_command()
-        self.calculate_estimated_times_commands()
+       # self.calculate_estimated_times_commands()
 
     def deepcopy(self) -> 'Aircraft':
         new_aircraft = deepcopy(self)
@@ -366,9 +366,9 @@ class Aircraft:
         values = self._conflict_dict.get_from_key(conflict_with)
 
         #self.logger.info(f"Ajout d'un conflict: {conflict_info}: {values}")
-
         if values: # La cle existe si ca renvoie pas None
-            self._conflict_dict.get_from_key(conflict_with).append(conflict_info) # Modification en place
+            if not conflict_info in values:
+                self._conflict_dict.get_from_key(conflict_with).append(conflict_info) # Modification en place
         else:
             self._conflict_dict.add(key=conflict_with, value=[conflict_info]) # Forcer la valeur a etre une liste
 
@@ -384,7 +384,6 @@ class Aircraft:
 
         # Recalculer les conflicts
         Aircraft.notify_observers(self)
-
 
     @classmethod
     def register_observer(cls, observer: 'ConflictManager'):

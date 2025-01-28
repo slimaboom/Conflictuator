@@ -5,6 +5,9 @@ from PyQt5.QtWidgets import (QWidget, QVBoxLayout,
 )
 from PyQt5.QtCore import Qt, QTimer, pyqtSignal
 
+from collections import defaultdict
+
+
 from typing import List, Dict, Tuple, TYPE_CHECKING
 from typing_extensions import override
 
@@ -85,47 +88,59 @@ class ArrivalManagerWindow(QWidget):
 
         # Construire le message HTML des informations de l'avion
         flight_plan_timed = aircraft.get_flight_plan_timed()  # Retourne un dictionnaire ou une liste de tuples (balise, temps)
-        take_off_time     = aircraft.get_take_off_time()
-        conflicts         = aircraft.get_conflicts()
+        take_off_time = aircraft.get_take_off_time()
+        conflicts = aircraft.get_conflicts()  # Dictionnaire des conflits
+        
+        # Construction d'un dictionnaire de balises avec les conflits associés
+        conflict_balises = defaultdict(list)
 
+        # Parcourir les conflits et organiser par balise
+        for _, conflicts_list in conflicts.get_all().items():
+            for conflict_info in sorted(conflicts_list, key=lambda info: info.get_conflict_time_one()):
+                conflict_balises[conflict_info.get_location().get_name()].append(conflict_info)
+
+
+        # Formatage du message HTML
         message = f"""
         <div>
-            <b>Take Off:</b> {sec_to_time(take_off_time)}<br><br>
+            <b>Take Off:</b> {sec_to_time(take_off_time)}<br>
 
-            <b>Flight Plan Estimated:</b><br>
+            <b>Flight Plan Estimated:</b>
             <div style="margin-left: 20px;">
                 {"<br>".join([f"• <b>{wpt}</b>: {sec_to_time(time)}" for wpt, time in flight_plan_timed.items()])}
             </div><br>
 
-            <b>Conflict Information:</b><br>
-            <div style="margin-left: 20px;">
-                {"<br>".join([self.__format_conflict_info(conflict_info) for conflict_info in conflicts.get_all().values()])}            
-            </div>
+            <b>Conflict Information:</b>
+            <div style="margin-left: 20px; margin-top: 6px;">
+                {"".join([self.__format_conflict_balise(balise, conflict_list) for balise, conflict_list in conflict_balises.items()])}
+            </div><br>
         </div>
         """
 
         # Afficher le message dans une fenêtre dédiée
-        self.__show_flight_plan(title=f"Flight Plan of aircraft: {aircraft_id}", message=message)
+        self.__show_flight_plan(f"Plan de vol de l'avion {aircraft_id}", message)
 
 
-    def __format_conflict_info(self, conflict: ConflictInformation) -> str:
+    def __format_conflict_balise(self, balise: str, conflict_list: List['ConflictInformation']) -> str:
         """
-        Formate les informations d'un conflit pour l'affichage.
-        
-        :param conflict: L'objet ConflictInformation.
-        :return: La chaîne formatée pour un conflit spécifique.
-        """
-        aircraft_one_id = conflict.get_aircraft_one().get_id_aircraft()
-        aircraft_two_id = conflict.get_aircraft_two().get_id_aircraft()
-        conflict_time_one = sec_to_time(conflict.get_conflict_time_one())
-        conflict_time_two = sec_to_time(conflict.get_conflict_time_two())
-        location = conflict.get_location().get_name()
+        Formate les informations de conflit pour une balise spécifique.
 
-        html = f"""• <b>Conflict between Aircraft {aircraft_one_id} and Aircraft {aircraft_two_id}</b><br>
-        Location: <b>{location}</b><br>
-        Times: Aircraft {aircraft_one_id}: {conflict_time_one} | Aircraft {aircraft_two_id}: {conflict_time_two}
-"""
-        return html
+        :param balise: Le nom de la balise où se produisent les conflits.
+        :param conflict_list: La liste des conflits associés à cette balise.
+        :return: Une chaîne HTML formatée avec les conflits.
+        """
+        # Construire les conflits pour cette balise
+        conflicts_html = "".join([
+              f"""
+<div style="margin-top: 8px;">
+    <div style="margin-left: 20px;">• <b>{conflict.get_aircraft_two().get_id_aircraft()}</b>: {sec_to_time(conflict.get_conflict_time_two())}</div>
+    <div style="margin-left: 20px;">• <b>{conflict.get_aircraft_one().get_id_aircraft()}</b>: {sec_to_time(conflict.get_conflict_time_one())}</div>
+</div>
+""" for conflict in conflict_list])
+
+        # Retourner la balise et les conflits associés avec un décalage cohérent
+        return f'<div style="margin-top: 8px;">• <b>{balise}</b>:</div>{conflicts_html}'
+
 
     def __show_flight_plan(self, title: str, message: str) -> None:
         """

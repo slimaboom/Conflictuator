@@ -112,3 +112,30 @@ AIRCRAFTS.add_aircraft(Aircraft(speed=0.001,
 AIRCRAFTS.add_aircraft(Aircraft(speed=0.0012, 
                                 flight_plan=Airway.transform(["MAJOR", "MTL", "MINDI", "CFA", "ETAMO"], BALISES))
 )
+
+from algorithm.storage import DataStorage
+commands = {1:
+              [DataStorage(speed=0.0014, id=1, time=163.69, heading=5.516356508438049), 
+               DataStorage(speed=0.0012, id=1, time=165.11, heading=5.516356508438049)],
+
+            2:[DataStorage(speed=0.0012, id=2, time=40.12, heading=2.8036144653662953), 
+               DataStorage(speed=0.0014, id=2, time=76.11, heading=2.8036144653662953), 
+               DataStorage(speed=0.0014, id=2, time=158.25, heading=2.8036144653662953),
+               DataStorage(speed=0.001, id=2, time=256.7, heading=2.8036144653662953), 
+               DataStorage(speed=0.0016, id=2, time=297.57, heading=2.8036144653662953)],
+
+            3:[DataStorage(speed=0.001, id=3, time=40.94, heading=1.7053337239371453), 
+               DataStorage(speed=0.001, id=3, time=139.13, heading=1.7053337239371453), 
+               DataStorage(speed=0.0016, id=3, time=167.94, heading=1.7053337239371453), 
+               DataStorage(speed=0.0014, id=3, time=202.31169820253618, heading=1.7053337239371453), 
+               DataStorage(speed=0.0016, id=3, time=203.49, heading=1.7053337239371453)],
+
+
+            4: [DataStorage(speed=0.0012, id=4, time=112.61, heading=6.014843526578622), 
+                DataStorage(speed=0.0012, id=4, time=112.61, heading=6.014843526578622), 
+                DataStorage(speed=0.0014, id=4, time=162.09369736286513, heading=6.014843526578622), 
+                DataStorage(speed=0.0016, id=4, time=270.5777672165488, heading=6.014843526578622)]
+            }
+
+#for id, command in commands.items():
+#    AIRCRAFTS.get_from_key(id).set_commands(commands=command)
