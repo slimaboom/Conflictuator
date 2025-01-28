@@ -5,6 +5,7 @@ class SignalEmitter(QObject):
     # cela permet d'accepter n'importe quel objet (type)
     clicked = pyqtSignal(object)
     aircrafts_moved = pyqtSignal()
+    simulation_finished = pyqtSignal(bool)
     algorithm_terminated = pyqtSignal(object)
     algorithm_progress = pyqtSignal(float)
     algorithm_elapsed = pyqtSignal(float)

@@ -330,7 +330,7 @@ class Aircraft:
 
     def get_flight_plan_timed(self) -> Dict[str, float]: return self.flight_plan_timed
 
-    def is_in_conflict(self) -> bool: return not(self._conflict_dict == {})
+    def is_in_conflict(self) -> bool: return not(self._conflict_dict.is_empty())
 
     def get_conflicts(self) -> Collector[List['ConflictInformation']]: return self._conflict_dict
    

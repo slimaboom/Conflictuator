@@ -1,9 +1,10 @@
 from model.sector import SectorType
 from view.simulation_notifier import SimulationModelNotifier
 from view.QtObject import QtSector, QtBalise, QtAirway, QtAircraft
-
+from view.arrival_manager import ArrivalManagerWindow
 from utils.formatter.AFormat import AFormat
 from utils.writter.AWritter import AWritter
+
 
 from logging_config import setup_logging
 
@@ -23,6 +24,7 @@ class SimulationViewController(QObject):
     # Signal qui transmet le temps écoulé (en secondes)
     chronometer = pyqtSignal(float)
     algorithm_terminated = pyqtSignal(object)
+
     
     def __init__(self, scene: QGraphicsScene):
         super().__init__()
@@ -193,6 +195,7 @@ class SimulationViewController(QObject):
         # Continue with the UI update logic
         self.draw()
         self.chronometer.emit(self.simulation.get_time_elapsed())
+        self.simulation.is_finished()
 
 
     def toggle_running(self) -> None:
@@ -350,11 +353,15 @@ class SimulationViewController(QObject):
     
     def record_simulation(self, aformatter: AFormat, awritter: AWritter) -> bool:
         """"""
-        return False
-        # for a in self.simulation.get_aircrafts().values():
-        #     while not a.has_reached_final_point():
-        #         a.update(timestep=0.1)
+        for a in self.simulation.get_aircrafts().values():
+            while not a.has_reached_final_point():
+                a.update(timestep=self.simulation.get_interval_timer())
                 
-        # filtered_positive_id = [a for a in self.simulation.get_aircrafts().values() if a.get_id_aircraft() > 0]
-        # formatted_data = aformatter.export(iterable=filtered_positive_id)
-        # return awritter.write(text=formatted_data)
+        filtered_positive_id = [a for a in self.simulation.get_aircrafts().values() if a.get_id_aircraft() > 0]
+        formatted_data = aformatter.export(iterable=filtered_positive_id)
+        return awritter.write(text=formatted_data)
+
+    def display_arrival_manager(self, arrival_manager: ArrivalManagerWindow) -> None:
+        aircraft_to_show = [a for id, a in self.simulation.get_aircrafts().items() if id > 0]
+        arrival_manager.set_refresh_interval(self.timer.interval())
+        arrival_manager.show_aircrafts(aircraft_to_show)

@@ -190,10 +190,10 @@ class SimulationModel:
             self.timer.start(self.INTERVAL)
 
     def stop_simulation(self) -> None:
-        if self.timer.isActive(): self.toggle_running()
+        if self.is_running(): self.toggle_running()
 
     def start_simulation(self) -> None:
-        if not self.timer.isActive(): self.toggle_running()
+        if not (self.is_running()) and not self.is_finished(): self.toggle_running()
     
     def is_running(self) -> bool: return self.timer.isActive()
 
@@ -218,7 +218,8 @@ class SimulationModel:
         msg = f"Toggle running attribut from {self.is_running()} to {not(self.is_running())}"
         
         if not self.timer.isActive():
-            self.timer.start(self.INTERVAL) # Mettre a jour toutes les 100 ms
+            if not self.is_finished():
+                self.timer.start(self.INTERVAL) # Mettre a jour toutes les 100 ms
         else:
             self.timer.stop()
         self.logger.info(msg)
@@ -253,3 +254,11 @@ class SimulationModel:
 
     def get_algorithm_manager(self) -> AlgorithmManager:
         return self._algorithm_manager
+
+    def get_interval_timer(self) -> float:
+        """Retourne l'interval de déclenchement du timer en (s)"""
+        return self.timer.interval()/1000 # converti en secondes
+
+    def is_finished(self) -> bool:
+        """Renvoie True si tous les avions ont atteints leur destination finale"""
+        return all(a.has_reached_final_point() for a in self.get_aircrafts().values())

@@ -66,6 +66,7 @@ class MainWindow(QMainWindow):
 
         # Fenêtre des plans de vols
         self.arrival_manager = ArrivalManagerWindow()
+        self.arrival_manager.closing.connect(lambda :self.arrival_manager_btn.setChecked(False))
 
         # Mise en page principale
         main_layout = QVBoxLayout(container)  # Mise en page verticale principale
@@ -87,7 +88,7 @@ class MainWindow(QMainWindow):
         # Masquer la fenêtre des conflits au démarrage
         self.conflict_window.setVisible(False)
         # Masquer la fenêtre de l'A-MAN
-        self.arrival_manager.setVisible(True)
+        self.arrival_manager.setVisible(False)
 
 
     def create_control_panel(self):
@@ -180,7 +181,6 @@ class MainWindow(QMainWindow):
 
         layout_two.addWidget(self.record_sim_btn)
         layout_two.addWidget(self.arrival_manager_btn)
-
         return control_panel
 
     def show_popup_combox(self):
@@ -349,6 +349,7 @@ class MainWindow(QMainWindow):
         simulation_controller = SimulationViewController(self.scene)
         # Connexion a l'affichage du temps
         simulation_controller.chronometer.connect(self.update_time_label)
+        simulation_controller.simulation.signal.simulation_finished.connect(self.simulation_finished)
 
         # Connexion des avions au signal clicked
         simulation_controller.connect_to_qtaircrafts(self.click_on_aircraft)
@@ -507,7 +508,8 @@ class MainWindow(QMainWindow):
         self.time_label.setStyleSheet(bg_style)
 
         self.conflict_window.close()
-        
+        self.arrival_manager.reset()
+
         self.play_button.setDisabled(False)
 
         self.combobox.setDisabled(False)
@@ -673,10 +675,15 @@ class MainWindow(QMainWindow):
 
     def show_arrival_manager(self) -> None:
         """Afficher l'arrival manager"""
-        # arrival_manager_btn
-        # arrival_manager
-        self.arrival_manager.setVisible(True)
+        self.arrival_manager_btn.setChecked(True)        
+        self.simulation_controller.display_arrival_manager(self.arrival_manager)
 
+        self.arrival_manager.closing.connect(lambda :self.arrival_manager_btn.setChecked(False))
+
+    def simulation_finished(self, is_finished: bool) -> None:
+        if is_finished:
+            self.toggle_simulation(not is_finished)
+            
 #----------------------------------------------------------------------------
 #---------------------   MAIN PART  -----------------------------------------
 #----------------------------------------------------------------------------

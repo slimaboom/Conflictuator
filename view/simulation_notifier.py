@@ -2,7 +2,6 @@ from model.simulation import SimulationModel
 from view.signal import SignalEmitter
 from logging_config import setup_logging
 from algorithm.type import AlgoType
-from algorithm.interface.IAlgorithm import AlgorithmState
 
 from queue import Queue
 from PyQt5.QtCore import QTimer
@@ -62,3 +61,9 @@ class SimulationModelNotifier(SimulationModel):
     
     def disconnect(self) -> None:
         self.signal.disconnect()
+    
+    @override
+    def is_finished(self) -> None:
+        """Emet un signal si la simulation est terminée"""
+        if super().is_finished():
+            self.signal.simulation_finished.emit(True)

@@ -74,7 +74,7 @@ class RecordDialog(QDialog):
         fmt_name = self.format_combobox.currentText()
         writter_name = self.writer_combobox.currentText()
 
-        # Assurez-vous que le nom du fichier est valide
+        # Assure s que le nom du fichier est valide
         while not self.file_name or '.' not in self.file_name:
             return self.get_selection()  # Redemander l'entrée à l'utilisateur
 
