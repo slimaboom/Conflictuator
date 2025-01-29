@@ -12,6 +12,7 @@ from typing_extensions import override
 #----------------------------------------------------------
 #----------------------------------------------------------
 # Evaluation par le nombre de conflit simple
+@AObjective.register_objective_function
 class ObjectiveFunctionMaxConflict(AObjective):
     """ Fonction objective simple:
             calculant le nombre de conflits de chaque ASimulatedAircraft
@@ -44,7 +45,7 @@ class ObjectiveFunctionMaxConflict(AObjective):
 #------------- ObjectiveFunctionMaxConflictMinVariation ----------------
 #-----------------------------------------------------------------------
 #-----------------------------------------------------------------------
-
+@AObjective.register_objective_function
 class ObjectiveFunctionMaxConflictMinVariation(AObjective):
     """ Fonction objective:
             calculant le nombre de conflits de chaque ASimulatedAircraft

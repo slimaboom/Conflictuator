@@ -5,6 +5,7 @@ from view.arrival_manager import ArrivalManagerWindow
 from utils.formatter.AFormat import AFormat
 from utils.writter.AWritter import AWritter
 
+from algorithm.interface.IAlgorithm import AAlgorithm
 
 from logging_config import setup_logging
 
@@ -12,14 +13,9 @@ from PyQt5.QtWidgets import QGraphicsScene, QGraphicsRectItem
 from PyQt5.QtGui import QColor, QPen
 from PyQt5.QtCore import QTimer, QObject, pyqtSignal, Qt
 
-from typing import Callable, List, TYPE_CHECKING, Dict
+from typing import Callable, List, Dict
 from threading import Thread
-
-from time import sleep, time
-
-if TYPE_CHECKING:
-    from algorithm.type import AlgoType
-    from queue import Queue
+from queue import Queue
 
 
 
@@ -245,8 +241,8 @@ class SimulationViewController(QObject):
         if self.aircraft_click_callback:
             self.connect_to_qtaircrafts(self.aircraft_click_callback)
 
-    def start_algorithm(self, algotype: 'AlgoType') -> None:
-        self.simulation.start_algorithm(algotype)
+    def start_algorithm(self, aalgortim: 'AAlgorithm', *args, **kwargs) -> None:
+        self.simulation.start_algorithm(aalgortim, *args, **kwargs)
     
     def stop_algorithm(self) -> None:
         self.simulation.stop_algorithm()

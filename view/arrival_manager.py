@@ -254,12 +254,13 @@ class ArrivalManagerWindow(QWidget):
         """
         Déconnecte tous les signaux associés aux boutons.
         """
-        for _, btn in self.buttons.values():
-            btn.clicked.disconnect()  # Déconnecte tous les clics des boutons
-        if self.timer:
-            self.timer.timeout.disconnect()  # Déconnecte le signal timeout du timer
-        super().disconnect()
-
+        try:
+            for _, btn in self.buttons.values():
+                btn.clicked.disconnect()  # Déconnecte tous les clics des boutons
+            if self.timer:
+                self.timer.timeout.disconnect()  # Déconnecte le signal timeout du timer
+            super().disconnect()
+        except: pass
 
     @override
     def setVisible(self, visible):

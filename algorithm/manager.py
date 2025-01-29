@@ -1,69 +1,56 @@
 from threading import Thread
 from queue import Queue
 from typing import Any, List, Tuple
-from algorithm.genetic.genetique import AlgorithmGenetic
-from algorithm.objective_function.function import ObjectiveFunctionMaxConflict, ObjectiveFunctionMaxConflictMinVariation
 
 from algorithm.interface.IAlgorithm import AlgorithmState, AAlgorithm
-from algorithm.type import AlgoType
-from algorithm.recuit.recuit import AlgorithmRecuit
+from algorithm.interface.IObjective import AObjective
+from algorithm.interface.ISimulatedObject import ASimulatedAircraft
 from algorithm.data import SimulatedAircraftImplemented
 
 from logging_config import setup_logging
 
 class AlgorithmManager:
     def __init__(self):
-        self._algorithm = None  # Algorithme courant
-        self._data = None
-        self._thread = None
-        self._instance = None
+        self._algorithm: 'AAlgorithm' = None
+        self._data: List['ASimulatedAircraft'] = None
+        self._thread: Thread = None
+        self._instance: 'AAlgorithm' = None
         self.__singleton_start = False
         self.logger = setup_logging(__class__.__name__)
 
-    def set_algorithm(self, algorithm: AlgoType) -> None:
+    def create_algorithm(self, aalgorithm: AAlgorithm, *args, **kwargs) -> None:
         """Définit l'algorithme à utiliser."""
-        self._algorithm = algorithm
+        self.logger.info(f"args: {args}\nkwargs:{kwargs}")
+        self._algorithm = aalgorithm
 
-    def get_algorithm(self) -> AlgoType:
+        # Parse les arguments
+        aalgorithm_constructor_parameters = kwargs.pop(aalgorithm.__name__)
+        aobjective_function_name = list(kwargs)[0] # Il ne doit rester qu'une seule clé
+        aobjective_function_constructor_parameters = kwargs.pop(aobjective_function_name)
+
+        # Creation de l'instance de AAlgorithm
+        self._instance = AAlgorithm.create_algorithm(aalgorithm.__name__, self._data_to_algo, **aalgorithm_constructor_parameters)
+        
+        # Création de l'instance de AObjective
+        aobjective_function = AObjective.create_objective_function(aobjective_function_name, **aobjective_function_constructor_parameters)
+        self._instance.set_objective_function(aobjective_function)
+    
+    def get_algorithm(self) -> AAlgorithm:
         """Renvoie l'algorithme actuellement configuré."""
         return self._algorithm
 
     def set_data(self, data: List[Any]) -> None:
         """Definit les donnees utilisees pour l'algorithme."""
-        self._data = data
-        self._create_instance_algo()
+        # Transformer les avions en objets pour l'algorithme
+        self._data_to_algo = [SimulatedAircraftImplemented(aircraft) for aircraft in data]
 
-    def _create_instance_algo(self):
-        if self._algorithm == AlgoType.RECUIT:
-            # Transformer les avions en objets pour le recuit
-            data_to_recuit = [SimulatedAircraftImplemented(aircraft) for aircraft in self._data]
-            self._instance = AlgorithmRecuit(data_to_recuit, is_minimise=False) 
 
-            # Creation de l'instance fonction objective
-            function_objectif = ObjectiveFunctionMaxConflict()
-            # Envoie de l'instance dans l'algorithme genetique
-            self._instance.set_objective_function(function_objectif)
-
-        elif self._algorithm == AlgoType.GENETIQUE:
-            # Transformer les avions en objets pour l'algorithme génétique
-            data_to_genetic = [SimulatedAircraftImplemented(aircraft) for aircraft in self._data]
-            self._instance = AlgorithmGenetic(data_to_genetic, is_minimise=False, population_size=30, generations=15)
-
-            # Creation de l'instance fonction objective
-            function_objectif = ObjectiveFunctionMaxConflict()
-            #function_objectif = ObjectiveFunctionMaxConflictMinVariation()
-            # Envoie de l'instance dans l'algorithme genetique
-            self._instance.set_objective_function(function_objectif)
-
-        else:
-            pass
-
-    def start_algorithm(self, queue: 'Queue') -> None:
+    def start_algorithm(self, queue: 'Queue', *args, **kwargs) -> None:
         """
         Lance l'algorithme dans un thread séparé et retourne les résultats.
         """
         if not self._instance:
-            raise ValueError("Aucun algorithme n'est défini.")
+            raise ValueError("Aucun algorithme n'est défini ou instancié.")
 
 
         # Créer et démarrer un thread pour exécuter l'algorithme

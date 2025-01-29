@@ -1,7 +1,7 @@
 from model.simulation import SimulationModel
 from view.signal import SignalEmitter
 from logging_config import setup_logging
-from algorithm.type import AlgoType
+from algorithm.interface.IAlgorithm import AAlgorithm
 
 from queue import Queue
 from PyQt5.QtCore import QTimer
@@ -27,17 +27,18 @@ class SimulationModelNotifier(SimulationModel):
         self.is_finished()
 
     @override
-    def start_algorithm(self, algotype: 'AlgoType') -> 'Queue':
+    def start_algorithm(self, aalgorithm: 'AAlgorithm', *args, **kwargs) -> 'Queue':
         """
         Démarre l'algorithme dans un thread séparé et connecte un signal pour notifier.
         """
         queue = Queue()
-        super().set_algorithm(algotype)
+        super().set_algorithm(aalgorithm, *args, **kwargs)
         super().start_algorithm(queue)
     
         self._queue = queue
-        interval = 100 if AlgoType.GENETIQUE else 1000
-        self.qtimer.start(interval) # msec
+        interval = int(self.get_interval_timer() * 1000)
+        interval = interval if interval else self.INTERVAL
+        self.qtimer.start(int(interval)) # msec
 
     @override
     def stop_algorithm(self) -> None:

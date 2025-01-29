@@ -6,8 +6,8 @@ from model.sector import SectorType
 from model.timer import Timer
 from model.conflict_manager import ConflictManager
 
-from algorithm.type import AlgoType
 from algorithm.manager import AlgorithmManager
+from algorithm.interface.IAlgorithm import AAlgorithm
 from logging_config import setup_logging
 
 from PyQt5.QtCore import QTimer
@@ -104,11 +104,12 @@ class SimulationModel:
             #aircraft.set_speed(aircraft.get_speed())
             aircraft.set_commands(aircraft.get_commands())
 
-    def get_algorithm(self) -> AlgoType: return self._algorithm_manager.get_algorithm()
+    def get_algorithm(self) -> 'AAlgorithm': return self._algorithm_manager.get_algorithm()
 
-    def set_algorithm(self, algo: AlgoType) -> None: 
-        self._algorithm_manager.set_algorithm(algo)
+    def set_algorithm(self, aalgorithm: AAlgorithm, *args, **kwargs) -> None: 
         self._algorithm_manager.set_data(self.__aircraft_to_algo.values())
+        self._algorithm_manager.create_algorithm(aalgorithm, *args, **kwargs)
+
 
     def get_aircrafts(self) -> Dict[int, Aircraft]: return self.aircrafts
     def get_sectors(self) -> Dict[SectorType, Dict[str, List['Point']]]: return self.sectors

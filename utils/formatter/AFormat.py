@@ -1,9 +1,9 @@
 from abc import abstractmethod
 from typing import List, TYPE_CHECKING
-from typing_extensions import override
+from typing_extensions import override, Callable
 
 from utils.formatter.IFormat import IFormat
-from utils.dynamic_discover_packages import dynamic_discovering
+from utils.controller.dynamic_discover_packages import dynamic_discovering
 
 import inspect
 
@@ -27,7 +27,7 @@ class AFormat(IFormat):
     @classmethod
     def register_format(cls, name: str):
         """Classe décoratrice pour enregistrer un nouveau format."""
-        def decorator(subclass):
+        def decorator(subclass: Callable):
             # Vérifie que le constructeur (init) n'accepte que `self`
             init_signature = inspect.signature(subclass.__init__)
             if len(init_signature.parameters) > 1:  # Plus que `self`
@@ -65,4 +65,4 @@ class AFormat(IFormat):
         
         :param package: Le chemin du package où chercher les writters (ex. 'utils.writter').
         """
-        dynamic_discovering(package=package, filename=__file__)
+        dynamic_discovering(package=package)

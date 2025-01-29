@@ -3,11 +3,13 @@ from algorithm.interface.IObjective import IObjective, AObjective
 from algorithm.storage import DataStorage
 
 from utils.conversion import sec_to_time
-from utils.controller.argument import method_control_type
 from logging_config import setup_logging
 
+from utils.controller.dynamic_discover_packages import dynamic_discovering
+from utils.controller.database_dynamique import MetaDynamiqueDatabase
+
 from abc import ABC, abstractmethod
-from typing import List
+from typing import List, Type
 from typing_extensions import override
 from copy import deepcopy
 from time import time
@@ -29,7 +31,7 @@ class IAlgorithm(ABC):
     """Interface pour un algorithme prenant une liste de ISimulatedObject"""
 
     @abstractmethod
-    def __init__(self, data: List[ISimulatedObject], is_minimise: bool):
+    def __init__(self, data: List[ISimulatedObject], is_minimise: bool, timeout: float):
         """Constructeur abstrait obligeant à passer un paramètre de type List[ISimulatedObject] et un booleen pour minimisation ou non"""
         pass
 
@@ -74,8 +76,9 @@ class IAlgorithm(ABC):
 
 class AAlgorithm(IAlgorithm):
     """Classe abstraite pour un algorithme prenant une liste de ASimulatedAircraft"""
+   
     @abstractmethod
-    def __init__(self, data: List[ASimulatedAircraft], is_minimise: bool, verbose: bool = False):
+    def __init__(self, data: List[ASimulatedAircraft], is_minimise: bool, verbose: bool = False, timeout: float = 120.):
         """Constructeur abstrait obligeant à passer:
             @param: data
                 Liste de ASimulatedAircraft
@@ -91,7 +94,7 @@ class AAlgorithm(IAlgorithm):
 
         self.__pourcentage_process = 0.
         self.__process_time        = 0.
-        self.__timeout_value       = 120.
+        self.__timeout_value       = timeout
         self.__startime            = None
         self.__state               = AlgorithmState.NOT_STARTED
         self.__generator = np.random.default_rng(seed=sum(d.get_object().get_id_aircraft() for d in data))
@@ -228,3 +231,67 @@ class AAlgorithm(IAlgorithm):
     def get_state(self) -> AlgorithmState:
         """Récupère l'état actuel de l'algorithme."""
         return self.__state
+
+    @classmethod
+    def register_algorithm(cls, algo_class: Type):
+        """
+        Enregistre un algorithme à partir de la classe.
+        Exception: TypeError
+        """
+        return MetaDynamiqueDatabase.register(algo_class)
+
+    @classmethod
+    def get_available_algorithms(cls):
+        """
+        Retourne la liste des noms des algorithms disponibles.
+        Exception: TypeError
+        """
+        return MetaDynamiqueDatabase.get_available(base_class=cls)
+
+    @classmethod
+    def discover_algorithms(cls, package: str):
+        """
+        Découvre et importe tous les modules dans un package donné ('algorithm.concrete')
+        
+        :param package: Le chemin du package où chercher les algorithms (ex. 'algorithm.concrete').
+        """
+        dynamic_discovering(package=package)
+    
+    @classmethod
+    def get_algorithm_class(cls, name: str) -> 'AAlgorithm':
+        """
+        Renvoie une classe AAlgorithm à partir de son nom enregistré.
+        L'instance n'est pas crée.
+        Exception: TypeError ou ValueError
+        """
+        try:
+            return MetaDynamiqueDatabase.get_class(base_class=cls, name=name)
+        except Exception as e:
+            error = f"Algorithm '{name}' non supporté car non enregistré dans la classe {cls.__name__}"
+            error += f"\nUtiliser @{cls.__name__}.register_algorithm en décoration de la classe dérivée pour enregistrer l'algorithm."
+            full_message = f"{str(e)}\n{error}"
+            raise type(e)(full_message)
+    
+    @classmethod
+    def create_algorithm(cls, name: str, *args, **kwargs) -> 'AAlgorithm':
+        """
+        Instancie une classe algorithm à partir de son nom enregistré.
+        Exception: TypeError ou ValueError
+        """
+        return cls.get_algorithm_class(name)(*args, **kwargs)
+
+
+    @classmethod
+    def get_class_constructor_params(cls, class_name: str):
+        """
+        Retourne les paramètres du constructeur de l'algorithme spécifiée.
+        Exception: TypeError
+        """
+        params = MetaDynamiqueDatabase.get_class_constructor_params(cls, class_name)
+        ignored_param_names = ['data']
+        # MappingProxyType[str, Parameter] est immutable donc on passe par un dictionnaire temporaire
+        new_params = dict(params)
+        for ignored_param_name in ignored_param_names:
+            if new_params.get(ignored_param_name):
+                del new_params[ignored_param_name]
+        return type(params)(new_params)

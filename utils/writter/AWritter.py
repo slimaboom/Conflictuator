@@ -1,9 +1,9 @@
 from abc import abstractmethod
 from typing import List
-from typing_extensions import override
+from typing_extensions import override, Callable
 
 from utils.writter.IWritter import IWritter
-from utils.dynamic_discover_packages import dynamic_discovering
+from utils.controller.dynamic_discover_packages import dynamic_discovering
 
 import inspect
 
@@ -30,11 +30,11 @@ class AWritter(IWritter):
     @classmethod
     def register_writter(cls, name: str):
         """Classe décoratrice pour enregistrer un nouveau writter."""
-        def decorator(subclass):
+        def decorator(subclass: Callable):
             # Vérifie que le constructeur (init) n'accepte que `self` et `container`
             init_signature = inspect.signature(subclass.__init__)
             if len(init_signature.parameters) > 2:  # Plus que `self` et `container`
-                error =  f"La classe {subclass.__name__} ne peut pas avoir que deux paramètres dans son constructeur (self, container: str)."
+                error =  f"La classe {subclass.__name__} ne peut avoir que deux paramètres dans son constructeur (self, container: str)."
                 error += f"container correspond à où l'écriture va se faire (nom de fichier, nom de la base de donnée, ect)"
                 raise TypeError(error)
             lower = name.lower()
@@ -50,12 +50,12 @@ class AWritter(IWritter):
         lower = name.lower()
         if lower not in cls.__registry:
             error = f"Writter: '{lower}' non supporté car non enregistré dans la classe {cls.__name__}"
-            error += f"\nUtiliser @{cls.__name__}.register_writter('{lower}') en décoration de la classe dérivée pour enregistré le format."
+            error += f"\nUtiliser @{cls.__name__}.register_writter('{lower}') en décoration de la classe dérivée pour enregistré le writter."
             raise ValueError(error)
         return cls.__registry[name](container)
 
     @classmethod
-    def get_available_writter(cls) -> List[str]:
+    def get_available_writters(cls) -> List[str]:
         """
         Retourne tous les writters disponibles.
         """
@@ -69,4 +69,4 @@ class AWritter(IWritter):
         
         :param package: Le chemin du package où chercher les writters (ex. 'utils.writter').
         """
-        dynamic_discovering(package=package, filename=__file__)
+        dynamic_discovering(package=package)

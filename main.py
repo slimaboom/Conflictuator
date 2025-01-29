@@ -9,20 +9,24 @@ from PyQt5.QtWidgets import (QMainWindow, QVBoxLayout,
                              QProgressBar
 )
 
-from PyQt5.QtCore import Qt, QModelIndex, QTimer
+from PyQt5.QtCore import Qt, QModelIndex
 from PyQt5.QtGui import QCursor
 from PyQt5.QtWidgets import QMessageBox
 
 from controller.controller_view import SimulationViewController
 from view.QtObject import QtAircraft, ConflictWindow
 from view.arrival_manager import ArrivalManagerWindow
-from view.record_dialog import RecordDialog
+
+from view.dialog.record_dialog import RecordDialog
+from view.dialog.algorithm_dialog import AlgorithmParamDialog
+
 from utils.conversion import sec_to_time, deg_aero_to_rad
 from model.aircraft import SpeedValue
 
-from algorithm.type import AlgoType
-from algorithm.interface.IAlgorithm import AlgorithmState
+from algorithm.interface.IAlgorithm import AlgorithmState, AAlgorithm
 from algorithm.data import DataStorage
+
+from utils.controller.dynamic_discover_packages import main_dynamic_discovering
 
 from logging_config import setup_logging
 
@@ -95,6 +99,9 @@ class MainWindow(QMainWindow):
 
     def create_control_panel(self):
         """Crée la barre de contrôle avec les boutons et curseurs."""
+        # Découverte dynamic des algorithms, fonctions objectifs
+        main_dynamic_discovering()
+        
         # Créer le QWidget parent
         control_panel = QWidget()
         # Layout principal vertical pour le control panel
@@ -153,7 +160,7 @@ class MainWindow(QMainWindow):
 
         self.algobox_container.setLayout(self.algobox)
 
-        self.combo_options = [algotype.value for algotype in AlgoType]
+        self.combo_options = AAlgorithm.get_available_algorithms()
         self.combobox.addItems(self.combo_options)
         
         # Connecter le signal
@@ -212,32 +219,33 @@ class MainWindow(QMainWindow):
     def on_combobox_item_clicked(self, index: QModelIndex) -> None:
         """Déclenche une action uniquement quand l'utilisateur clique sur une option."""
         selected_text = self.combobox.itemText(index.row())
-        algo = AlgoType.find(selected_text)
+        try:
+            # Ne lancer un algorithm que si c'est le premier
+            if not self.simulation_controller.simulation.get_algorithm_manager().has_been_lauch():
+                # Gestion IHM
+                self.combobox.setCurrentIndex(index.row())  # S'assurer que l'élément sélectionné reste visible
+                self.freeze_interactions(True)
+                self.create_algorithm_panel()
 
-        msg = f"Lauch {selected_text}"
-        self.logger.info(msg)
-        if algo == AlgoType.RECUIT or algo == algo.GENETIQUE:
-            try:
-                # Ne lancer un algorithm que si c'est le premier
-                if not self.simulation_controller.simulation.get_algorithm_manager().has_been_lauch():
-                    self.combobox.setCurrentIndex(index.row())  # S'assurer que l'élément sélectionné reste visible
+                # Gestion Algorithm class
+                aalgorithm = AAlgorithm.get_algorithm_class(selected_text)
+                # Demande des paramètres du constructeur de la classe dérivée AAlgorithm (dynamique)
+                algorithm_dialog = AlgorithmParamDialog(algorithm_name=selected_text, parent=self)
+                if algorithm_dialog.exec_() == QDialog.Accepted:
+                    algo_constructor_parameters_objective_function_constructors_parameters = algorithm_dialog.get_parameters()   
+                    self.simulation_controller.start_algorithm(aalgorithm, **algo_constructor_parameters_objective_function_constructors_parameters)
+            else:
+                self.notify_algorithm_termination(AlgorithmState.ALREADY_LAUNCH)
+        except Exception as e:
+            import traceback
+            tb = traceback.format_exc()
 
-                    self.freeze_interactions(True)
-
-                    self.create_algorithm_panel()
-                    self.simulation_controller.simulation.start_algorithm(algo)
-                else:
-                    self.notify_algorithm_termination(AlgorithmState.ALREADY_LAUNCH)
-            except Exception as e:
-                import traceback
-                tb = traceback.format_exc()
-
-                # Construire un message d'erreur informatif
-                error_msg = (
-                    f"Erreur dans la classe '{self.__class__.__name__}' --> {self.on_combobox_item_clicked.__qualname__}:\n\n"
-                    f"{tb}"
-                )
-                self.notify_algorithm_error(AlgorithmState.ERROR, Exception(error_msg)) # Propager l'erreur avec le traceback 
+            # Construire un message d'erreur informatif
+            error_msg = (
+                f"Erreur dans la classe '{self.__class__.__name__}' --> {self.on_combobox_item_clicked.__qualname__}:\n\n"
+                f"{tb}"
+            )
+            self.notify_algorithm_error(AlgorithmState.ERROR, Exception(error_msg)) # Propager l'erreur avec le traceback 
 
     def create_algorithm_panel(self) -> None:
         self.progress_bar = QProgressBar()
@@ -319,7 +327,7 @@ class MainWindow(QMainWindow):
             item = self.algobox.takeAt(1)  # Commence à partir du deuxième widget
             widget_or_layout = item.widget()  # Récupère le widget (ou layout si c'est un layout)
 
-            if widget_or_layout is not None:
+            if widget_or_layout != None:
                 # Si c'est un widget, on le supprime proprement
                 widget_or_layout.deleteLater()  # Supprime le widget proprement
             else:
@@ -330,11 +338,11 @@ class MainWindow(QMainWindow):
                     for i in range(layout.count()):
                         child_item = layout.itemAt(i)
                         child_widget = child_item.widget()
-                        if child_widget is not None:
+                        if child_widget != None:
                             child_widget.deleteLater()  # Supprime le widget enfant
                         else:
                             child_layout = child_item.layout()
-                            if child_layout is not None:
+                            if child_layout != None:
                                 child_layout.deleteLater()  # Supprime le layout enfant
                     layout.deleteLater()  # Supprime le layout principal
 
@@ -591,7 +599,7 @@ class MainWindow(QMainWindow):
         self.combobox.setStyleSheet("background-color: none;")
         self.combobox.setEnabled(True)
 
-        msg_box = QMessageBox()
+        msg_box = QMessageBox(self)
         msg_box.setIcon(QMessageBox.Critical if is_error else QMessageBox.Information)
         msg_box.setWindowTitle(title)
         msg_box.setText(message)
