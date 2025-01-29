@@ -8,7 +8,6 @@ from model.conflict_manager import ConflictManager
 
 from algorithm.type import AlgoType
 from algorithm.manager import AlgorithmManager
-from algorithm.interface.IAlgorithm import AlgorithmState
 from logging_config import setup_logging
 
 from PyQt5.QtCore import QTimer
@@ -19,7 +18,6 @@ from typing import Dict, List, Callable, TYPE_CHECKING, Tuple
 if TYPE_CHECKING:
     from model.point import Point
     from model.balise import Balise
-    from algorithm.data import DataStorage
 
 class SimulationModel:
     """Classe responsable de la logique de la simulation."""    
@@ -209,9 +207,7 @@ class SimulationModel:
             self.time_elapsed += dt
             for aircraft in self.aircrafts.values():
                 #self.logger.info(f"Avancement pour {aircraft.get_id_aircraft()} de {dt} seconds (elapsed: {self.time_elapsed})")
-                aircraft.set_time(self.time_elapsed)
-                if aircraft.get_take_off_time() <= self.time_elapsed: # Decollage
-                    aircraft.update(timestep=dt)
+                aircraft.update(timestep=dt)
 
         # Mise a jour du temps de simulation dans le manager de conflict (necessaire pour filtrer)
         self.conflict_manager.set_time_simulation(self.time_elapsed)
@@ -255,5 +251,5 @@ class SimulationModel:
     def get_process_time_algorithm(self) -> Tuple[float, float]:
         return self._algorithm_manager.process_time_algorithm()
 
-    def has_algorithm_reach_time(self) -> bool:
-        return self._algorithm_manager.has_algorithm_reach_timeout()
+    def get_algorithm_manager(self) -> AlgorithmManager:
+        return self._algorithm_manager

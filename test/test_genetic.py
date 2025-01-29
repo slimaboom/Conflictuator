@@ -5,7 +5,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from model.simulation import SimulationModel
 from algorithm.data import SimulatedAircraftImplemented
 from algorithm.genetic.genetique import AlgorithmGenetic
-from algorithm.objective_function.conflict_objective import ObjectiveFunctionMaxConflict
+from algorithm.objective_function.function import ObjectiveFunctionMaxConflict
 import time
 
 def main():
@@ -15,7 +15,7 @@ def main():
     data = [SimulatedAircraftImplemented(aircraft) for aircraft in aircrafts.values()]
 
     # Critere est le nombre de conflits par avion: Maximisation
-    genetic = AlgorithmGenetic(data=data, is_minimise=False, verbose=True)
+    genetic = AlgorithmGenetic(data=data, is_minimise=False, verbose=False)
     # Critere
     function = ObjectiveFunctionMaxConflict()
     # Envoie de la fonction objective dans l'algorithme
@@ -30,6 +30,7 @@ def main():
     # Recherche solution
     for _ in range(1):
         optimal_solution = genetic.start()
+        print(optimal_solution)
         for i, sol in enumerate(optimal_solution):
             data[i].update_commands(sol)
             print(f"Maj commande {data[i]}")

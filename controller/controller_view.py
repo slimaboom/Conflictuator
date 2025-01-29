@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 class SimulationViewController(QObject):
     # Signal qui transmet le temps écoulé (en secondes)
     chronometer = pyqtSignal(float)
-    algorithm_terminated = pyqtSignal(bool)
+    algorithm_terminated = pyqtSignal(object)
     
     def __init__(self, scene: QGraphicsScene):
         super().__init__()
@@ -47,7 +47,7 @@ class SimulationViewController(QObject):
 
         # Algorithme results
         self.simulation.signal.algorithm_terminated.connect(self.update_view_with_algorithm, type=Qt.QueuedConnection)  # Assure que le signal est traité dans le thread principal
-        self.logger.info(self.qt_aircrafts)
+        #self.logger.info(self.qt_aircrafts)
 
 
     def initialise_view(self) -> None:
@@ -181,7 +181,7 @@ class SimulationViewController(QObject):
             
             # Mettre le flag a vrai pour eviter de redessiner les items statics
             self.static_items_drawn = True  
-            self.logger.info("draw method call")
+
          # Toujours mettre a jour de facon dynamique
         self.moving_aircrafts()
 
@@ -328,8 +328,8 @@ class SimulationViewController(QObject):
 
         self.logger.info(self.qt_aircrafts)
 
-        self.logger.info(self.simulation.has_algorithm_reach_time())
-        self.algorithm_terminated.emit(self.simulation.has_algorithm_reach_time())
+        algostate = self.simulation.get_algorithm_manager().get_algorithm_state()
+        self.algorithm_terminated.emit(algostate)
 
     def cleanup(self) -> None:
         self.stop_simulation()
@@ -350,5 +350,5 @@ class SimulationViewController(QObject):
         self.qt_routes.clear()
         
         # Déconnecter les signaux pour éviter les callbacks
-        self.simulation.signal.aircrafts_moved.disconnect(self.update_view)
-        self.simulation.signal.algorithm_terminated.disconnect(self.update_view_with_algorithm)
+        self.simulation.disconnect()
+        self.disconnect()

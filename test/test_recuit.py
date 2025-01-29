@@ -5,7 +5,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from model.simulation import SimulationModel
 from algorithm.data import SimulatedAircraftImplemented
 from algorithm.recuit.recuit import AlgorithmRecuit
-from algorithm.objective_function.conflict_objective import ObjectiveFunctionMaxConflict
+from algorithm.objective_function.function import ObjectiveFunctionMaxConflict
 import time
 
 def main():

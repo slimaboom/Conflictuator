@@ -4,9 +4,10 @@ from typing import Any, List, Tuple
 from algorithm.genetic.genetique import AlgorithmGenetic
 from algorithm.genetic.genetique_intervalles import AlgorithmGeneticIntervalles
 from algorithm.objective_function.conflict_exact import ObjectiveFunctionConflict
-from algorithm.objective_function.conflict_objective import ObjectiveFunctionMaxConflict
-from algorithm.objective_function.mix_objective import CombinedEvaluationStrategy
+from algorithm.objective_function.function import ObjectiveFunctionMaxConflict, ObjectiveFunctionMaxConflictMinVariation
+#from algorithm.objective_function.mix_objective import CombinedEvaluationStrategy
 
+from algorithm.interface.IAlgorithm import AlgorithmState, AAlgorithm
 from algorithm.type import AlgoType
 from algorithm.recuit.recuit import AlgorithmRecuit
 from algorithm.data import SimulatedAircraftImplemented
@@ -18,6 +19,8 @@ class AlgorithmManager:
         self._algorithm = None  # Algorithme courant
         self._data = None
         self._thread = None
+        self._instance = None
+        self.__singleton_start = False
         self.logger = setup_logging(__class__.__name__)
 
     def set_algorithm(self, algorithm: AlgoType) -> None:
@@ -37,12 +40,12 @@ class AlgorithmManager:
         if self._algorithm == AlgoType.RECUIT:
             # Transformer les avions en objets pour le recuit
             data_to_recuit = [SimulatedAircraftImplemented(aircraft) for aircraft in self._data]
-            self.instance = AlgorithmRecuit(data_to_recuit, is_minimise=False) 
+            self._instance = AlgorithmRecuit(data_to_recuit, is_minimise=False) 
 
             # Creation de l'instance fonction objective
             function_objectif = ObjectiveFunctionMaxConflict()
             # Envoie de l'instance dans l'algorithme genetique
-            self.instance.set_objective_function(function_objectif)
+            self._instance.set_objective_function(function_objectif)
 
         elif self._algorithm == AlgoType.GENETIQUE:
             # Transformer les avions en objets pour l'algorithme génétique
@@ -64,7 +67,7 @@ class AlgorithmManager:
             function_objectif = ObjectiveFunctionConflict()
             #function_objectif.set_nb_expected_conflict(12)
             # Envoie de l'instance dans l'algorithme genetique
-            self.instance.set_objective_function(function_objectif)
+            self._instance.set_objective_function(function_objectif)
 
         else:
             pass
@@ -73,13 +76,14 @@ class AlgorithmManager:
         """
         Lance l'algorithme dans un thread séparé et retourne les résultats.
         """
-        if not self.instance:
+        if not self._instance:
             raise ValueError("Aucun algorithme n'est défini.")
 
 
         # Créer et démarrer un thread pour exécuter l'algorithme
         self._thread = Thread(target=self._run_algorithm_in_thread, args=(queue,), )
         self._thread.start()
+        self.__singleton_start = True
 
     def _run_algorithm_in_thread(self, result_queue: Queue) -> None:
         """
@@ -88,7 +92,7 @@ class AlgorithmManager:
         """
         try:
             # Exécuter l'algorithme (par exemple recuit simulé)
-            result = self.instance.start()
+            result = self._instance.start()
             #result = [DataStorage(speed=0.002, id=1), DataStorage(speed=0.003, id=2), DataStorage(speed=0.003, id=3), DataStorage(speed=0.003, id=4)]
             result_queue.put(result)  # Mettre le résultat dans la Queue
         except Exception as e:
@@ -97,14 +101,17 @@ class AlgorithmManager:
     
     def stop_algorithm(self) -> None:
         if self._thread and self._thread.is_alive():
-            self.instance.stop()
-            self.logger.info(f"Stopping {self.instance}")
+            self._instance.stop()
+            self.logger.info(f"Stopping {self._instance}")
     
     def progress_algorithm(self) -> float:
-        return self.instance.get_progress()
+        return self._instance.get_progress()
 
     def process_time_algorithm(self) -> Tuple[float, float]:
-        return self.instance.get_process_time(), self.instance.get_timeout_value()
+        return self._instance.get_process_time(), self._instance.get_timeout_value()
     
-    def has_algorithm_reach_timeout(self) -> bool:
-        return self.instance.has_timeout_occurred()
+    def get_algorithm_state(self) -> AlgorithmState:
+        return self._instance.get_state()
+
+    def has_been_lauch(self) -> bool:
+        return self.__singleton_start
