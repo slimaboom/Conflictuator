@@ -82,9 +82,6 @@ class AObjective(IObjective):
         Instancie une classe AObjective à partir de son nom enregistré.
         Exception: TypeError ou ValueError
         """
-        print('AObjective', name)
-        print('AObjective', args)
-        print('AObjective', kwargs)
         return cls.get_objective_class(name)(*args, **kwargs)
 
     @classmethod

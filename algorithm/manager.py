@@ -20,7 +20,6 @@ class AlgorithmManager:
 
     def create_algorithm(self, aalgorithm: AAlgorithm, *args, **kwargs) -> None:
         """Définit l'algorithme à utiliser."""
-        self.logger.info(f"args: {args}\nkwargs:{kwargs}")
         self._algorithm = aalgorithm
 
         # Parse les arguments
@@ -45,7 +44,7 @@ class AlgorithmManager:
         self._data_to_algo = [SimulatedAircraftImplemented(aircraft) for aircraft in data]
 
 
-    def start_algorithm(self, queue: 'Queue', *args, **kwargs) -> None:
+    def start_algorithm(self, queue: 'Queue') -> None:
         """
         Lance l'algorithme dans un thread séparé et retourne les résultats.
         """

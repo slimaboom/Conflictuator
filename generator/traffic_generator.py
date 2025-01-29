@@ -71,8 +71,8 @@ class PTrafficGenerator:
 
         return aircrafts
 
-
-"""# Chargement des routes et des balises
+"""
+# Chargement des routes et des balises
 routes = ROUTES  # Objets Airway définis dans configuration.py
 balises = BALISES  # Objets DatabaseBalise définis dans configuration.py
 AIRCRAFTS = AircraftCollector()
@@ -83,7 +83,7 @@ traffic_generator = PTrafficGenerator(routes, balises, max_duration)
 
 # Définition des taux de génération (lambda) pour toutes les routes
 for route_key in routes:
-    traffic_generator.set_poisson_rate(route_key, random.uniform(0.00025, 0.005))  # Exemple : lambda aléatoire entre 0.01 et 0.1
+    traffic_generator.set_poisson_rate(route_key, random.uniform(0.0012, 0.0012))  # Exemple : lambda aléatoire entre 0.01 et 0.1
 
 # Génération du trafic
 aircrafts = traffic_generator.generate_traffic()

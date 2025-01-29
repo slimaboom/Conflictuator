@@ -133,7 +133,7 @@ class MainWindow(QMainWindow):
         speed_layout = QHBoxLayout()
         # Curseur pour régler la vitesse
         self.speed_spin =  QDoubleSpinBox()
-        self.speed_spin.setRange(1, 20)  # Vitesse entre 1x et 10x
+        self.speed_spin.setRange(1, 100)  # Vitesse entre 1x et 10x
         self.speed_spin.setDecimals(0)
         self.speed_spin.setValue(1)  # Par défaut, à 1
         self.speed_spin.setSingleStep(1)

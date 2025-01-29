@@ -74,6 +74,15 @@ class Aircraft:
 
     _observers: WeakSet = None
 
+    def __hash__(self):
+        return hash(self.get_id_aircraft())
+
+    def __eq__(self, other):
+        if not isinstance(other, Aircraft):
+            return False
+        return self.get_id_aircraft() == other.get_id_aircraft()
+
+
     def __post_init__(self):
         self.__class__.logger = setup_logging(__class__.__name__)
 

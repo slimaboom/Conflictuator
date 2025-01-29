@@ -1,3 +1,4 @@
+import numpy as np
 from algorithm.interface.IAlgorithm import AAlgorithm
 from algorithm.interface.ISimulatedObject import ASimulatedAircraft
 from algorithm.storage import DataStorage
@@ -33,6 +34,9 @@ class AlgorithmGenetic(AAlgorithm):
         self.__mutation_rate   = mutation_rate
         self.__crossover_rate  = crossover_rate
 
+        # Attribut pour sauvegarder les meilleurs résultats
+        self.best_results = []
+
         # Autres attributs
         self.logger = setup_logging(self.__class__.__name__)
 
@@ -65,8 +69,25 @@ class AlgorithmGenetic(AAlgorithm):
         if fitnesses.count(0) >= n - 2:
             selected_indices = self.get_generator().choice(n, size=2, replace=False).tolist()
             return [population[i] for i in selected_indices] #np.random.sample(population, 2)
+        
+        #Pour un problème de min
+        if self.is_minimisation :
+            # Inverser la fitness pour la minimisation
+            max_fitness = max(fitnesses)
+            adjusted_fitnesses = [max_fitness - f for f in fitnesses]
 
-        probabilities = [f / total_fitness for f in fitnesses]
+            # Calcul des probabilités
+            total_fitness = sum(adjusted_fitnesses)
+            if total_fitness == 0 : 
+                    probabilities = [1 / len(adjusted_fitnesses) for f in adjusted_fitnesses]
+            else:
+                probabilities = [f / (total_fitness) for f in adjusted_fitnesses]
+        else: #Pour un problème de max
+            if total_fitness == 0 :
+                probabilities = [1 / len(fitnesses) for f in fitnesses]
+            else : 
+                probabilities = [f / (total_fitness) for f in adjusted_fitnesses]
+
         selected_indices = self.get_generator().choice(n, size=2, replace=False, p=probabilities).tolist()#random.choices(population, weights=probabilities, k=2)
         return [population[i] for i in selected_indices]
     
@@ -182,14 +203,20 @@ class AlgorithmGenetic(AAlgorithm):
             # Acceptation ou non du critere
             if self.is_minimisation():
                 optimal_fitness = min(fitnesses)
-                if (generation <= 0) or (optimal_fitness < best_fitness):
-                    best_fitness   = optimal_fitness
-                    best_individual = population[fitnesses.index(optimal_fitness)]
+                if (generation <= 0) or (optimal_fitness < best_fitness) or (best_fitness == None):
+                    best_fitness   = deepcopy(optimal_fitness)
+                    best_individual = deepcopy(population[fitnesses.index(optimal_fitness)])
+                    self.best_results = [best_individual]
+                elif optimal_fitness == best_fitness : 
+                    self.best_results.append(population[fitnesses.index(optimal_fitness)])
             else: # Maximisation
                 optimal_fitness = max(fitnesses)
-                if (generation <= 0) or (optimal_fitness > best_fitness):
-                    best_fitness    = optimal_fitness
-                    best_individual = population[fitnesses.index(optimal_fitness)]
+                if (generation <= 0) or (optimal_fitness > best_fitness) or (best_fitness == None):
+                    best_fitness   = deepcopy(optimal_fitness)
+                    best_individual = deepcopy(population[fitnesses.index(optimal_fitness)])
+                    self.best_results = [best_individual]
+                elif optimal_fitness == best_fitness : 
+                    self.best_results.append(population[fitnesses.index(optimal_fitness)])
 
             # Logger
             if self.is_verbose():
@@ -204,7 +231,7 @@ class AlgorithmGenetic(AAlgorithm):
 
             if self.is_verbose():
                 self.logger.info(f"Generation {generation + 1}: Progress = {self.get_progress()}%")
-
+                
         self.stop()
         self.logger.info(f"Final Best Solution(fitness: {best_fitness}): {best_individual}")
         self.reinitialize_data()
