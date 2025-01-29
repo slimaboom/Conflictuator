@@ -74,6 +74,15 @@ class Aircraft:
 
     _observers: WeakSet = None
 
+    def __hash__(self):
+        return hash(self.get_id_aircraft())
+
+    def __eq__(self, other):
+        if not isinstance(other, Aircraft):
+            return False
+        return self.get_id_aircraft() == other.get_id_aircraft()
+
+
     def __post_init__(self):
         self.__class__.logger = setup_logging(__class__.__name__)
 
@@ -370,7 +379,8 @@ class Aircraft:
         #self.logger.info(f"Ajout d'un conflict: {conflict_info}: {values}")
 
         if values: # La cle existe si ca renvoie pas None
-            self._conflict_dict.get_from_key(conflict_with).append(conflict_info) # Modification en place
+            if not conflict_info in values:
+                self._conflict_dict.get_from_key(conflict_with).append(conflict_info) # Modification en place
         else:
             self._conflict_dict.add(key=conflict_with, value=[conflict_info]) # Forcer la valeur a etre une liste
 

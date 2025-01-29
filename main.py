@@ -101,7 +101,7 @@ class MainWindow(QMainWindow):
         speed_layout = QHBoxLayout()
         # Curseur pour régler la vitesse
         self.speed_spin =  QDoubleSpinBox()
-        self.speed_spin.setRange(1, 20)  # Vitesse entre 1x et 10x
+        self.speed_spin.setRange(1, 60)  # Vitesse entre 1x et 10x
         self.speed_spin.setDecimals(0)
         self.speed_spin.setValue(1)  # Par défaut, à 1
         self.speed_spin.setSingleStep(1)
@@ -161,7 +161,7 @@ class MainWindow(QMainWindow):
 
         msg = f"Lauch {selected_text}"
         self.logger.info(msg)
-        if algo == AlgoType.RECUIT or algo == algo.GENETIQUE:
+        if algo == AlgoType.RECUIT or algo == algo.GENETIQUE or algo == algo.GENETIQUEINT:
             # Marquer le changement comme interne
             self.is_internal_change = True
             self.combobox.setCurrentIndex(index.row())  # S'assurer que l'élément sélectionné reste visible
@@ -179,6 +179,7 @@ class MainWindow(QMainWindow):
 
             self.create_algorithm_panel()
             self.simulation_controller.simulation.start_algorithm(algo)
+            
 
     def create_algorithm_panel(self) -> None:
         self.progress_bar = QProgressBar()

@@ -297,7 +297,14 @@ class SimulationViewController(QObject):
 
                 # Assurer un Z-index élevé pour les avions originaux
                 qtaircraft.setZValue(2)
-        
+        # Afficher les conflits
+        """s=0
+        for qtaircraft in self.qt_aircrafts.values(): 
+            aircraft = qtaircraft.get_aircraft()
+            for values in aircraft.get_conflicts().get_all().values():
+                s += (len(values))
+                print(values)
+        print("len : ",s)"""
         self.enable_original_aircraft_interactions()
 
         # Ajouter les copies des avions (optimaux) à la scène

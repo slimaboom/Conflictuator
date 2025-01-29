@@ -4,6 +4,7 @@ class AlgoType(Enum):
     NO_ALGO: str = "No Algorithm"
     RECUIT: str = "Simulated Annealing"
     GENETIQUE: str = "Genetic"
+    GENETIQUEINT: str = "Genetic intervalles"
 
     @staticmethod
     def find(value: str) -> 'AlgoType':

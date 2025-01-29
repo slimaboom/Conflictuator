@@ -1,5 +1,7 @@
 from dataclasses import dataclass
 
+import numpy as np
+
 from logging_config import setup_logging
 
 from typing import List, TYPE_CHECKING
@@ -81,14 +83,26 @@ class ConflictManager:
 
     def update_aircraft_conflicts(self, updated_aircraft: 'Aircraft') -> None:
         """
-        Met à jour les conflits liés à un avion spécifique après un changement (ex: vitesse).
+        Met à jour les conflits impliquant un avion spécifique après une modification.
         """
-        # Efface les anciens conflits de l'avion qui ont dépassé le temps courant
-        #self.logger.info(f"Start Mise a jour de l'avion:  {updated_aircraft.get_id_aircraft()}")
+        # Récupérer les balises affectées par cet avion
+        affected_balises = updated_aircraft.get_flight_plan_timed().keys()
+        
+        # Identifier les avions partageant ces balises
+        impacted_aircrafts = []
+        for aircraft in self.aircrafts.values():
+            if any(balise in aircraft.get_flight_plan_timed() for balise in affected_balises):
+                impacted_aircrafts.append(aircraft)
+        
+        # Ajouter l'avion cible en tête de la liste
+        impacted_aircrafts.insert(0, updated_aircraft)
 
-        # Recalcule les conflits impliquant cet avion
-        self.detect_conflicts(list(self.aircrafts.values()))
-        #self.logger.info(f"End Mise a jour de l'avion:  {updated_aircraft.get_id_aircraft()}")
+        # Supprimer les doublons tout en maintenant l'ordre
+        impacted_aircrafts = list(dict.fromkeys(impacted_aircrafts))
+        
+        # Recalculer les conflits uniquement pour ces avions
+        self.detect_conflicts(impacted_aircrafts)
+
 
 
     def detect_conflicts(self, aircraft_list: List['Aircraft']) -> None:
@@ -98,6 +112,19 @@ class ConflictManager:
         """
         #self.logger.info(f"Calcul des conflits pour:  {[aircraft.get_id_aircraft() for aircraft in aircraft_list]}")
 
+        # Identifier l'avion cible 
+        target_aircraft = aircraft_list[0]
+        target_id = target_aircraft.get_id_aircraft()
+
+        # Obtenir les IDs des avions impactés
+        impacted_aircraft_ids = {aircraft.get_id_aircraft() for aircraft in aircraft_list}
+
+        # Étape 1 : Nettoyer les conflits pour chaque avion impliqué
+        for aircraft in aircraft_list:
+            if (aircraft.id != target_id):
+                aircraft.clear_conflicts(target_id)
+            target_aircraft.clear_conflicts(aircraft)
+        
         # Collecter les temps de passage pour chaque avion
         balise_passages = {}
         for aircraft in aircraft_list:
@@ -107,25 +134,34 @@ class ConflictManager:
                     balise_passages[balise_name] = []
                 balise_passages[balise_name].append((aircraft, passage_time))
 
-        # Analyser les conflits pour chaque balise
+        # Parcourir les balises et supprimer les conflits impliquant l'avion cible
         for balise_name, passages in balise_passages.items():
+            if balise_name in self.balises: # Si balise deja en conflit 
+                balise = self.balises[balise_name]
+                for aircraft, _ in passages: # on parcours les avions qui la parcours
+                    if aircraft.get_id_aircraft() != target_aircraft.get_id_aircraft(): # Si l'avion en conflit n'est pas l'avion cible 
+                        balise.clear_conflicts_between(
+                            target_aircraft.get_id_aircraft(),
+                            aircraft.get_id_aircraft()
+                        )
+
+            # Analyser les conflits pour chaque balise
             if self.balises.get(balise_name):
-                self.balises.get(balise_name).clear_conflicts(self.time_simulation) # Effacer les conflicts en cas de recalcul
 
                 # Trier les passages par temps
                 passages.sort(key=lambda x: x[1])
                 conflicts: List[ConflictInformation] = []
 
                 # Vérifier les conflits
-                for i in range(len(passages)):
+                for i in range(len(passages) - 1):
                     for j in range(i + 1, len(passages)):
                         aircraft1, time1 = passages[i]
                         aircraft2, time2 = passages[j]
-                        if time2 - time1 > self.time_threshold:
+                        if np.abs(time2 - time1) > self.time_threshold:
                             break  # Les avions suivants sont trop éloignés dans le temps
 
                         #ajouter les conflit dans les balises et les trajectoires
-                        if time2 - time1 <= self.time_threshold:
+                        else:
                             # conflicts.append({
                             #     "aircraft_1": aircraft1.get_id_aircraft(),
                             #     "speed_1": aircraft1.get_speed(),
@@ -140,22 +176,26 @@ class ConflictManager:
                             conflict_info_two = ConflictInformation(aircraft2, aircraft1, time2, time1, self.balises.get(balise_name))
                             
                             # Nettoyer les conflits entre 2 et 1
-                            aircraft2.clear_conflicts(with_aircraft_id=aircraft1.get_id_aircraft())
+                            #aircraft2.clear_conflicts(with_aircraft_id=aircraft1.get_id_aircraft())
 
                             # Ajouter les conflits aux avions
                             aircraft1.set_conflicts(conflict_info_one)
+                            #print(aircraft1.set_conflicts(conflict_info_one))
                             aircraft2.set_conflicts(conflict_info_two)
+                            #print(aircraft2.set_conflicts(conflict_info_two))
 
                             conflicts.append(conflict_info_one)
 
                             if time1 < time2:
                                 self.add_conflicts(conflict_info_one)
+                                self.balises.get(balise_name).add_conflicts(conflict_info_one)
                             else:
                                 self.add_conflicts(conflict_info_two)
+                                self.balises.get(balise_name).add_conflicts(conflict_info_two)
                 
-                if len(conflicts) > 0 :
+                #if len(conflicts) > 0 :
                     #self.logger.info(f"Manager: conflicts detected for balise: {balise_name}")
-                    self.balises.get(balise_name).set_conflicts(conflicts)
+                    #self.balises.get(balise_name).set_conflicts(conflicts)
         return None
     
     def add_conflicts(self, conflict: ConflictInformation) -> None:

@@ -36,6 +36,11 @@ class Balise(Point):
         #self.logger.info(f"Adding/Replacing conflict in balise: {self}\nfrom {self.conflits} to {conflicts}")
         self.conflits = conflicts # Ajoute les conflits
 
+    def add_conflicts(self, conflict: ConflictInformation) -> None:
+        #self.logger.info(f"Adding/Replacing conflict in balise: {self}\nfrom {self.conflits} to {conflicts}")
+        if conflict not in self.conflits :
+            self.conflits.append(conflict)  # Ajoute les conflits
+
     
     def get_conflicts(self) -> List[ConflictInformation]: return self.conflits
 
@@ -49,10 +54,31 @@ class Balise(Point):
                 filter_conflict.append(c)
         
         self.conflits = filter_conflict
+
+    def clear_conflicts_between(self, aircraft_id_one: int, aircraft_id_two: int) -> None:
+        """
+        Supprime les conflits impliquant deux avions spécifiques identifiés par leurs IDs.
+
+        Args:
+            aircraft_id_one (int): ID du premier avion.
+            aircraft_id_two (int): ID du second avion.
+        """
+        self.conflits = [
+            conflict for conflict in self.conflits
+            if not (
+                (conflict.get_aircraft_one().get_id_aircraft() == aircraft_id_one and
+                conflict.get_aircraft_two().get_id_aircraft() == aircraft_id_two)
+                or
+                (conflict.get_aircraft_one().get_id_aircraft() == aircraft_id_two and
+                conflict.get_aircraft_two().get_id_aircraft() == aircraft_id_one)
+            )
+        ]
+
     
     def deepcopy(self) -> 'Balise':
         new_balise = deepcopy(self)
         return new_balise       
+    
 
 
         

@@ -10,7 +10,7 @@ import numpy as np
 class SimulatedAircraftImplemented(ASimulatedAircraft):
     """Implémentation concrète de ASimulatedAircraft"""
     PRECISION           = 4
-    NB_MAXIMUM_COMMANDS = 5
+    NB_MAXIMUM_COMMANDS = 3
     NB_SPEEDS_POSSIBLE  = 20
 
     @override
