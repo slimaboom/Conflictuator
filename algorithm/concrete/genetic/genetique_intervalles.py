@@ -24,7 +24,7 @@ class AlgorithmGeneticIntervalles(AAlgorithm):
                  generations: int = 100, 
                  mutation_rate: float = 0.1, 
                  crossover_rate: float = 0.8,
-                 t: float = 600):
+                 time_window: float = 600):
         
         # Attributs generaux
         super().__init__(data=data, is_minimise=is_minimise, verbose=verbose)
@@ -35,16 +35,21 @@ class AlgorithmGeneticIntervalles(AAlgorithm):
         self.__generations     = generations
         self.__mutation_rate   = mutation_rate
         self.__crossover_rate  = crossover_rate
-        self.__t               = t
-
+        self.__time_window     = time_window
+        if time_window > 0:
+            self.__interval_index = int(3600//time_window)
+        else:
+            message = f"Time Window parameter cannot negative or null."
+            raise ValueError(message)
+        
         self.aircraft_intervals = {}  # Associe chaque avion à son intervalle initial
         self.bests_results = [] #meileurs resultat à stocké 
 
         # Initialiser les intervalles une fois
-        for interval_index in range(int(3600//t)):
+        for interval_index in range(self.__interval_index):
             for obj in self.get_data():
-                interval_start = interval_index * self.__t
-                interval_end = (interval_index + 1) * self.__t
+                interval_start = interval_index * self.__interval_index
+                interval_end = (interval_index + 1) * self.__interval_index
                 if interval_start <= obj.get_object().get_take_off_time() < interval_end : 
                     self.aircraft_intervals[obj] = interval_index
 
@@ -56,7 +61,7 @@ class AlgorithmGeneticIntervalles(AAlgorithm):
         """Generation d'un individu (commandes) pour chaque ASimulatedAircraft"""
         # Renvoyer les meilleurs solutions pour un intervalle de temps 
         bests = []
-        for interval_index in range(3600//self.__t) :
+        for interval_index in range(self.__interval_index) :
             print(f"Run : {interval_index}")
 
             # Filtrer les avions pour cet intervalle

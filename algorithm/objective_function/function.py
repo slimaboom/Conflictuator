@@ -4,7 +4,6 @@ from algorithm.interface.ISimulatedObject import ASimulatedAircraft
 from typing import List
 from typing_extensions import override
 
-import numpy as np
 #-------------------------------------------------#
 # Implementation de l'interface des fonctions objectives
 
