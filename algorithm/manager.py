@@ -4,7 +4,7 @@ from typing import Any, List, Tuple
 from algorithm.genetic.genetique import AlgorithmGenetic
 from algorithm.genetic.genetique_intervalles import AlgorithmGeneticIntervalles
 from algorithm.objective_function.conflict_exact import ObjectiveFunctionConflict
-from algorithm.objective_function.function import ObjectiveFunctionMaxConflict, ObjectiveFunctionMaxConflictMinVariation
+from algorithm.objective_function.function import ObjectiveFunctionMaxConflict, ObjectiveFunctionMaxConflictMinVariation, ObjectiveFunctionConflict
 #from algorithm.objective_function.mix_objective import CombinedEvaluationStrategy
 
 from algorithm.interface.IAlgorithm import AlgorithmState, AAlgorithm
@@ -50,18 +50,18 @@ class AlgorithmManager:
         elif self._algorithm == AlgoType.GENETIQUE:
             # Transformer les avions en objets pour l'algorithme génétique
             data_to_genetic = [SimulatedAircraftImplemented(aircraft) for aircraft in self._data]
-            self.instance = AlgorithmGenetic(data_to_genetic, is_minimise=True, population_size=15, generations=30)
+            self._instance = AlgorithmGenetic(data_to_genetic, is_minimise=True, population_size=15, generations=30)
 
             # Creation de l'instance fonction objective
             function_objectif = ObjectiveFunctionConflict()
             function_objectif.set_nb_expected_conflict(4)
             # Envoie de l'instance dans l'algorithme genetique
-            self.instance.set_objective_function(function_objectif)
+            self._instance.set_objective_function(function_objectif)
         
         elif self._algorithm == AlgoType.GENETIQUEINT:
             # Transformer les avions en objets pour l'algorithme génétique
             data_to_genetic = [SimulatedAircraftImplemented(aircraft) for aircraft in self._data]
-            self.instance = AlgorithmGeneticIntervalles(data_to_genetic, is_minimise=True, population_size=5, generations=5)
+            self._instance = AlgorithmGeneticIntervalles(data_to_genetic, is_minimise=True, population_size=5, generations=5)
 
             # Creation de l'instance fonction objective
             function_objectif = ObjectiveFunctionConflict()

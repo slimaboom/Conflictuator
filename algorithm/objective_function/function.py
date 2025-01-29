@@ -3,6 +3,8 @@ from algorithm.interface.ISimulatedObject import ASimulatedAircraft
 
 from typing import List
 from typing_extensions import override
+
+import numpy as np
 #-------------------------------------------------#
 # Implementation de l'interface des fonctions objectives
 
@@ -226,3 +228,42 @@ class ObjectiveFunctionMaxConflictMinVariation(AObjective):
         fitness  = conflict_value + time_bonus_value 
         fitness +=- (timediff_penality_value + command_penality_value + speed_penalty_value + spacing_penalty_value)
         return fitness # s'assurer que la fitness est positive.
+    
+
+#-----------------------------------------------------------------------
+#-----------------------------------------------------------------------
+#------------- ObjectiveFunctionExactConflict --------------------------
+#-----------------------------------------------------------------------
+#-----------------------------------------------------------------------
+    
+class ObjectiveFunctionConflict(AObjective):
+
+
+    def __init__(self):
+
+        super().__init__()
+
+        self.nb_expected_conflict: int = 2
+
+    def set_nb_expected_conflict(self, n: int) -> None:
+        self.nb_expected_conflict = n
+    
+    @override
+    def evaluate(self, data: List[ASimulatedAircraft]) -> float:
+        total_conflicts = 0
+        nc = 0.
+        conflict = []
+        for _, aircraft_sim in enumerate(data):
+            for conflicts in aircraft_sim.get_object().get_conflicts().get_all().values():
+                if conflicts not in conflict:
+                    conflict.append(conflicts)
+                    nc = len(conflicts)
+                    total_conflicts += nc
+        #print("c'est la ", self.nb_conflicts, total_conflicts)
+        total = np.abs(self.nb_expected_conflict - (total_conflicts * 0.5))
+        return total
+    
+    @override
+    def name(self) -> str:
+        return f"{self.__class__.__name__}"
+    
