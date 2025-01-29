@@ -7,8 +7,7 @@ from algorithm.concrete.genetic.genetique import AlgorithmGenetic
 from algorithm.interface.IAlgorithm import AAlgorithm
 from algorithm.interface.IObjective import AObjective
 from algorithm.interface.ISimulatedObject import ASimulatedAircraft
-from algorithm.objective_function.conflict_exact import ObjectiveFunctionAbsoluteNumberConflict
-from algorithm.objective_function.conflict_objective import ObjectiveFunctionMaxConflict
+from algorithm.objective_function.function import ObjectiveFunctionMaxConflict, ObjectiveFunctionAbsoluteNumberConflict
 from algorithm.storage import DataStorage
 
 from logging_config import setup_logging

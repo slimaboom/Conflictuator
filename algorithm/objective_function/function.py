@@ -19,24 +19,19 @@ class ObjectiveFunctionMaxConflict(AObjective):
     """ Fonction objective simple:
             calculant le nombre de conflits de chaque ASimulatedAircraft
     """
+
     def __init__(self):
         super().__init__()
 
     @override
     def evaluate(self, data: List[ASimulatedAircraft]) -> float:
-        """
-            Score Formula: `y = f(data)`
-
-            ```
-            y = sum(len(aircraft_sim.get_object().get_conflicts()) for a in data)
-            ```
-        """
         total_conflicts = 0
         nc = 0.
         for _, aircraft_sim in enumerate(data):
-            nc = len(aircraft_sim.get_object().get_conflicts())
-            total_conflicts += nc
-        return total_conflicts * 0.5
+            for conflicts in aircraft_sim.get_object().get_conflicts().get_all().values():
+                nc = len(conflicts)
+                total_conflicts += nc
+        return (total_conflicts * 0.5)
     
     @override
     def name(self) -> str:
@@ -287,4 +282,3 @@ class ObjectiveFunctionAbsoluteNumberConflict(AObjective):
     @override
     def name(self) -> str:
         return f"{self.__class__.__name__}"
-    
