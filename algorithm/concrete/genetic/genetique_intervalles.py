@@ -4,10 +4,8 @@ import random
 import numpy as np
 
 from algorithm.concrete.genetic.genetique import AlgorithmGenetic
-from algorithm.interface.IAlgorithm import AAlgorithm
-from algorithm.interface.IObjective import AObjective
+from algorithm.interface.IAlgorithm import AAlgorithm, AlgorithmState
 from algorithm.interface.ISimulatedObject import ASimulatedAircraft
-from algorithm.objective_function.function import ObjectiveFunctionMaxConflict, ObjectiveFunctionAbsoluteNumberConflict
 from algorithm.storage import DataStorage
 
 from logging_config import setup_logging
@@ -68,9 +66,9 @@ class AlgorithmGeneticIntervalles(AAlgorithm):
             instance = AlgorithmGenetic(relevant_aircraft, verbose=False, is_minimise=True, population_size=10, generations=20)
 
             # Définir la fonction objective
-            function_objective = ObjectiveFunctionAbsoluteNumberConflict(nunber_of_conflict_expected=2)
+            #function_objective = #ObjectiveFunctionAbsoluteNumberConflict(nunber_of_conflict_expected=2)
             #instance.set_added_data(added_data)
-            instance.set_objective_function(function_objective)
+            #instance.set_objective_function(function_objective)
 
             # Lancer l'algorithme génétique pour cet intervalle et récupérer les meilleurs individus
             print("L'algo commence")
@@ -301,5 +299,5 @@ class AlgorithmGeneticIntervalles(AAlgorithm):
             #print("best fitnesses",self.__calculate_fitnesses([best_individual]))
             return best_individual
         except Exception as e:
-            print(e)
+            raise e
 

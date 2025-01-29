@@ -87,3 +87,6 @@ class AlgorithmManager:
 
     def has_been_lauch(self) -> bool:
         return self.__singleton_start
+    
+    def is_algorithm_error(self) -> bool:
+        return self.get_algorithm_state() == AlgorithmState.ERROR

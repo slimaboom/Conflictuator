@@ -369,8 +369,8 @@ class MainWindow(QMainWindow):
         
         # Connexion lors de la fin d'un algorithm pour re-enable les elements d'interactions
         simulation_controller.simulation.signal.algorithm_terminated.connect(self.connect_elements)
+        simulation_controller.simulation.signal.algorithm_error.connect(self.notify_algorithm_error)
         simulation_controller.algorithm_terminated.connect(self.notify_algorithm_termination)
-
         return simulation_controller
     
 

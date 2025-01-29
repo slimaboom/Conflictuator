@@ -51,8 +51,12 @@ class SimulationModelNotifier(SimulationModel):
         if self._queue.qsize() != 0:
             # Emission du signal pour signifier que l'algorithme a terminé
             # Le file d'attente est envoyee dans le signal
-            self.signal.algorithm_terminated.emit(self._queue)
-            self.qtimer.stop()
+            if self.get_algorithm_manager().is_algorithm_error():
+                self.signal.algorithm_error.emit(self.get_algorithm_manager().get_algorithm_state(), 
+                           self._queue.get_nowait())
+            else:
+                self.signal.algorithm_terminated.emit(self._queue)
+                self.qtimer.stop()
         
         progression = self.get_progress_algorithm()
         elasped, timeout = self.get_process_time_algorithm()

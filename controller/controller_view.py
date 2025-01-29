@@ -267,13 +267,15 @@ class SimulationViewController(QObject):
         except Exception as e:
             self.logger.error(f"Impossible de récupérer les résultats dans la queue : {e}")
             return
+        
+        algostate = self.simulation.get_algorithm_manager().get_algorithm_state()
+        self.algorithm_terminated.emit(algostate)
 
         # Vérification de la structure de final
         if not isinstance(final, list) or not all(isinstance(sublist, list) for sublist in final):
             msg = f"Structure inattendue dans la file d'attente : {final}"
-            msg += f"\nExpected List[DataStorage] or List[List[DataStorage]], got {type(final)}"
+            msg += f"\nExpected List[DataStorage] or List[List[DataStorage]], got {type(final)}\n\n{final}"
             self.logger.error(msg)
-            return
 
         qt_aircrafts_copies = self.copy_qtaircrafts()
 
@@ -328,8 +330,6 @@ class SimulationViewController(QObject):
         self.update_qt_balises_color()
 
         #self.logger.info(self.qt_aircrafts)
-
-        algostate = self.simulation.get_algorithm_manager().get_algorithm_state()
         self.algorithm_terminated.emit(algostate)
 
     def update_qt_balises_color(self) -> None:
