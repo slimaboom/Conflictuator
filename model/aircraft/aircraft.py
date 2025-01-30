@@ -211,8 +211,11 @@ class Aircraft:
 
     def update(self, timestep: float) -> None:
         """Mise à jour des attributs de l'avion pour le faire avancer en utilisant"""
-        self.time = self.__round(self.time + timestep)
-        if not self.time < self.take_off_time: # L'avion a pas décollé on calcul sa nouvelle position, nouveau cap
+
+        if self.time < self.take_off_time: # L'avion a pas décollé, mise a jour que du temps
+            self.time = self.__round(self.time + timestep)
+        else:
+            self.time = self.__round(self.time + timestep)
             self.position = self.get_position_from_time(time=self.time)
 
     # def update(self, timestep: float) -> None:
@@ -418,14 +421,14 @@ class Aircraft:
                 lower = list_items[-1][0]
             return lower, upper
         #---------------------------------------
-
+        self.flight_time = max(0, target_time - self.take_off_time) # si target_time < take_off alors avion pas décollé
+        self.time = target_time
         if target_time < self.take_off_time: # L'avion ne bouge pas
            self._is_finished = False
            return self.position
         else: # L'avion doit bouger
             # Trouver les balises entre lesquelles se trouve l'avion
             balise_name, next_balise_name = find_keys(flight_plan_timed=self.flight_plan_timed, time=target_time)
-
             if balise_name == None:  # L'avion n'a pas encore démarré
                 self._is_finished = False
                 return self.position
@@ -445,16 +448,16 @@ class Aircraft:
                 return self.position  # Évite les erreurs en cas de données manquantes
 
             # Calcul de la fraction du trajet effectuée
-            progress = (target_time - balise_time) / (next_balise_time - balise_time)
+            progress = (self.__round(target_time) - balise_time) / (next_balise_time - balise_time)
 
             # Interpolation linéaire entre les balises
             new_x = balise.getX() + progress * (next_balise.getX() - balise.getX())
             new_y = balise.getY() + progress * (next_balise.getY() - balise.getY())
-            new_z = balise.getZ() #+ progress * (next_balise.getZ() - balise.getZ())
+            new_z = self.position.getZ() #+ progress * (next_balise.getZ() - balise.getZ())
 
             # Mettre à jour le heading de l'avion
             self.heading = self.calculate_heading(Point(new_x, new_y, new_z), next_balise)
-            self.time = target_time
+            self._is_finished = False
             #return self.controle_position(new_x, new_y, new_z) # modifie le heading pour faire un rebond 
             return Point(new_x, new_y, new_z) # raise error si les new_xyz sortent de MinMax Value
 

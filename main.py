@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import (QMainWindow, QVBoxLayout, 
+from PyQt5.QtWidgets import (QMainWindow, QVBoxLayout, QLayout,
                              QWidget, QApplication,
                              QHBoxLayout, QPushButton,
                              QLabel, QComboBox,
@@ -6,7 +6,7 @@ from PyQt5.QtWidgets import (QMainWindow, QVBoxLayout,
                              QMenu, QAction, 
                              QInputDialog, QDialog, 
                              QDoubleSpinBox, QDialogButtonBox,
-                             QProgressBar
+                             QProgressBar, QSlider
 )
 
 from PyQt5.QtCore import Qt, QModelIndex
@@ -119,6 +119,10 @@ class MainWindow(QMainWindow):
         layout_two = QHBoxLayout()  # Disposition horizontale
         vertical_layout.addLayout(layout_two)
 
+        # Troisième ligne : Horizontal layout
+        layout_tree = QHBoxLayout()
+        vertical_layout.addLayout(layout_tree)
+
         # Première ligne : Ajout des QWidgets 
         # Bouton Play/Pause
         self.play_button = QPushButton("Play")
@@ -193,7 +197,28 @@ class MainWindow(QMainWindow):
 
         layout_two.addWidget(self.record_sim_btn)
         layout_two.addWidget(self.arrival_manager_btn)
+
+        # Troisième ligne : Ajout des QWidgets
+        self.create_slider(layout_tree)
         return control_panel
+
+    def create_slider(self, layout: QLayout) -> QSlider:
+        self.time_slider = QSlider(Qt.Horizontal)  # Slider horizontal
+        self.time_slider.setRange(0, 36000)  # 1 heure = 3600 secondes * 10 (car pas de 0.1s)
+        self.time_slider.setSingleStep(1)  # Unité = 0.1s
+        self.time_slider.setTickInterval(600)  # Affichage des ticks toutes les minutes (60s * 10)
+        self.time_slider.setTickPosition(QSlider.TicksBelow)
+
+        # Mettre à jour le label quand on déplace le slider
+        self.time_slider.valueChanged.connect(self.update_slider)
+    
+        # Ajouter les widgets au layout
+        layout.addWidget(self.time_slider)
+
+    # Fonction pour mettre à jour l'affichage du temps
+    def update_slider(self, value):
+        seconds = value * self.simulation_controller.simulation.get_interval_timer()  # Convertir en secondes
+        self.simulation_controller.run_fast_simulation(elasped=seconds)
 
     def show_popup_combox(self):
         """Forcer la première option sélectionnée et afficher le menu déroulant."""
@@ -511,7 +536,8 @@ class MainWindow(QMainWindow):
 
         if self.simulation_controller:
             self.simulation_controller.cleanup()
-            
+            self.time_slider.setValue(0) # Déclenche les fonctions connectées
+
             self.scene.clear()
 
             self.simulation_controller = self.create_simulation_controller()

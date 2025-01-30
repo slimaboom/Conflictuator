@@ -201,7 +201,7 @@ class SimulationModel:
 
     def run(self) -> None:
         """Met à jour la simulation."""
-        dt = self.timer.interval()/1000 # converti en secondes
+        dt = self.get_interval_timer() # converti en secondes
         
         for _ in range(self._speed_factor):
             if not self.is_finished():
@@ -212,6 +212,17 @@ class SimulationModel:
 
                 # Mise a jour du temps de simulation dans le manager de conflict (necessaire pour filtrer)
                 self.conflict_manager.set_time_simulation(self.time_elapsed)
+
+    def run_fast_simulation(self, elasped: float) -> None:
+        """Met a jour la simulation en fonction du temps précis et non d'une courte durée d'avancement"""
+        self.time_elapsed = elasped
+        self.conflict_manager.set_time_simulation(self.time_elapsed)
+        elasped_minus = elasped - self.get_interval_timer() # retirer le temps du timer car aircraft.update(dt) va incrémenter 
+        for aircraft in self.aircrafts.values():
+            # Préciser à l'avion à quelle heure il est
+            aircraft.set_time(elasped_minus)
+            # Incrément de sa position, cap et temps de vol
+            aircraft.update(elasped_minus)
 
 
     def toggle_running(self) -> None:

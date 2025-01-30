@@ -212,6 +212,10 @@ class SimulationViewController(QObject):
     def stop_simulation(self): self.simulation.stop_simulation()
     def start_simulation(self): self.simulation.start_simulation()
 
+    def run_fast_simulation(self, elasped: float) -> None:
+        """Permet d'exécute la méthode du modèle logique. C'est un passage de relais"""
+        self.simulation.run_fast_simulation(elasped=elasped)
+
     def connect_to_qtaircrafts(self, callback: Callable[[QtAircraft], None]) -> None:
         """Connexion du callback a l'evenement clicked sur le signal"""
         self.aircraft_click_callback = callback  # Callback pour les clics

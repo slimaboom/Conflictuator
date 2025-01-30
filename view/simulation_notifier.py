@@ -27,6 +27,13 @@ class SimulationModelNotifier(SimulationModel):
         self.is_finished()
 
     @override
+    def run_fast_simulation(self, elasped: float) -> None:
+        """Permet d'exécuter la méthode parente (Simulation) et de notifier l'IHM"""
+        super().run_fast_simulation(elasped=elasped)
+        self.signal.aircrafts_moved.emit()
+        #self.is_finished()
+
+    @override
     def start_algorithm(self, aalgorithm: 'AAlgorithm', *args, **kwargs) -> 'Queue':
         """
         Démarre l'algorithme dans un thread séparé et connecte un signal pour notifier.
