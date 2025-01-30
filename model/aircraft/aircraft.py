@@ -1,49 +1,20 @@
 from dataclasses import dataclass, field
+from model.aircraft. information import Information
 from model.point import Point, PointValue
 from model.balise import Balise
 from utils.conversion import rad_to_deg_aero
 from model.collector import Collector
 from logging_config import setup_logging
-from algorithm.storage import DataStorage
+from model.aircraft.storage import DataStorage
 
 from typing import List, Dict, TYPE_CHECKING, Optional
 from copy import deepcopy
 from weakref import WeakSet
-from enum import Enum
 
 import numpy as np
-import pdb
 
 if TYPE_CHECKING:
     from model.conflict_manager import ConflictManager, ConflictInformation
-
-class SpeedValue(Enum):
-    MAX: float = 1e-2
-    MIN: float = 1e-4
-    STEP: float = 1e-4
-
-
-@dataclass(frozen=True)
-class Information:
-    """ Permet de stocker les informations d'un avion a un instant t donne
-    Frozen=True, car non modifiable
-    """
-    position: Point
-    time: float
-    speed: float
-    heading: float
-    take_off: float
-    flight_time: float
-
-    def get_position(self): return self.position
-    def get_time(self): return self.time
-    def get_speed(self): return self.speed
-    def get_heading(self, in_aero: bool = True): 
-        if in_aero: return rad_to_deg_aero(self.heading)
-        else: return self.heading
-    def get_take_off_(self): return self.take_off
-    def get_flight_time(self): return self.flight_time
-
 
 @dataclass
 class Aircraft:

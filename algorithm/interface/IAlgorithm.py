@@ -1,6 +1,6 @@
 from algorithm.interface.ISimulatedObject import ISimulatedObject, ASimulatedAircraft
 from algorithm.interface.IObjective import IObjective, AObjective
-from algorithm.storage import DataStorage
+from model.aircraft.storage import DataStorage
 
 from utils.conversion import sec_to_time
 from logging_config import setup_logging

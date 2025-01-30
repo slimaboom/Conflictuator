@@ -5,7 +5,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from generator.traffic_generator import AIRCRAFTS
 from logging_config import setup_logging
 from utils.conversion import sec_to_time
-from algorithm.storage import DataStorage
+from model.aircraft.storage import DataStorage
 
 logger = setup_logging(__file__.split("/")[-1])
 

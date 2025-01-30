@@ -3,7 +3,7 @@ import numpy as np
 from model.configuration import BALISES, ROUTES
 from model.route import Airway
 from model.balise import DatabaseBalise
-from model.aircraft import Aircraft, AircraftCollector
+from model.aircraft.aircraft import Aircraft, AircraftCollector
 from typing import List
 
 class PTrafficGenerator:
@@ -113,7 +113,7 @@ AIRCRAFTS.add_aircraft(Aircraft(speed=0.0012,
                                 flight_plan=Airway.transform(["MAJOR", "MTL", "MINDI", "CFA", "ETAMO"], BALISES))
 )
 
-from algorithm.storage import DataStorage
+from model.aircraft.storage import DataStorage
 commands = {1:
               [DataStorage(speed=0.0014, id=1, time=163.69, heading=5.516356508438049), 
                DataStorage(speed=0.0012, id=1, time=165.11, heading=5.516356508438049)],

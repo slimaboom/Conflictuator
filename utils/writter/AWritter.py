@@ -14,7 +14,9 @@ class AWritter(IWritter):
         super().__init__(container)
         self.__container = container
 
-    @abstractmethod
+    def __repr__(self):
+        return f"{self.__class__.__name__}(container='{self.__container}')"
+
     def write(self, text: str) -> bool:
         """Renvoie True si l'écriture du <texte> a été possible et False sinon"""
         pass
@@ -30,13 +32,12 @@ class AWritter(IWritter):
         """
         writter_class = MetaDynamiqueDatabase.register(subclass=writter_class)
         params = MetaDynamiqueDatabase.get_class_constructor_params(base_class=cls, class_name=writter_class.__name__)
-        # Vérifie que le constructeur (init) n'accepte que `self`
-        print(params)
+        # Vérifie que le constructeur (init) n'accepte que `self` et le container
         if len(params) != 1: # self est deja retirer dans MetaDynamiqueDatabase
             error =  f"Class {cls.__name__}({cls.__bases__[0]}) shoud have only one parameter (container: str), total parameters:(self, container: str)."
             error += f" container is the string related to where writting will be done (filename or database for exemple)"
             raise TypeError(error)
-        return cls
+        return writter_class
 
 
     @classmethod
@@ -59,7 +60,7 @@ class AWritter(IWritter):
 
 
     @classmethod
-    def get_format_class(cls, name: str) -> 'AWritter':
+    def get_writter_class(cls, name: str) -> 'AWritter':
         """
         Renvoie une classe AWritter à partir de son nom enregistré.
         L'instance n'est pas crée.
@@ -69,7 +70,7 @@ class AWritter(IWritter):
             return MetaDynamiqueDatabase.get_class(base_class=cls, name=name)
         except Exception as e:
             error = f"Writter '{name}' non supporté car non enregistré dans la classe {cls.__name__}"
-            error += f"\nUtiliser @{cls.__name__}.register_format en décoration de la classe dérivée pour enregistré le format."
+            error += f"\nUtiliser @{cls.__name__}.register_writter en décoration de la classe dérivée pour enregistré le writter."
             full_message = f"{str(e)}\n{error}"
             raise type(e)(full_message)
 
@@ -77,7 +78,7 @@ class AWritter(IWritter):
     @classmethod
     def create_writter(cls, name: str, container: str) -> 'AWritter':
         """
-        Instancie une classe AWritter à partir de son nom enregistré.
+        Instancie une classe AWritter à partir de son nom enregistré, et du container
         Exception: TypeError ou ValueError
         """
-        return cls.get_format_class(name)(container)
+        return cls.get_writter_class(name)(container)

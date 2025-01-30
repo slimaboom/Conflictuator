@@ -1,5 +1,5 @@
 from algorithm.interface.ISimulatedObject import ASimulatedAircraft
-from algorithm.storage import DataStorage
+from model.aircraft.storage import DataStorage
 
 from logging_config import setup_logging
 

@@ -1,6 +1,7 @@
 from algorithm.interface.ISimulatedObject import VariableName, ASimulatedAircraft
-from model.aircraft import Aircraft, SpeedValue
-from algorithm.storage import DataStorage
+from model.aircraft.aircraft import Aircraft
+from model.aircraft.speed import SpeedValue
+from model.aircraft.storage import DataStorage
 from typing import List
 from typing_extensions import override
 from logging_config import setup_logging

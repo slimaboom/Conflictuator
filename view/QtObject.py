@@ -17,7 +17,7 @@ from typing import List
 from model.point import Point
 from model.balise import Balise
 from model.conflict_manager import ConflictInformation
-from model.aircraft import Aircraft
+from model.aircraft.aircraft import Aircraft
 from utils.conversion import sec_to_time
 from generator.traffic_generator import AIRCRAFTS
 from view.signal import SignalEmitter

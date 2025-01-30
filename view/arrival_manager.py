@@ -15,7 +15,7 @@ from model.conflict_manager import ConflictInformation
 from utils.conversion import sec_to_time
 
 if TYPE_CHECKING:
-    from model.aircraft import Aircraft
+    from model.aircraft.aircraft import Aircraft
 
 class ArrivalManagerWindow(QWidget):
     # Signal émettant l'ID de l'avion sélectionné

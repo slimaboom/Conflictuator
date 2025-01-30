@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from enum import Enum
-from algorithm.storage import DataStorage
-from model.aircraft import Aircraft
+from model.aircraft.storage import DataStorage
+from model.aircraft.aircraft import Aircraft
 
 from utils.controller.argument import method_control_type
 

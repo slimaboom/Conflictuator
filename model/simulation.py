@@ -1,6 +1,6 @@
 from generator.traffic_generator import AIRCRAFTS
 from model.configuration import MAIN_SECTOR, SECONDARY_SECTOR, ROUTES, BALISES
-from model.aircraft import Aircraft
+from model.aircraft.aircraft import Aircraft
 from model.route import Airway
 from model.sector import SectorType
 from model.timer import Timer

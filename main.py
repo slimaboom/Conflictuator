@@ -21,7 +21,7 @@ from view.dialog.record_dialog import RecordDialog
 from view.dialog.algorithm_dialog import AlgorithmParamDialog
 
 from utils.conversion import sec_to_time, deg_aero_to_rad
-from model.aircraft import SpeedValue
+from model.aircraft.speed import SpeedValue
 
 from algorithm.interface.IAlgorithm import AlgorithmState, AAlgorithm
 from algorithm.data import DataStorage

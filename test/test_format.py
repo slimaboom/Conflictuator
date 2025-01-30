@@ -2,10 +2,10 @@ import sys, os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from utils.formatter.AFormat import AFormat
-from model.aircraft import Aircraft
+from model.aircraft.aircraft import Aircraft
 from model.configuration import BALISES
 from model.route import Airway
-from algorithm.storage import DataStorage
+from model.aircraft.storage import DataStorage
 
 # Découvre tous les writters dans le package utils.writter
 AFormat.discover_formatters('utils.formatter')

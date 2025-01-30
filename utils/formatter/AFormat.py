@@ -6,18 +6,20 @@ from utils.formatter.IFormat import IFormat
 from utils.controller.database_dynamique import MetaDynamiqueDatabase
 
 if TYPE_CHECKING:
-    from model.aircraft import Aircraft
+    from model.aircraft.aircraft import Aircraft
 
 class AFormat(IFormat):
     """Class abstraites pour les formats de données gérant une base de données des différents formats disponibles"""
 
-    @override
     def __init__(self):
-        super().__init__()
+        pass
 
-    @abstractmethod
     def export(self, iterable: List['Aircraft']) -> str:
         """Renvoie l'export de la liste des Aircraft dans une chaine de caractère correspond au format souhaité"""
+        pass
+
+    def parse(self, data: str) -> List['Aircraft']:
+        """Renvoie le parsing de l'argument <data> qui est une chaine en un objet List['Aircraft']"""
         pass
 
     @classmethod
@@ -31,7 +33,7 @@ class AFormat(IFormat):
         if len(params) != 0: # self est deja retirer dans MetaDynamiqueDatabase
             error =  f"Class {cls.__name__}({cls.__bases__[0]}) should not have 0 parameter to instanciate the class except (self)"
             raise TypeError(error)
-        return cls
+        return format_class
 
 
     @classmethod

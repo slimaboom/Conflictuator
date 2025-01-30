@@ -9,6 +9,9 @@ class FileWritter(AWritter):
     def __init__(self, filename: str):
         super().__init__(container=filename)
 
+    def __repr__(self):
+        return f"{self.__class__.__name__}(container='{self.get_container()}')"
+    
     @override
     def write(self, text: str) -> bool:
         filename = self.get_container()

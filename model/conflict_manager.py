@@ -7,7 +7,7 @@ from logging_config import setup_logging
 from typing import List, TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from aircraft import Aircraft
+    from model.aircraft.aircraft import Aircraft
     from model.balise import Balise
 
 @dataclass(frozen=True)
