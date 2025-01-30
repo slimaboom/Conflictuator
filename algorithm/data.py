@@ -51,8 +51,8 @@ class SimulatedAircraftImplemented(ASimulatedAircraft):
                 ]
         # Générer les autres commandes
         current_time = departure_time
-        additionnal_commands = 0#self.__random_generator.integers(1, self.NB_MAXIMUM_COMMANDS) # Au moins un changement
-        for _ in range(additionnal_commands):
+        additionnal_commands = 0 #self.__random_generator.integers(1, self.NB_MAXIMUM_COMMANDS) # Au moins un changement
+        for _ in range(additionnal_commands + 1):
             speed = self.__generate_random_speed()
             random_time = self.__generate_random_time(low=0., high=120.)
             time = round(current_time + random_time, 2)
