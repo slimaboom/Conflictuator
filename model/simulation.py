@@ -217,12 +217,15 @@ class SimulationModel:
         """Met a jour la simulation en fonction du temps précis et non d'une courte durée d'avancement"""
         self.time_elapsed = elasped
         self.conflict_manager.set_time_simulation(self.time_elapsed)
-        elasped_minus = elasped - self.get_interval_timer() # retirer le temps du timer car aircraft.update(dt) va incrémenter 
+        dt = self.get_interval_timer()
+        elasped_minus = elasped - dt # retirer le temps du timer car aircraft.update(dt) va incrémenter 
+        from utils.conversion import sec_to_time
+        print(elasped, sec_to_time(elasped))
         for aircraft in self.aircrafts.values():
             # Préciser à l'avion à quelle heure il est
             aircraft.set_time(elasped_minus)
             # Incrément de sa position, cap et temps de vol
-            aircraft.update(elasped_minus)
+            aircraft.update(dt)
 
 
     def toggle_running(self) -> None:

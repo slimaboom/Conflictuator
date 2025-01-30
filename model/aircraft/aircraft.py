@@ -210,7 +210,7 @@ class Aircraft:
 
 
     def update(self, timestep: float) -> None:
-        """Mise à jour des attributs de l'avion pour le faire avancer en utilisant"""
+        """Mise à jour des attributs de l'avion pour le faire avancer en utilisant get_position_from_time"""
 
         if self.time < self.take_off_time: # L'avion a pas décollé, mise a jour que du temps
             self.time = self.__round(self.time + timestep)
@@ -403,9 +403,9 @@ class Aircraft:
 
     def get_position_from_time(self, time: float) -> Point:
         """ Renvoie la position de l'avion au temps <time>"""
-        return self.__find_position_position(target_time=time)
+        return self.__find_next_position(target_time=time)
 
-    def __find_position_position(self, target_time: float) -> Point:
+    def __find_next_position(self, target_time: float) -> Point:
         def find_keys(flight_plan_timed: Dict[str, float], time: float):
             """Chercher entre quelle balise l'avion est en fonction du time"""
             # Convertir en liste triée de tuples, elle est deja triee si tout va bien.
@@ -422,7 +422,7 @@ class Aircraft:
             return lower, upper
         #---------------------------------------
         self.flight_time = max(0, target_time - self.take_off_time) # si target_time < take_off alors avion pas décollé
-        self.time = target_time
+        #self.time = target_time
         if target_time < self.take_off_time: # L'avion ne bouge pas
            self._is_finished = False
            return self.position
@@ -456,10 +456,11 @@ class Aircraft:
             new_z = self.position.getZ() #+ progress * (next_balise.getZ() - balise.getZ())
 
             # Mettre à jour le heading de l'avion
-            self.heading = self.calculate_heading(Point(new_x, new_y, new_z), next_balise)
+            new_point = Point(new_x, new_y, new_z)
+            self.heading = self.calculate_heading(new_point, next_balise)
             self._is_finished = False
             #return self.controle_position(new_x, new_y, new_z) # modifie le heading pour faire un rebond 
-            return Point(new_x, new_y, new_z) # raise error si les new_xyz sortent de MinMax Value
+            return new_point # raise error si les new_xyz sortent de MinMax Value
 
     
     def set_next_command(self) -> Optional[DataStorage]:
