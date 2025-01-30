@@ -1,7 +1,7 @@
 from utils.writter.AWritter import AWritter
 from typing_extensions import override
 
-@AWritter.register_writter('filewritter')
+@AWritter.register_writter
 class FileWritter(AWritter):
     """Classe concrète de AWritter pour écrire dans un fichier"""
 

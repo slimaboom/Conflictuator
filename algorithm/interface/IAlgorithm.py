@@ -5,7 +5,6 @@ from algorithm.storage import DataStorage
 from utils.conversion import sec_to_time
 from logging_config import setup_logging
 
-from utils.controller.dynamic_discover_packages import dynamic_discovering
 from utils.controller.database_dynamique import MetaDynamiqueDatabase
 
 from abc import ABC, abstractmethod
@@ -255,7 +254,7 @@ class AAlgorithm(IAlgorithm):
         
         :param package: Le chemin du package où chercher les algorithms (ex. 'algorithm.concrete').
         """
-        dynamic_discovering(package=package)
+        return MetaDynamiqueDatabase.discover_dynamic(package=package)
     
     @classmethod
     def get_algorithm_class(cls, name: str) -> 'AAlgorithm':

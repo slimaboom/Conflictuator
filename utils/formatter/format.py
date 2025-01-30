@@ -7,7 +7,7 @@ import json
 if TYPE_CHECKING:
     from model.aircraft import Aircraft
 
-@AFormat.register_format('JSON')
+@AFormat.register_format
 class JSONFormat(AFormat):
     """Classe concrète de format JSON"""
     @override

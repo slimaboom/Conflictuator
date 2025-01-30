@@ -1,10 +1,9 @@
-from concurrent.futures import ThreadPoolExecutor
 import random
 
 import numpy as np
 
 from algorithm.concrete.genetic.genetique import AlgorithmGenetic
-from algorithm.interface.IAlgorithm import AAlgorithm, AlgorithmState
+from algorithm.interface.IAlgorithm import AAlgorithm
 from algorithm.interface.ISimulatedObject import ASimulatedAircraft
 from algorithm.storage import DataStorage
 
@@ -204,7 +203,7 @@ class AlgorithmGeneticIntervalles(AAlgorithm):
                 aircraft_sim.update_commands(trajectory)
 
             # A calculer apres avoir changer chaque avion 
-            fitnesses.append(np.abs(self.evaluate())) # Evaluation du critere avec la List[ASimulatedAircraft]
+            fitnesses.append(abs(self.evaluate())) # Evaluation du critere avec la List[ASimulatedAircraft]
         return fitnesses
 
     def __next_population(self, population: List[List[List[DataStorage]]], fitnesses: List[float]) -> List[List[List[DataStorage]]]:
@@ -292,7 +291,7 @@ class AlgorithmGeneticIntervalles(AAlgorithm):
                         nc = len(conflicts)
                         total_conflicts += nc
             #print("c'est la ", self.nb_conflicts, total_conflicts)
-            total = np.abs(12 - (total_conflicts * 0.5))
+            total = abs(12 - (total_conflicts * 0.5))
             print("c'est la : ",total, 12, total_conflicts) 
 
             best_individual = self.bests_results[0]

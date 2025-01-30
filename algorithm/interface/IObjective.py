@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
 from algorithm.interface.ISimulatedObject import ISimulatedObject, ASimulatedAircraft
-from utils.controller.dynamic_discover_packages import dynamic_discovering
 from utils.controller.database_dynamique import MetaDynamiqueDatabase
 
 from typing import List
@@ -60,7 +59,7 @@ class AObjective(IObjective):
         
         :param package: Le chemin du package où chercher les fonctions objectives (ex. 'algorithm.objective_function').
         """
-        dynamic_discovering(package=package)
+        return MetaDynamiqueDatabase.discover_dynamic(package=package)
     
     @classmethod
     def get_objective_class(cls, name: str) -> 'AObjective':

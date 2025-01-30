@@ -1,16 +1,12 @@
 from abc import abstractmethod
-from typing import List
-from typing_extensions import override, Callable
+from typing import List, Type
+from typing_extensions import override
 
+from utils.controller.database_dynamique import MetaDynamiqueDatabase
 from utils.writter.IWritter import IWritter
-from utils.controller.dynamic_discover_packages import dynamic_discovering
-
-import inspect
-
 
 class AWritter(IWritter):
     """Classe abstraite pour les classes qui écrivent des données"""
-    __registry = {}  # Stocke tous les formats disponibles (clé: nom, valeur: classe)
 
     @override
     def __init__(self, container: str):
@@ -28,38 +24,28 @@ class AWritter(IWritter):
         return self.__container
 
     @classmethod
-    def register_writter(cls, name: str):
-        """Classe décoratrice pour enregistrer un nouveau writter."""
-        def decorator(subclass: Callable):
-            # Vérifie que le constructeur (init) n'accepte que `self` et `container`
-            init_signature = inspect.signature(subclass.__init__)
-            if len(init_signature.parameters) > 2:  # Plus que `self` et `container`
-                error =  f"La classe {subclass.__name__} ne peut avoir que deux paramètres dans son constructeur (self, container: str)."
-                error += f"container correspond à où l'écriture va se faire (nom de fichier, nom de la base de donnée, ect)"
-                raise TypeError(error)
-            lower = name.lower()
-            cls.__registry[lower] = subclass
-            return subclass
-        return decorator
+    def register_writter(cls, writter_class: Type):
+        """Classe décoratrice pour enregistrer un nouveau writter.
+        Exception TypeError
+        """
+        writter_class = MetaDynamiqueDatabase.register(subclass=writter_class)
+        params = MetaDynamiqueDatabase.get_class_constructor_params(base_class=cls, class_name=writter_class.__name__)
+        # Vérifie que le constructeur (init) n'accepte que `self`
+        print(params)
+        if len(params) != 1: # self est deja retirer dans MetaDynamiqueDatabase
+            error =  f"Class {cls.__name__}({cls.__bases__[0]}) shoud have only one parameter (container: str), total parameters:(self, container: str)."
+            error += f" container is the string related to where writting will be done (filename or database for exemple)"
+            raise TypeError(error)
+        return cls
+
 
     @classmethod
-    def create_writter(cls, name: str, container: str) -> 'AWritter':
+    def get_available_writters(cls):
         """
-        Instancie une classe writter à partir de son nom enregistré.
+        Retourne la liste des noms des writters disponibles.
+        Exception: TypeError
         """
-        lower = name.lower()
-        if lower not in cls.__registry:
-            error = f"Writter: '{lower}' non supporté car non enregistré dans la classe {cls.__name__}"
-            error += f"\nUtiliser @{cls.__name__}.register_writter('{lower}') en décoration de la classe dérivée pour enregistré le writter."
-            raise ValueError(error)
-        return cls.__registry[name](container)
-
-    @classmethod
-    def get_available_writters(cls) -> List[str]:
-        """
-        Retourne tous les writters disponibles.
-        """
-        return list(cls.__registry.keys())
+        return MetaDynamiqueDatabase.get_available(base_class=cls)
 
 
     @classmethod
@@ -69,4 +55,29 @@ class AWritter(IWritter):
         
         :param package: Le chemin du package où chercher les writters (ex. 'utils.writter').
         """
-        dynamic_discovering(package=package)
+        return MetaDynamiqueDatabase.discover_dynamic(package=package)
+
+
+    @classmethod
+    def get_format_class(cls, name: str) -> 'AWritter':
+        """
+        Renvoie une classe AWritter à partir de son nom enregistré.
+        L'instance n'est pas crée.
+        Exception: TypeError ou ValueError
+        """
+        try:
+            return MetaDynamiqueDatabase.get_class(base_class=cls, name=name)
+        except Exception as e:
+            error = f"Writter '{name}' non supporté car non enregistré dans la classe {cls.__name__}"
+            error += f"\nUtiliser @{cls.__name__}.register_format en décoration de la classe dérivée pour enregistré le format."
+            full_message = f"{str(e)}\n{error}"
+            raise type(e)(full_message)
+
+
+    @classmethod
+    def create_writter(cls, name: str, container: str) -> 'AWritter':
+        """
+        Instancie une classe AWritter à partir de son nom enregistré.
+        Exception: TypeError ou ValueError
+        """
+        return cls.get_format_class(name)(container)

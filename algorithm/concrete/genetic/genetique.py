@@ -1,4 +1,3 @@
-import numpy as np
 from algorithm.interface.IAlgorithm import AAlgorithm
 from algorithm.interface.ISimulatedObject import ASimulatedAircraft
 from algorithm.storage import DataStorage
@@ -11,6 +10,7 @@ from typing import List
 from typing_extensions import override
 from copy import deepcopy
 from time import time
+import numpy as np
 
 @AAlgorithm.register_algorithm
 class AlgorithmGenetic(AAlgorithm):

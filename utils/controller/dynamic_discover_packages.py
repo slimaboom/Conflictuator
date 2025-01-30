@@ -24,7 +24,6 @@ def dynamic_discovering(package: str):
 
 
 def main_dynamic_discovering():
-    from utils.controller.database_dynamique import MetaDynamiqueDatabase
     from algorithm.interface.IAlgorithm import AAlgorithm
     from algorithm.interface.IObjective import AObjective
     from utils.formatter.AFormat import AFormat

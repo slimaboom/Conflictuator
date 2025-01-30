@@ -1,5 +1,6 @@
-from typing import Callable, Dict, Type
+from typing import Dict, Type
 from types import MappingProxyType
+from utils.controller.dynamic_discover_packages import dynamic_discovering
 
 import inspect
 
@@ -102,3 +103,12 @@ class MetaDynamiqueDatabase:
             return MappingProxyType(params)
         error = f"Annotations on parameters error, Please annotate the type of the parameters:\n{params_without_annotations}"
         raise TypeError(error)
+    
+    @classmethod
+    def discover_dynamic(cls, package: str):
+        """
+        Découvre et importe tous les modules dans un package donné.
+        
+        :param package: Le chemin du package où chercher les writters (ex. 'utils.writter').
+        """
+        return dynamic_discovering(package=package)
