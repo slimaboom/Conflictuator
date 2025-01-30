@@ -439,7 +439,7 @@ class Aircraft:
                 cmd = commands[0]
                 self.set_take_off_time(cmd.time)
                 self.set_speed(cmd.speed)
-                self.set_heading(cmd.heading)
+                #self.set_heading(cmd.heading)
 
         # Recalculer les conflicts
         self.update_conflicts()

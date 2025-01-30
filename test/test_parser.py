@@ -13,7 +13,7 @@ try:
 
     data_str = reader.read()
     data = parser.parse(data_str)
-    print(data[0][2])
+    print(data[0][0])
 except Exception as e:
     print('Failed test')
     raise e

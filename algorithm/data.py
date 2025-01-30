@@ -41,7 +41,7 @@ class SimulatedAircraftImplemented(ASimulatedAircraft):
         random_takeoff = self.__generate_random_time(low=0., high=180.)
         departure_time = round(max(self.__aircraft.get_take_off_time() + random_takeoff, 0.0) , 2)
         initial_speed =  self.__generate_random_speed()
-        heading = self.__aircraft.get_heading()
+        heading = None#sself.__aircraft.get_heading()
         cmds = [DataStorage(id=self.__aircraft.get_id_aircraft(),
                             time=departure_time,
                             speed=initial_speed,
@@ -54,7 +54,7 @@ class SimulatedAircraftImplemented(ASimulatedAircraft):
             speed = self.__generate_random_speed()
             random_time = self.__generate_random_time(low=0., high=120.)
             time = round(current_time + random_time, 2)
-            heading = self.__aircraft.get_heading() # NotImplemented
+            heading = None#self.__aircraft.get_heading() # NotImplemented
             # DataStorage
             ds = DataStorage(id=self.__aircraft.get_id_aircraft(),
                              time=time,

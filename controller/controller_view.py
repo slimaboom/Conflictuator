@@ -330,7 +330,6 @@ class SimulationViewController(QObject):
         self.update_qt_balises_color()
 
         #self.logger.info(self.qt_aircrafts)
-        self.algorithm_terminated.emit(algostate)
 
     def update_qt_balises_color(self) -> None:
         # Mettre à jour les couleurs des balises en fonction des conflits
