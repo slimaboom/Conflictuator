@@ -9,9 +9,10 @@ from logging_config import setup_logging
 
 @dataclass
 class Balise(Point):
-    def __init__(self, x: float, y: float, z: float = 0, name: str = None):
+    def __init__(self, x: float, y: float, z: float = 0, name: str = None, is_external: bool = False):
         super().__init__(x, y, z)
         self.name = name
+        self.is_external = is_external
         self.conflits: List[ConflictInformation] = []
         self.logger = setup_logging(__class__.__name__)
 
@@ -26,6 +27,8 @@ class Balise(Point):
     def get_name(self) -> str: return self.name
 
     def get_point(self) -> Point: return Point(self.x, self.y, self.z) 
+
+    def is_external(self) -> bool: return self.is_external
 
     def __repr__(self):
         repr = super().__repr__()

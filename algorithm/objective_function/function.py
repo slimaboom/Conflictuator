@@ -4,21 +4,25 @@ from algorithm.interface.ISimulatedObject import ASimulatedAircraft
 from typing import List
 from typing_extensions import override
 
+import numpy as np
 #-------------------------------------------------#
 # Implementation de l'interface des fonctions objectives
+
+
+
+
 
 #----------------------------------------------------------
 #----------------------------------------------------------
 #------------- ObjectiveFunctionMaxConflict ---------------
 #----------------------------------------------------------
 #----------------------------------------------------------
-# Evaluation par le nombre de conflit simple
 @AObjective.register_objective_function
 class ObjectiveFunctionMaxConflict(AObjective):
-    """ Fonction objective simple:
-            calculant le nombre de conflits de chaque ASimulatedAircraft
+    """ 
+    Fonction objective simple:
+    calculant le nombre de conflits de chaque ASimulatedAircraft
     """
-
     def __init__(self):
         super().__init__()
 
@@ -225,8 +229,60 @@ class ObjectiveFunctionMaxConflictMinVariation(AObjective):
         return fitness # s'assurer que la fitness est positive.
     
 
+
+    
+
+
 #-----------------------------------------------------------------------
 #-----------------------------------------------------------------------
 #------------- ObjectiveFunctionExactConflict --------------------------
+#---------------- PENALISATION EXTERNAL --------------------------------
 #-----------------------------------------------------------------------
-#-----------------------------------------------------------------------
+@AObjective.register_objective_function 
+class ObjectiveFunctionConflictInternal(AObjective):
+
+    def __init__(self,
+                nb_expected_conflict: int = 2,
+                weight_conflicts: float = 1,
+                weight_external_penality: float= 0.1):
+
+        super().__init__()
+
+        # Nombre de conflit voulu
+        self.nb_expected_conflict: int = 2
+
+        # Bonus et penalisation
+        self.__weight_conflicts = weight_conflicts
+        self.__weight_external_penality = weight_external_penality
+
+    def set_nb_expected_conflict(self, n: int) -> None:
+        self.nb_expected_conflict = n
+    
+    @override
+    def evaluate(self, data: List[ASimulatedAircraft]) -> float:
+        total_conflicts = 0
+        nc = 0.
+        conflict = []
+        external_penalisation = 0
+        for _, aircraft_sim in enumerate(data):
+            for conflicts in aircraft_sim.get_object().get_conflicts().get_all().values():
+                if conflicts not in conflict:
+                    conflict.append(conflicts)
+                    nc = len(conflicts)
+                    total_conflicts += nc
+
+                    for c in conflicts : 
+                        if c.location.is_external() == True:
+                            external_penalisation += 1
+
+
+        # Calcul du coût : 
+        penalisation = self.__weight_external_penality * external_penalisation
+        conflicts    = np.abs(self.__weight_conflicts * self.nb_expected_conflict - (total_conflicts * 0.5))
+
+        total = conflicts + penalisation 
+        return total
+    
+    @override
+    def name(self) -> str:
+        return f"{self.__class__.__name__}"

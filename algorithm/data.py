@@ -11,7 +11,7 @@ import numpy as np
 class SimulatedAircraftImplemented(ASimulatedAircraft):
     """Implémentation concrète de ASimulatedAircraft"""
     PRECISION           = 4
-    NB_MAXIMUM_COMMANDS = 3
+    NB_MAXIMUM_COMMANDS = 5
     NB_SPEEDS_POSSIBLE  = 20
 
     @override
@@ -29,9 +29,9 @@ class SimulatedAircraftImplemented(ASimulatedAircraft):
        # self.update_commands(commands=self.initialize())
     
     @override
-    def update_commands(self, commands: List[DataStorage]) -> None:
+    def update_commands(self, commands: List[DataStorage], recalcul = True, dt: int = 0) -> None:
         """Met a jour les commandes pour l'avion"""
-        self.__aircraft.set_commands(commands=commands)
+        self.__aircraft.set_commands(commands=commands, recalcul=recalcul, dt=dt)
         self.__commands = commands
     
     @override

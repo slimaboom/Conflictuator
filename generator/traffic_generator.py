@@ -71,7 +71,7 @@ class PTrafficGenerator:
 
         return aircrafts
 
-"""
+
 # Chargement des routes et des balises
 routes = ROUTES  # Objets Airway définis dans configuration.py
 balises = BALISES  # Objets DatabaseBalise définis dans configuration.py
@@ -93,9 +93,9 @@ for aircraft in aircrafts:
     AIRCRAFTS.add_aircraft(aircraft)
     print(f"Avion généré: vitesse={aircraft.speed}, départ={aircraft.take_off_time}, route={aircraft.flight_plan}")
 print("c'est fini avec : ", len(aircrafts))
-"""
 
-#------------------------------------------------------------------------------
+
+"""#------------------------------------------------------------------------------
 #--------- Definition  des avions:  -------------------------------------------
 #------------------------------------------------------------------------------
 AIRCRAFTS = AircraftCollector() # Gestion d'un dictionnaire car recherche en O(1)
@@ -139,3 +139,4 @@ commands = {1:
 
 #for id, command in commands.items():
 #    AIRCRAFTS.get_from_key(id).set_commands(commands=command)
+"""

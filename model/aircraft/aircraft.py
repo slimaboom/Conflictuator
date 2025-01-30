@@ -353,17 +353,24 @@ class Aircraft:
             self._conflict_dict.add(key=conflict_with, value=[conflict_info]) # Forcer la valeur a etre une liste
 
 
-    def update_conflicts(self):
+    def update_conflicts(self, recalcul = True, dt:int = 0):
         """ Recalcul les conflits posterieurs a la date courante"""
-        
-        # Recalculer le plan de vol
-        self.flight_plan_timed = self.clear_flight_plan_timed()
-        self.calculate_estimated_times_commands()
+        if recalcul == True : 
+            # Recalculer le plan de vol
+            self.flight_plan_timed = self.clear_flight_plan_timed()
+            self.calculate_estimated_times_commands()
+        elif dt != 0: 
+            self.flight_plan_timed_delayed(dt)
         # Effacer tous les conflicts de self
         self.clear_conflicts()
 
         # Recalculer les conflicts
         Aircraft.notify_observers(self)
+    
+    def flight_plan_timed_delayed(self, dt : int) -> None:
+        for time in self.flight_plan_timed.values():
+            time += dt
+        return None
 
     @classmethod
     def register_observer(cls, observer: 'ConflictManager'):
@@ -429,7 +436,7 @@ class Aircraft:
         return next_command
 
     
-    def set_commands(self, commands: List[DataStorage]) -> None:
+    def set_commands(self, commands: List[DataStorage], recalcul : bool = True, dt:int = 0) -> None:
         """ Set la liste de commande a l'avion (DataStorage) et recalcule les conflit en consequence"""
         if commands:
             commands.sort(key= lambda c: c.time)
@@ -442,7 +449,7 @@ class Aircraft:
                 #self.set_heading(cmd.heading)
 
         # Recalculer les conflicts
-        self.update_conflicts()
+        self.update_conflicts(recalcul=recalcul, dt=dt)
 
     def add_command(self, command: DataStorage):
         # Ajouter une commande ie. un changement de vitesse ou de cap
