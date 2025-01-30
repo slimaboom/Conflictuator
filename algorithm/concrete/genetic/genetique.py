@@ -5,7 +5,6 @@ from logging_config import setup_logging
 
 from utils.controller.argument import method_control_type
 
-
 from typing import List
 from typing_extensions import override
 from copy import deepcopy
@@ -22,13 +21,15 @@ class AlgorithmGenetic(AAlgorithm):
                  population_size: int = 50, 
                  generations: int = 100, 
                  mutation_rate: float = 0.1, 
-                 crossover_rate: float = 0.8):
+                 crossover_rate: float = 0.8,
+                 early_stopping: int = 10,
+                 ):
         
         # Attributs generaux
         super().__init__(data=data, is_minimise=is_minimise, verbose=verbose, timeout=timeout)
 
         # Paramètre de l'algorithme génétique
-
+        # les définir pour les rendre compatible a l'optimisation
         self.__population_size = population_size
         self.__generations     = generations
         self.__mutation_rate   = mutation_rate
@@ -36,6 +37,8 @@ class AlgorithmGenetic(AAlgorithm):
 
         # Attribut pour sauvegarder les meilleurs résultats
         self.best_results = []
+        self.best_fitness = None
+        self.early_stopping = early_stopping
 
         # Autres attributs
         self.logger = setup_logging(self.__class__.__name__)
@@ -168,17 +171,21 @@ class AlgorithmGenetic(AAlgorithm):
     def __next_population(self, population: List[List[List[DataStorage]]], fitnesses: List[float]) -> List[List[List[DataStorage]]]:
         """Calcul la prochaine population en fonction de la precedante et des valeurs de fitnesses"""
         next_population = []
-        for _ in range(self.__population_size // 2):
-            try:
-                parent1, parent2 = self.__select_parents(population, fitnesses)
-            except Exception as e:
-                msg = f"Selection of parents in class {self.__class__.__name__} error\n{e}"
-                self.logger.error(msg)
-            offspring1 = self.__crossover(parent1, parent2)
-            offspring2 = self.__crossover(parent2, parent1)
-            next_population.append(self.__mutate(offspring1))
-            next_population.append(self.__mutate(offspring2))
-        return next_population
+
+        if (f == 0 for f in fitnesses) :
+            return population
+        else : 
+            for _ in range(self.__population_size // 2):
+                try:
+                    parent1, parent2 = self.__select_parents(population, fitnesses)
+                except Exception as e:
+                    msg = f"Selection of parents in class {self.__class__.__name__} error\n{e}"
+                    self.logger.error(msg)
+                offspring1 = self.__crossover(parent1, parent2)
+                offspring2 = self.__crossover(parent2, parent1)
+                next_population.append(self.__mutate(offspring1))
+                next_population.append(self.__mutate(offspring2))
+            return next_population
 
     @override
     def run(self) -> List[List[DataStorage]]:
@@ -198,7 +205,7 @@ class AlgorithmGenetic(AAlgorithm):
 
             # Calcul fitnesses
             fitnesses = self.__calculate_fitnesses(population)
-           # self.logger.info(f"Generation {generation + 1} Fitnesses: {fitnesses}")
+            #self.logger.info(f"Generation {generation + 1} Fitnesses: {fitnesses}")
 
             # Acceptation ou non du critere
             if self.is_minimisation():
@@ -231,8 +238,73 @@ class AlgorithmGenetic(AAlgorithm):
 
             if self.is_verbose():
                 self.logger.info(f"Generation {generation + 1}: Progress = {self.get_progress()}%")
-                
+
         self.stop()
         self.logger.info(f"Final Best Solution(fitness: {best_fitness}): {best_individual}")
         self.reinitialize_data()
         return best_individual
+    
+
+    # Meme methode que run mais ne declanche pas la queue
+    def startbis(self) -> List[List[DataStorage]]:
+        if self.is_verbose():
+            self.logger.info(f"Il y a {len(self.get_data())} ASimulatedAircraft")
+
+        self.set_process(0.)
+        self.set_start_time(start=time())
+
+        population      = self.__generate_initial_population(self.get_data())
+        best_individual = None
+        best_fitness    = None
+
+        for generation in range(self.__generations):
+            print(f"Génération {generation + 1}/{self.__generations}")
+        
+
+            # Calcul fitnesses
+            fitnesses = self.__calculate_fitnesses(population)
+           # self.logger.info(f"Generation {generation + 1} Fitnesses: {fitnesses}")
+
+            # Acceptation ou non du critere
+            if self.is_minimisation():
+                optimal_fitness = min(fitnesses)
+                if (generation <= 0) or (optimal_fitness < best_fitness) or (best_fitness == None):
+                    best_fitness   = deepcopy(optimal_fitness)
+                    best_individual = deepcopy(population[fitnesses.index(optimal_fitness)])
+                    self.best_results = [best_individual]
+                    self.best_fitness = best_fitness
+                elif optimal_fitness == best_fitness : 
+                    self.best_results.append(population[fitnesses.index(optimal_fitness)])
+            else: # Maximisation
+                optimal_fitness = max(fitnesses)
+                if (generation <= 0) or (optimal_fitness > best_fitness) or (best_fitness == None):
+                    best_fitness   = deepcopy(optimal_fitness)
+                    best_individual = deepcopy(population[fitnesses.index(optimal_fitness)])
+                    self.best_results = [best_individual]
+                    self.best_fitness = best_fitness
+                elif optimal_fitness == best_fitness : 
+                    self.best_results.append(population[fitnesses.index(optimal_fitness)])
+
+            # Logger
+            if self.is_verbose():
+                self.logger.info(f"Generation {generation + 1}: Best Fitness = {best_fitness}, Best Individual = {best_individual}")
+
+            # Calcul de la Prochaine population
+            population = self.__next_population(population, fitnesses)
+
+            # Avancement du processus
+            self.set_process(int(((generation + 1) / self.__generations) * 100))
+            self.set_process_time(process_time=time() - self.get_start_time())
+
+            if self.is_verbose():
+                self.logger.info(f"Generation {generation + 1}: Progress = {self.get_progress()}%")
+            
+            # Early stopping après avoir plusieurs individu avec une fitness de 0 
+            # Uniquement pour les minimisations
+            if (self.early_stopping != None) and (len(self.best_results) > self.early_stopping) and (self.best_fitness == 0) and self.is_minimisation :
+                break
+
+        #self.stop()
+        self.logger.info(f"Final Best Solution(fitness: {best_fitness}): {best_individual}")
+        self.reinitialize_data()
+        return best_individual, best_fitness

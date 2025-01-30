@@ -328,7 +328,6 @@ class SimulationViewController(QObject):
             self.scene.addItem(qtaircraft_copy)
 
         self.update_qt_balises_color()
-
         #self.logger.info(self.qt_aircrafts)
 
     def update_qt_balises_color(self) -> None:

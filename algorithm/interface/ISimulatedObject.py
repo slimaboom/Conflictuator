@@ -21,7 +21,7 @@ class ISimulatedObject(ABC):
         pass
     
     @abstractmethod 
-    def update_commands(self, commands:List[DataStorage]) -> None:
+    def update_commands(self, commands:List[DataStorage], recalcul: bool = True, dt:int = 0) -> None:
         """Met a jour les commandes pour l'objet"""
         pass
     
@@ -70,6 +70,6 @@ class ASimulatedAircraft(ISimulatedObject):
         """Retourne l'avion passer en paramètre du constructeur"""
         return self.__aircraft
     
-    def update_conflicts(self) -> None:
+    def update_conflicts(self, recalcul: bool = True) -> None:
         """Met a jour les conflits de l'avion"""
-        self.__aircraft.update_conflicts()
+        self.__aircraft.update_conflicts(recalcul = recalcul)
