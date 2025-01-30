@@ -1,5 +1,4 @@
-from dataclasses import dataclass
-from typing import List
+from typing import List, Dict
 from model.point import Point
 from model.collector import Collector
 from model.conflict_manager import ConflictInformation
@@ -7,13 +6,20 @@ from model.conflict_manager import ConflictInformation
 from copy import deepcopy
 from logging_config import setup_logging
 
-@dataclass
 class Balise(Point):
+    __registry: Dict[str, "Balise"] = {}  # Registre de toutes les instances de Balise
+
     def __init__(self, x: float, y: float, z: float = 0, name: str = None):
         super().__init__(x, y, z)
         self.name = name
         self.conflits: List[ConflictInformation] = []
         self.logger = setup_logging(__class__.__name__)
+        # Enregistrer la balise dans le registre
+        if name:
+            if name in self.__registry:
+                error = f"{self.__class__.__name__} with name {name} already exists in the registry of {self.__class__.__name__}"
+                raise ValueError(error)
+            self.__registry[name] = self
 
     def __hash__(self):
         return hash((self.x, self.y, self.z, self.name))
@@ -23,15 +29,15 @@ class Balise(Point):
             return False
         return (self.x, self.y, self.z, self.name) == (other.x, other.y, other.z, other.name)
 
-    def get_name(self) -> str: return self.name
-
-    def get_point(self) -> Point: return Point(self.x, self.y, self.z) 
-
     def __repr__(self):
         repr = super().__repr__()
         repr = repr.replace('Point', 'Balise').replace(')', f", name='{self.name}')")
         return repr
     
+    def get_name(self) -> str: return self.name
+
+    def get_point(self) -> Point: return Point(self.x, self.y, self.z) 
+
     def set_conflicts(self, conflicts: List[ConflictInformation]) -> None:
         #self.logger.info(f"Adding/Replacing conflict in balise: {self}\nfrom {self.conflits} to {conflicts}")
         self.conflits = conflicts # Ajoute les conflits
@@ -79,14 +85,12 @@ class Balise(Point):
         new_balise = deepcopy(self)
         return new_balise       
     
+    @classmethod
+    def get_available_balises(cls) -> Dict[str, 'Balise']:
+        """Retourne toutes les balises enregistrées."""
+        return cls.__registry
 
-
-        
-
-class DatabaseBalise(Collector[Balise]):
-    def __init__(self, balises: List[Balise] = []):
-        super().__init__()
-        for balise in balises:
-            self.add(key=balise.get_name(),
-                     value=balise) # association cle/valeur
-            
+    @classmethod
+    def get_balise_by_name(cls, name: str) -> 'Balise':
+        """Retourne une balise par son nom."""
+        return cls.__registry.get(name)

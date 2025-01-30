@@ -1,7 +1,8 @@
-from generator.traffic_generator import AIRCRAFTS
-from model.configuration import MAIN_SECTOR, SECONDARY_SECTOR, ROUTES, BALISES
+from generator.static import AIRCRAFTS
+from model.configuration import MAIN_SECTOR, SECONDARY_SECTOR
 from model.aircraft.aircraft import Aircraft
 from model.route import Airway
+from model.balise import Balise
 from model.sector import SectorType
 from model.timer import Timer
 from model.conflict_manager import ConflictManager
@@ -76,13 +77,13 @@ class SimulationModel:
 
     def initialise_balises(self) -> None:
         """Balise initialisation"""
-        for balise in BALISES.get_all().copy().values():
+        for _, balise in Balise.get_available_balises().items():
             self.add_balise(balise.deepcopy())
         
     def initialise_routes(self) -> None:
         """Route/Airway initialisation"""
-        for airway_name, route in ROUTES.get_all().items():
-            self.add_route(airway_name, route)
+        for airway_name, route in Airway.get_available_airways().items():
+            self.add_route(airway_name, route.get_transform_points())
 
     def initialise_aircrafts(self) -> None:
         """Aircraft initialisation"""
@@ -144,9 +145,8 @@ class SimulationModel:
         else: return False
     
 
-    def add_route(self, name: str, points: List[str]) -> None:
-        route_balises = Airway.transform(points, BALISES, reverse=False)
-        self.routes[name] = route_balises
+    def add_route(self, name: str, points: List['Balise']) -> None:
+        self.routes[name] = points
     
     def delete_route(self, name: str) -> bool:
         if self.routes.get(name):

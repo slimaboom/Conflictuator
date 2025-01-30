@@ -19,7 +19,6 @@ from model.balise import Balise
 from model.conflict_manager import ConflictInformation
 from model.aircraft.aircraft import Aircraft
 from utils.conversion import sec_to_time
-from generator.traffic_generator import AIRCRAFTS
 from view.signal import SignalEmitter
 
 class QtSector(QGraphicsPolygonItem):

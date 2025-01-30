@@ -36,7 +36,9 @@ class SimulatedAircraftImplemented(ASimulatedAircraft):
     
     @override
     def initialize(self) -> List[DataStorage]:
-        """Initialise les commandes aleatoirement pour l'objet mais ne met pas a jour l'objet"""
+        """Initialise les commandes aleatoirement pour l'objet mais ne met pas a jour l'objet:
+        Il n'y a pas de set_commands fait sur l'object Aircraft
+        """
         # Générer la première commande : temps de départ et vitesse initiale
         random_takeoff = self.__generate_random_time(low=0., high=180.)
         departure_time = round(max(self.__aircraft.get_take_off_time() + random_takeoff, 0.0) , 2)
@@ -49,8 +51,8 @@ class SimulatedAircraftImplemented(ASimulatedAircraft):
                 ]
         # Générer les autres commandes
         current_time = departure_time
-        num_commands = self.__random_generator.integers(1, self.NB_MAXIMUM_COMMANDS) # Au moins un changement
-        for _ in range(num_commands):
+        additionnal_commands = 0#self.__random_generator.integers(1, self.NB_MAXIMUM_COMMANDS) # Au moins un changement
+        for _ in range(additionnal_commands):
             speed = self.__generate_random_speed()
             random_time = self.__generate_random_time(low=0., high=120.)
             time = round(current_time + random_time, 2)

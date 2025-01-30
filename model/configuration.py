@@ -1,6 +1,6 @@
 from model.sector import Sector
 from model.point import Point
-from model.balise import Balise, DatabaseBalise
+from model.balise import Balise
 from model.route import Airway
 
 #------------------------------------------------------------------------------
@@ -120,301 +120,130 @@ SECONDARY_SECTOR.add(
 #------------------------------------------------------------------------------
 #--------- Definition  des balises  -------------------------------------------
 #------------------------------------------------------------------------------
-BALISES = DatabaseBalise([
-    Balise(0.04714640198511166, 1-0.01730920535011802, name="DIRMO"),
-    Balise(0.03287841191066997, 1-0.3060582218725413, name="GWENA"),
-    Balise(0.01054590570719603, 1-0.8182533438237608, name="GAI"),
-    Balise(0.07258064516129033, 1-0.07317073170731707, name="ETAMO"),
-    Balise(0.09553349875930521, 1-0.7411487018095987, name="LOBOS"),
-    Balise(0.10669975186104218, 1-0.7781274586939417, name="ONGHI"),
-    Balise(0.18176178660049627, 1-0.23839496459480725, name="VULCA"),
-    Balise(0.19540942928039703, 1-0.33831628638867034, name="CFA"),
-    Balise(0.19975186104218362, 1-0.6451612903225806, name="MEN"),
-    Balise(0.19540942928039703, 1-0.7435090479937058, name="ETORI"),
-    Balise(0.2630272952853598, 1-0.5696302124311565, name="LANZA"),
-    Balise(0.2698511166253102, 1-0.7112509834775768, name="SPIDY"),
-    Balise(0.3238213399503722, 1-0.5011801730920535, name="MINDI"),
-    Balise(0.34863523573200994, 1-0.07710464201416208, name="ATN"),
-    Balise(0.3815136476426799, 1-0.14712824547600314, name="BURGO"),
-    Balise(0.4230769230769231, 1-0.23918174665617625, name="BOJOL"),
-    Balise(0.43548387096774194, 1-0.6451612903225806, name="MTL"),
-    Balise(0.4441687344913151, 1-0.8269079464988198, name="MAJOR"),
-    Balise(0.4646401985111663, 1-0.3304484657749803, name="LSE"),
-    Balise(0.5167493796526055, 1-0.3981117230527144, name="LTP"),
-    Balise(0.5347394540942928, 1-0.2549173878835563, name="LIMAN"),
-    Balise(0.5831265508684863, 1-0.2069236821400472, name="PAS"),
-    Balise(0.6271712158808933, 1-0.03147128245476003, name="VEYRI"),
-    Balise(0.6116625310173698, 1-0.2966168371361133, name="MOZAO"),
-    Balise(0.6004962779156328, 1-0.5712037765538945, name="GRENA"),
-    Balise(0.6687344913151365, 1-0.11644374508261211, name="MELKA"),
-    Balise(0.6662531017369727, 1-0.7065302911093627, name="SANTO"),
-    Balise(0.7468982630272953, 1-0.03619197482297404, name="FRI"),
-    Balise(0.7096774193548387, 1-0.1966955153422502, name="SEVET"),
-    Balise(0.7363523573200993, 1-0.5177025963808025, name="BOSUA"),
-    Balise(0.739454094292804, 1-0.8583792289535799, name="JAMBI"),
-    Balise(0.8120347394540943, 1-0.09284028324154209, name="RAPID"),
-    Balise(0.848014888337469, 1-0.4704956726986625, name="JUVEN"),
-    Balise(0.8815136476426799, 1-0.8174665617623919, name="SAMOS"),
-    Balise(0.9032258064516129, 1-0.975609756097561, name="SICIL"),
-    Balise(0.966501240694789, 1-0.42014162077104644, name="BIELA"),
-    Balise(0.9844913151364765, 1-0.982690794649882, name="SODRI")]
-)
+BALISES = [
+Balise(0.04714640198511166, 1-0.01730920535011802, name="DIRMO"),
+Balise(0.03287841191066997, 1-0.3060582218725413, name="GWENA"),
+Balise(0.01054590570719603, 1-0.8182533438237608, name="GAI"),
+Balise(0.07258064516129033, 1-0.07317073170731707, name="ETAMO"),
+Balise(0.09553349875930521, 1-0.7411487018095987, name="LOBOS"),
+Balise(0.10669975186104218, 1-0.7781274586939417, name="ONGHI"),
+Balise(0.18176178660049627, 1-0.23839496459480725, name="VULCA"),
+Balise(0.19540942928039703, 1-0.33831628638867034, name="CFA"),
+Balise(0.19975186104218362, 1-0.6451612903225806, name="MEN"),
+Balise(0.19540942928039703, 1-0.7435090479937058, name="ETORI"),
+Balise(0.2630272952853598, 1-0.5696302124311565, name="LANZA"),
+Balise(0.2698511166253102, 1-0.7112509834775768, name="SPIDY"),
+Balise(0.3238213399503722, 1-0.5011801730920535, name="MINDI"),
+Balise(0.34863523573200994, 1-0.07710464201416208, name="ATN"),
+Balise(0.3815136476426799, 1-0.14712824547600314, name="BURGO"),
+Balise(0.4230769230769231, 1-0.23918174665617625, name="BOJOL"),
+Balise(0.43548387096774194, 1-0.6451612903225806, name="MTL"),
+Balise(0.4441687344913151, 1-0.8269079464988198, name="MAJOR"),
+Balise(0.4646401985111663, 1-0.3304484657749803, name="LSE"),
+Balise(0.5167493796526055, 1-0.3981117230527144, name="LTP"),
+Balise(0.5347394540942928, 1-0.2549173878835563, name="LIMAN"),
+Balise(0.5831265508684863, 1-0.2069236821400472, name="PAS"),
+Balise(0.6271712158808933, 1-0.03147128245476003, name="VEYRI"),
+Balise(0.6116625310173698, 1-0.2966168371361133, name="MOZAO"),
+Balise(0.6004962779156328, 1-0.5712037765538945, name="GRENA"),
+Balise(0.6687344913151365, 1-0.11644374508261211, name="MELKA"),
+Balise(0.6662531017369727, 1-0.7065302911093627, name="SANTO"),
+Balise(0.7468982630272953, 1-0.03619197482297404, name="FRI"),
+Balise(0.7096774193548387, 1-0.1966955153422502, name="SEVET"),
+Balise(0.7363523573200993, 1-0.5177025963808025, name="BOSUA"),
+Balise(0.739454094292804, 1-0.8583792289535799, name="JAMBI"),
+Balise(0.8120347394540943, 1-0.09284028324154209, name="RAPID"),
+Balise(0.848014888337469, 1-0.4704956726986625, name="JUVEN"),
+Balise(0.8815136476426799, 1-0.8174665617623919, name="SAMOS"),
+Balise(0.9032258064516129, 1-0.975609756097561, name="SICIL"),
+Balise(0.966501240694789, 1-0.42014162077104644, name="BIELA"),
+Balise(0.9844913151364765, 1-0.982690794649882, name="SODRI")
+]
+
 
 
 
 #------------------------------------------------------------------------------
 #--------- Definition  des routes aeriennes:  ---------------------------------
 #------------------------------------------------------------------------------
-ROUTES = Airway()
 
-#----------------nord sud ---------------------
-#DIRMO
+#--------------------Nord --> Sud  ------------------------------
 
-ROUTES.add(
-    key="NORTHSOUTH1",
-    value=["DIRMO", "ETAMO", "CFA", "MEN", "LOBOS", "GAI"]
-)
+ROUTES_NORTH_SOUTH = [
+    # DIRMO
 
-ROUTES.add(
-    key="NORTHSOUTH2",
-    value=["DIRMO", "ETAMO", "CFA", "MEN", "ETORI"]
-)
-
-"""ROUTES.add(
-    key="NORTHSOUTH3",
-    value=["DIRMO", "ETAMO", "CFA", "MEN", "ETORI", "SPIDY", "MTL", "GRENA", "SANTO", "JAMBI"]
-)"""
-
-"""ROUTES.add(
-    key="NORTHSOUTH4",
-    value=["DIRMO", "ETAMO", "CFA", "MEN", "ETORI", "SPIDY", "MTL", "GRENA", "SANTO", "SAMOS"]
-)"""
-
-"""ROUTES.add(
-    key="NORTHSOUTH5",
-    value=["DIRMO", "ETAMO", "CFA", "MEN", "ETORI", "SPIDY", "MTL", "GRENA", "BOSUA", "JUVEN"]
-)"""
-
-"""ROUTES.add(
-    key="NORTHSOUTH6",
-    value=["DIRMO", "ETAMO", "CFA", "MEN", "ETORI", "SPIDY", "MTL", "GRENA", "BOSUA", "JUVEN", "BIELA"]
-)"""
-
-#ATN
-
-ROUTES.add(
-    key="NORTHSOUTH7",
-    value=["ATN", "BURGO", "BOJOL", "LSE", "MINDI", "LANZA", "MEN", "LOBOS", "GAI"]
-)
-
-ROUTES.add(
-    key="NORTHSOUTH8",
-    value=["ATN", "BURGO", "BOJOL", "LSE", "MINDI", "LANZA", "MEN", "ETORI"]
-)
-
-"""ROUTES.add(
-    key="NORTHSOUTH11",
-    value=["ATN", "BURGO", "BOJOL", "LSE", "MINDI", "LANZA", "MEN", "ETORI", "ONGHI", "GAI"]
-)"""
-
-ROUTES.add(
-    key="NORTHSOUTH9",
-    value=["ATN", "BURGO", "BOJOL", "LSE", "LTP", "GRENA", "SANTO", "JAMBI"]
-)
-
-ROUTES.add(
-    key="NORTHSOUTH10",
-    value=["ATN", "BURGO", "BOJOL", "LSE", "LTP", "GRENA", "SANTO", "SAMOS"]
-)
-
-"""ROUTES.add(
-    key="NORTHSOUTH11",
-    value=["ATN", "BURGO", "BOJOL", "LSE", "LTP", "GRENA", "BOSUA", "JUVEN"]
-)"""
-
-"""ROUTES.add(
-    key="NORTHSOUTH12",
-    value=["ATN", "BURGO", "BOJOL", "LSE", "LTP", "GRENA", "BOSUA", "JUVEN", "BIELA"]
-)"""
-
-ROUTES.add(
-    key="NORTHSOUTH13",
-    value=["ATN", "BURGO", "BOJOL", "LSE", "LTP", "GRENA", "MTL", "SPIDY", "ETORI", "ONGHI", "GAI"]
-)
-
-#VEYRI
-ROUTES.add(
-    key="NORTHSOUTH14",
-    value=["VEYRI", "MELKA", "PAS", "LIMAN", "LSE", "MINDI", "LANZA", "MEN", "LOBOS", "GAI"]
-)
-
-ROUTES.add(
-    key="NORTHSOUTH15",
-    value=["VEYRI", "MELKA", "PAS", "LIMAN", "LSE", "MINDI", "LANZA", "MEN", "ETORI"]
-)
-
-"""ROUTES.add(
-    key="NORTHSOUTH15bis",
-    value=["VEYRI", "MELKA", "PAS", "LIMAN", "LSE", "MINDI", "LANZA", "MEN", "ETORI", "ONGHI", "GAI"]
-)"""
-
-ROUTES.add(
-    key="NORTHSOUTH16",
-    value=["VEYRI", "MELKA", "PAS", "LIMAN", "LSE", "LTP", "GRENA", "SANTO", "JAMBI"]
-)
-
-ROUTES.add(
-    key="NORTHSOUTH17",
-    value=["VEYRI", "MELKA", "PAS", "LIMAN", "LSE", "LTP", "GRENA", "SANTO", "SAMOS"]
-)
-
-ROUTES.add(
-    key="NORTHSOUTH18",
-    value=["VEYRI", "MELKA", "SEVET", "JUVEN"]
-)
-
-"""ROUTES.add(
-    key="NORTHSOUTH19",
-    value=["VEYRI", "MELKA", "SEVET", "JUVEN", "BIELA"]
-)"""
-
-ROUTES.add(
-    key="NORTHSOUTH20",
-    value=["VEYRI", "MELKA", "SEVET", "JUVEN", "BOSUA", "GRENA", "MTL", "SPIDY", "ETORI", "ONGHI", "GAI" ] 
-)
-
-"""ROUTES.add(
-    key="NORTHSOUTH20bis",
-    value=["VEYRI", "MELKA", "SEVET", "JUVEN", "BOSUA", "GRENA", "SANTO", "JAMBI" ] 
-)"""
-
-"""ROUTES.add(
-    key="NORTHSOUTH20tri",
-    value=["VEYRI", "MELKA", "SEVET", "JUVEN", "BOSUA", "GRENA", "SANTO", "SAMOS" ] 
-)"""
-
-#FRI
-
-ROUTES.add(
-    key="NORTHSOUTH21",
-    value=["FRI", "MELKA", "PAS", "LIMAN", "LSE", "MINDI", "LANZA", "MEN", "LOBOS", "GAI"]
-)
-
-ROUTES.add(
-    key="NORTHSOUTH22",
-    value=["FRI", "MELKA", "PAS", "LIMAN", "LSE", "MINDI", "LANZA", "MEN", "ETORI"]
-)
-
-ROUTES.add(
-    key="NORTHSOUTH23",
-    value=["FRI", "MELKA", "PAS", "LIMAN", "LSE", "LTP", "GRENA", "SANTO", "JAMBI"]
-)
-
-ROUTES.add(
-    key="NORTHSOUTH24",
-    value=["FRI", "MELKA", "PAS", "LIMAN", "LSE", "LTP", "GRENA", "SANTO", "SAMOS"]
-)
-
-ROUTES.add(
-    key="NORTHSOUTH25",
-    value=["FRI", "MELKA", "SEVET", "JUVEN"]
-)
-
-"""ROUTES.add(
-    key="NORTHSOUTH26",
-    value=["FRI", "MELKA", "PAS", "LIMAN", "LSE", "LTP", "GRENA", "MTL", "SPIDY", "ETORI", "ONGHI", "GAI"]
-)"""
-
-ROUTES.add(
-    key="NORTHSOUTH26",
-    value=["FRI", "MELKA", "SEVET", "JUVEN", "BOSUA", "GRENA", "MTL", "SPIDY", "ETORI", "ONGHI", "GAI"]
-)
-
-#BIELA
-
-ROUTES.add(
-    key="NORTHSOUTH34",
-    value=["BIELA", "JUVEN", "BOSUA", "GRENA", "MTL", "SPIDY", "ETORI", "ONGHI", "GAI"]
-)
+Airway(name='NORTHSOUTH1', points=["DIRMO", "ETAMO", "CFA", "MEN", "LOBOS", "GAI"]),
+Airway(name='NORTHSOUTH2', points=["DIRMO", "ETAMO", "CFA", "MEN", "ETORI"]),
+#Airway(name='NORTHSOUTH3', points=["DIRMO", "ETAMO", "CFA", "MEN", "ETORI", "SPIDY", "MTL", "GRENA", "SANTO", "JAMBI"]),
+#Airway(name="NORTHSOUTH4", points=["DIRMO", "ETAMO", "CFA", "MEN", "ETORI", "SPIDY", "MTL", "GRENA", "SANTO", "SAMOS"]),
+#Airway(name="NORTHSOUTH5", points=["DIRMO", "ETAMO", "CFA", "MEN", "ETORI", "SPIDY", "MTL", "GRENA", "BOSUA", "JUVEN"]),
+#Airway(name="NORTHSOUTH6", points=["DIRMO", "ETAMO", "CFA", "MEN", "ETORI", "SPIDY", "MTL", "GRENA", "BOSUA", "JUVEN", "BIELA"]),
 
 
-"""ROUTES.add(
-    key="NORTHSOUTH36",
-    value=["BIELA", "JUVEN", "BOSUA", "GRENA", "SANTO", "JAMBI"]
-)"""
+    # ATN
 
-"""ROUTES.add(
-    key="NORTHSOUTH37",
-    value=["BIELA", "JUVEN", "BOSUA", "GRENA", "SANTO", "SAMOS"]
-)"""
+Airway(name="NORTHSOUTH7", points=["ATN", "BURGO", "BOJOL", "LSE", "MINDI", "LANZA", "MEN", "LOBOS", "GAI"]),
+Airway(name="NORTHSOUTH8", points=["ATN", "BURGO", "BOJOL", "LSE", "MINDI", "LANZA", "MEN", "ETORI"]),
+#Airway(name="NORTHSOUTH11", points=["ATN", "BURGO", "BOJOL", "LSE", "MINDI", "LANZA", "MEN", "ETORI", "ONGHI", "GAI"]),
+Airway(name="NORTHSOUTH9", points=["ATN", "BURGO", "BOJOL", "LSE", "LTP", "GRENA", "SANTO", "JAMBI"]),
+Airway(name="NORTHSOUTH10", points=["ATN", "BURGO", "BOJOL", "LSE", "LTP", "GRENA", "SANTO", "SAMOS"]),
+#Airway(name="NORTHSOUTH11", points=["ATN", "BURGO", "BOJOL", "LSE", "LTP", "GRENA", "BOSUA", "JUVEN"]),
+#Airway(name="NORTHSOUTH12", points=["ATN", "BURGO", "BOJOL", "LSE", "LTP", "GRENA", "BOSUA", "JUVEN", "BIELA"]),
+Airway(name="NORTHSOUTH13", points=["ATN", "BURGO", "BOJOL", "LSE", "LTP", "GRENA", "MTL", "SPIDY", "ETORI", "ONGHI", "GAI"]),
+
+    # VEYRI
+Airway(name="NORTHSOUTH14", points=["VEYRI", "MELKA", "PAS", "LIMAN", "LSE", "MINDI", "LANZA", "MEN", "LOBOS", "GAI"]),
+Airway(name="NORTHSOUTH15", points=["VEYRI", "MELKA", "PAS", "LIMAN", "LSE", "MINDI", "LANZA", "MEN", "ETORI"]),
+#Airway(name="NORTHSOUTH15bis", points=["VEYRI", "MELKA", "PAS", "LIMAN", "LSE", "MINDI", "LANZA", "MEN", "ETORI", "ONGHI", "GAI"]),
+Airway(name="NORTHSOUTH16", points=["VEYRI", "MELKA", "PAS", "LIMAN", "LSE", "LTP", "GRENA", "SANTO", "JAMBI"]),
+Airway(name="NORTHSOUTH17", points=["VEYRI", "MELKA", "PAS", "LIMAN", "LSE", "LTP", "GRENA", "SANTO", "SAMOS"]),
+Airway(name="NORTHSOUTH18", points=["VEYRI", "MELKA", "SEVET", "JUVEN"]),
+#Airway(name="NORTHSOUTH19", points=["VEYRI", "MELKA", "SEVET", "JUVEN", "BIELA"]),
+Airway(name="NORTHSOUTH20", points=["VEYRI", "MELKA", "SEVET", "JUVEN", "BOSUA", "GRENA", "MTL", "SPIDY", "ETORI", "ONGHI", "GAI" ]),
+#Airway(name="NORTHSOUTH20bis", points=["VEYRI", "MELKA", "SEVET", "JUVEN", "BOSUA", "GRENA", "SANTO", "JAMBI" ]),
+#Airway(name="NORTHSOUTH20tri", points=["VEYRI", "MELKA", "SEVET", "JUVEN", "BOSUA", "GRENA", "SANTO", "SAMOS" ]),
 
 
-#--------------------sud nord ------------------------------
-#MAJOR
+    # FRI
 
-ROUTES.add(
-    key="SOUTHNORTH41",
-    value=["MAJOR", "MTL", "MINDI", "CFA", "VULCA"]
-)
+Airway(name="NORTHSOUTH21",points=["FRI", "MELKA", "PAS", "LIMAN", "LSE", "MINDI", "LANZA", "MEN", "LOBOS", "GAI"]),
+Airway(name="NORTHSOUTH22", points=["FRI", "MELKA", "PAS", "LIMAN", "LSE", "MINDI", "LANZA", "MEN", "ETORI"]),
+Airway(name="NORTHSOUTH23", points=["FRI", "MELKA", "PAS", "LIMAN", "LSE", "LTP", "GRENA", "SANTO", "JAMBI"]),
+Airway(name="NORTHSOUTH24", points=["FRI", "MELKA", "PAS", "LIMAN", "LSE", "LTP", "GRENA", "SANTO", "SAMOS"]),
+Airway(name="NORTHSOUTH25", points=["FRI", "MELKA", "SEVET", "JUVEN"]),
+#Airway(name="NORTHSOUTH26", points=["FRI", "MELKA", "PAS", "LIMAN", "LSE", "LTP", "GRENA", "MTL", "SPIDY", "ETORI", "ONGHI", "GAI"]),
+Airway(name="NORTHSOUTH26", points=["FRI", "MELKA", "SEVET", "JUVEN", "BOSUA", "GRENA", "MTL", "SPIDY", "ETORI", "ONGHI", "GAI"]),
 
-ROUTES.add(
-    key="SOUTHNORTH42",
-    value=["MAJOR", "MTL", "MINDI", "CFA", "VULCA", "BURGO", "VEYRI"]
-)
+    # BIELA
 
-ROUTES.add(
-    key="SOUTHNORTH43",
-    value=["MAJOR", "MTL", "LTP", "MOZAO", "SEVET", "RAPID"]
-)
+Airway(name="NORTHSOUTH34", points=["BIELA", "JUVEN", "BOSUA", "GRENA", "MTL", "SPIDY", "ETORI", "ONGHI", "GAI"]),
+#Airway(name="NORTHSOUTH36", points=["BIELA", "JUVEN", "BOSUA", "GRENA", "SANTO", "JAMBI"]),
+#Airway(name="NORTHSOUTH37", points=["BIELA", "JUVEN", "BOSUA", "GRENA", "SANTO", "SAMOS"]),
+]
 
-ROUTES.add(
-    key="SOUTHNORTH44",
-    value=["MAJOR", "MTL", "GRENA", "BOSUA", "JUVEN", "BIELA"]
-)
+#-------------------- South --> North  ------------------------------
+ROUTES_SOUTH_NORTH = [
+    # MAJOR
 
-#SODRI
+Airway(name="SOUTHNORTH41", points=["MAJOR", "MTL", "MINDI", "CFA", "VULCA"]),
+Airway(name="SOUTHNORTH42", points=["MAJOR", "MTL", "MINDI", "CFA", "VULCA", "BURGO", "VEYRI"]),
+Airway(name="SOUTHNORTH43", points=["MAJOR", "MTL", "LTP", "MOZAO", "SEVET", "RAPID"]),
+Airway(name="SOUTHNORTH44", points=["MAJOR", "MTL", "GRENA", "BOSUA", "JUVEN", "BIELA"]),
 
-ROUTES.add(
-    key="SOUTHNORTH46",
-    value=["SODRI", "SICIL", "JAMBI", "MTL", "MINDI", "CFA", "VULCA"]
-)
+    # SODRI
 
-ROUTES.add(
-    key="SOUTHNORTH47",
-    value=["SODRI", "SICIL", "JAMBI", "MTL", "MINDI", "CFA", "VULCA", "BURGO", "VEYRI"]
-)
+Airway(name="SOUTHNORTH46", points=["SODRI", "SICIL", "JAMBI", "MTL", "MINDI", "CFA", "VULCA"]),
+Airway(name="SOUTHNORTH47", points=["SODRI", "SICIL", "JAMBI", "MTL", "MINDI", "CFA", "VULCA", "BURGO", "VEYRI"]),
+Airway(name="SOUTHNORTH48", points=["SODRI", "SICIL", "JAMBI", "MTL", "LTP", "MOZAO", "SEVET", "RAPID"]),
+    
+    # GAI
 
-ROUTES.add(
-    key="SOUTHNORTH48",
-    value=["SODRI", "SICIL", "JAMBI", "MTL", "LTP", "MOZAO", "SEVET", "RAPID"]
-)
-
-#GAI
-
-ROUTES.add(
-    key="SOUTHNORTH50",
-    value=["GAI", "GWENA", "DIRMO"]
-)
-
-ROUTES.add(
-    key="SOUTHNORTH51",
-    value=["GAI", "GWENA", "VULCA"]
-)
-
-ROUTES.add(
-    key="SOUTHNORTH52",
-    value=["GAI", "GWENA", "VULCA", "BURGO", "VEYRI"]
-)
-
-ROUTES.add(
-    key="SOUTHNORTH53",
-    value=["GAI", "ONGHI", "ETORI", "SPIDY", "MTL", "LTP", "MOZAO", "SEVET", "RAPID"]
-)
-
-ROUTES.add(
-    key="SOUTHNORTH54",
-    value=["GAI", "ONGHI", "ETORI", "SPIDY", "MTL", "GRENA", "BOSUA", "JUVEN", "BIELA"]
-)
+Airway(name="SOUTHNORTH50", points=["GAI", "GWENA", "DIRMO"]),
+Airway(name="SOUTHNORTH51", points=["GAI", "GWENA", "VULCA"]),
+Airway(name="SOUTHNORTH52", points=["GAI", "GWENA", "VULCA", "BURGO", "VEYRI"]),
+Airway(name="SOUTHNORTH53", points=["GAI", "ONGHI", "ETORI", "SPIDY", "MTL", "LTP", "MOZAO", "SEVET", "RAPID"]),
+Airway(name="SOUTHNORTH54", points=["GAI", "ONGHI", "ETORI", "SPIDY", "MTL", "GRENA", "BOSUA", "JUVEN", "BIELA"])
+]
 
 
 #------------------------------------------------------------------------------

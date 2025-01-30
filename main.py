@@ -55,6 +55,9 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Conflictuator")
         self.setGeometry(150, 80, 1500, 1100)
 
+        self.create_simulation_view()
+
+    def create_simulation_view(self):
         # Mise en page principale
         container = QWidget()
         self.setCentralWidget(container)

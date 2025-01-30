@@ -56,7 +56,6 @@ class Aircraft:
 
     def __post_init__(self):
         self.__class__.logger = setup_logging(__class__.__name__)
-
         # Incrémenter le compteur de classe et assigner l'ID unique
         self.__class__.__COUNTER += 1
         object.__setattr__(self, 'id', self.__class__.__COUNTER)
@@ -89,7 +88,9 @@ class Aircraft:
                         ]
         
         self.next_command = self.set_next_command()
-       # self.calculate_estimated_times_commands()
+        if self.speed == None or self.speed <= 0: # Protection pour calcul des temps de passage au balise !!!
+            raise ValueError("{self.__class__.__name__} cannot be instanciate due to speed negative or null value or None value")
+        self.calculate_estimated_times_commands()
 
     def deepcopy(self) -> 'Aircraft':
         new_aircraft = deepcopy(self)
@@ -196,67 +197,82 @@ class Aircraft:
                             if current_command_index < len(self.commands)
                             else None
                         )
-
+            # Trier par ordre d'arriver mais normalement si le calcul est bien, il n'y a pas besoin
+            # car ca changerait le plan de vol !
+            #self.flight_plan_timed = dict(sorted(self.flight_plan_timed.items(), 
+            #                                     key=lambda item: item[1]
+            #                                     )
+            #                              )
 
 
     def clear_flight_plan_timed(self):
         return {k:v for k, v in self.get_flight_plan_timed().items() if v < self.time}
 
+
     def update(self, timestep: float) -> None:
-        #-----------------------------------------------------------------------
-        if self.time < self.take_off_time:
-            self.time += timestep # incrementer le temps
-        else:   #self.time >= self.take_off_time
-            # Sauvegarde la position courante dans l'historique
-            self.time = self.__round(self.time)
-            info = Information(self.position, 
-                               self.time, 
-                               self.speed, 
-                               self.heading, 
-                               self.take_off_time, 
-                               self.__round(self.flight_time)
-                               )
-            self.history[self.time] = info
+        """Mise à jour des attributs de l'avion pour le faire avancer en utilisant"""
+        self.time = self.__round(self.time + timestep)
+        if not self.time < self.take_off_time: # L'avion a pas décollé on calcul sa nouvelle position, nouveau cap
+            self.position = self.get_position_from_time(time=self.time)
+
+    # def update(self, timestep: float) -> None:
+    #    """Method de mise à jour des attributs de l'avion pour le faire avancer.
+    #        Utiliser du début du projet SITA-IA 22 jusqu'au 30/01/2025 17:08'
+    #    """
+    #     #-----------------------------------------------------------------------
+    #     if self.time < self.take_off_time:
+    #         self.time += timestep # incrementer le temps
+    #     else:   #self.time >= self.take_off_time
+    #         # Sauvegarde la position courante dans l'historique
+    #         self.time = self.__round(self.time)
+    #         info = Information(self.position, 
+    #                            self.time, 
+    #                            self.speed, 
+    #                            self.heading, 
+    #                            self.take_off_time, 
+    #                            self.__round(self.flight_time)
+    #                            )
+    #         self.history[self.time] = info
             
-            self.time += timestep
+    #         self.time += timestep
 
-            #Vérifier si on doit faire une commande et la faire si besoin
-            if self.id > 0 :
-                self.check_commands()
+    #         #Vérifier si on doit faire une commande et la faire si besoin
+    #         if self.id > 0 :
+    #             self.check_commands()
 
-            # Mise a jour des informations
-            target_balise = self.flight_plan[self.current_target_index]
+    #         # Mise a jour des informations
+    #         target_balise = self.flight_plan[self.current_target_index]
 
-            # Calculer la distance vers la balise
-            distance_to_target = self.position.distance_horizontale(target_balise)
-            approximation = 1.1 * self.speed * timestep # Pour savoir si on proche de la balise ou pas
+    #         # Calculer la distance vers la balise
+    #         distance_to_target = self.position.distance_horizontale(target_balise)
+    #         approximation = 1.1 * self.speed * timestep # Pour savoir si on proche de la balise ou pas
             
-            if distance_to_target <= approximation:
-                # Passer à la balise suivante
-                if self.current_target_index < len(self.flight_plan) - 1:
-                    self.current_target_index += 1
-                    target_balise = self.flight_plan[self.current_target_index]
-                    self.heading = self.calculate_heading(self.position, target_balise)
-                    self.flight_time += timestep
-                else:
-                    self._is_finished = True
-                    #TO DO on continue en ligne droite jusqu'a sortie du secteur 
-                    #print(f"Aircraft {self.id} has reached the final waypoint.")
-                    return
-            else:
-                # Déplacement rectiligne vers la balise
-                displacement = self.speed * timestep
+    #         if distance_to_target <= approximation:
+    #             # Passer à la balise suivante
+    #             if self.current_target_index < len(self.flight_plan) - 1:
+    #                 self.current_target_index += 1
+    #                 target_balise = self.flight_plan[self.current_target_index]
+    #                 self.heading = self.calculate_heading(self.position, target_balise)
+    #                 self.flight_time += timestep
+    #             else:
+    #                 self._is_finished = True
+    #                 #TO DO on continue en ligne droite jusqu'a sortie du secteur 
+    #                 #print(f"Aircraft {self.id} has reached the final waypoint.")
+    #                 return
+    #         else:
+    #             # Déplacement rectiligne vers la balise
+    #             displacement = self.speed * timestep
 
-                # Calculer les nouvelles coordonnées
-                direction_z = 0.0  # Pas de variation verticale pour l'instant
+    #             # Calculer les nouvelles coordonnées
+    #             direction_z = 0.0  # Pas de variation verticale pour l'instant
 
-                new_x = self.position.getX() + displacement * np.cos(self.heading)
-                new_y = self.position.getY() + displacement * np.sin(self.heading)
-                new_z = self.position.getZ() + displacement * direction_z
+    #             new_x = self.position.getX() + displacement * np.cos(self.heading)
+    #             new_y = self.position.getY() + displacement * np.sin(self.heading)
+    #             new_z = self.position.getZ() + displacement * direction_z
 
-                # Mettre à jour la position et le temps
-                self.position = self.controle_position(new_x, new_y, new_z)
-                self.flight_time += timestep
+    #             # Mettre à jour la position et le temps
+    #             self.position = self.controle_position(new_x, new_y, new_z)
+    #             self.flight_time += timestep
 
     def controle_position(self, x: float, y: float, z:float):
         try:
@@ -274,8 +290,6 @@ class Aircraft:
             new_point = self.position
         finally:
             return new_point        
-
-
 
 
     def get_position(self): return self.position
@@ -379,45 +393,64 @@ class Aircraft:
 
     def get_position_from_time(self, time: float) -> Point:
         """ Renvoie la position de l'avion au temps <time>"""
-        return self.__find_position_position(time=time)
+        return self.__find_position_position(target_time=time)
 
     def __find_position_position(self, target_time: float) -> Point:
+        def find_keys(flight_plan_timed: Dict[str, float], time: float):
+            """Chercher entre quelle balise l'avion est en fonction du time"""
+            # Convertir en liste triée de tuples, elle est deja triee si tout va bien.
+            # La retrier changerait le plan de vol, c'est une mauvaise idee !!!!
+            list_items = list(flight_plan_timed.items())  
+            lower, upper = None, None
+            for i, (key, value) in enumerate(list_items):
+                if time < value:
+                    upper = key
+                    lower = list_items[i - 1][0] if i > 0 else None
+                    break
+            else:
+                lower = list_items[-1][0]
+            return lower, upper
+        #---------------------------------------
 
-        if target_time < self.take_off_time:
-            raise ValueError("The requested time is before the aircraft's takeoff time.")
+        if target_time < self.take_off_time: # L'avion ne bouge pas
+           self._is_finished = False
+           return self.position
+        else: # L'avion doit bouger
+            # Trouver les balises entre lesquelles se trouve l'avion
+            balise_name, next_balise_name = find_keys(flight_plan_timed=self.flight_plan_timed, time=target_time)
 
-        current_position = self.position
-        current_time = self.take_off_time
-        current_speed = self.speed
+            if balise_name == None:  # L'avion n'a pas encore démarré
+                self._is_finished = False
+                return self.position
+            if next_balise_name == None:  # L'avion est arrivé à sa dernière balise
+                self._is_finished = True
+                return self.position
 
-        for balise in self.flight_plan:
-            balise_time = self.flight_plan_timed[balise.get_name()]
+            # Récupérer les objets Balise
+            balise      = Balise.get_balise_by_name(balise_name)              
+            next_balise = Balise.get_balise_by_name(next_balise_name)
 
-            for command in self.commands:
-                if command.time and current_time < command.time < balise_time:
-                    
-                    time_to_command = command.time - current_time
-                    proportion = time_to_command * current_speed / (balise_time - current_time)
-                    new_x = current_position.getX() + proportion * (balise.getX() - current_position.getX())
-                    new_y = current_position.getY() + proportion * (balise.getY() - current_position.getY())
-                    new_z = current_position.getZ() + proportion * (balise.getZ() - current_position.getZ())
-                    current_position = Point(new_x, new_y, new_z)
+            # Récupérer les temps des balises
+            balise_time      = self.flight_plan_timed.get(balise_name)
+            next_balise_time = self.flight_plan_timed.get(next_balise_name)
 
-                    current_time = command.time
-                    current_speed = command.speed
+            if balise_time == None or next_balise_time == None:
+                return self.position  # Évite les erreurs en cas de données manquantes
 
-            if current_time <= target_time <= balise_time:
-                remaining_time = target_time - current_time
-                proportion = remaining_time * current_speed / (balise_time - current_time)
-                final_x = current_position.getX() + proportion * (balise.getX() - current_position.getX())
-                final_y = current_position.getY() + proportion * (balise.getY() - current_position.getY())
-                final_z = current_position.getZ() + proportion * (balise.getZ() - current_position.getZ())
-                return Point(final_x, final_y, final_z)
+            # Calcul de la fraction du trajet effectuée
+            progress = (target_time - balise_time) / (next_balise_time - balise_time)
 
-            current_position = balise
-            current_time = balise_time
+            # Interpolation linéaire entre les balises
+            new_x = balise.getX() + progress * (next_balise.getX() - balise.getX())
+            new_y = balise.getY() + progress * (next_balise.getY() - balise.getY())
+            new_z = balise.getZ() #+ progress * (next_balise.getZ() - balise.getZ())
 
-        return current_position
+            # Mettre à jour le heading de l'avion
+            self.heading = self.calculate_heading(Point(new_x, new_y, new_z), next_balise)
+            self.time = target_time
+            #return self.controle_position(new_x, new_y, new_z) # modifie le heading pour faire un rebond 
+            return Point(new_x, new_y, new_z) # raise error si les new_xyz sortent de MinMax Value
+
     
     def set_next_command(self) -> Optional[DataStorage]:
         "renvoie la prochiane commands a appliqué "
