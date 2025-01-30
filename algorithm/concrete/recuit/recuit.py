@@ -1,5 +1,5 @@
 from algorithm.interface.ISimulatedObject import ASimulatedAircraft
-from algorithm.interface.IAlgorithm import AAlgorithm, AlgorithmState
+from algorithm.interface.IAlgorithm import AAlgorithm
 from algorithm.concrete.recuit.etat import Etat
 from model.aircraft.storage import DataStorage
 

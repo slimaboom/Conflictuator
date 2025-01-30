@@ -1,23 +1,23 @@
-import numpy as np
-from ray import tune
-from ray.tune.schedulers import ASHAScheduler
+#from ray import tune
+#from ray.tune.schedulers import ASHAScheduler
 from functools import partial
-from typing import Type, Dict, Any, List
+from typing import List
 
 from typing_extensions import override
 
-#from algorithm.objective_function.function import ObjectiveFunctionMaxConflict, ObjectiveFunctionMaxConflictMinVariation, ObjectiveFunctionConflict
 from algorithm.interface.IAlgorithm import AAlgorithm
 from algorithm.concrete.genetic.genetique import AlgorithmGenetic
 from algorithm.interface.ISimulatedObject import ASimulatedAircraft
 
-from model.aircraft.aircraft import Aircraft
-import ray
+#import ray
 from time import time
 
 @AAlgorithm.register_algorithm
 class HyperbandOptimizer(AAlgorithm):
-    def __init__(self, data: List['ASimulatedAircraft'],is_minimise : bool = True, num_samples: int = 20, max_epochs: int =100):
+    def __init__(self, data: List['ASimulatedAircraft'],
+                 is_minimise : bool = True, 
+                 num_samples: int = 20, 
+                 max_epochs: int =100):
         """
         Initialise l'optimiseur Hyperband.
 
@@ -33,14 +33,14 @@ class HyperbandOptimizer(AAlgorithm):
         self.num_samples = num_samples
         self.max_epochs = max_epochs
         self.data = data
-        self.search_space = {
+        """self.search_space = {
                 "population_size": tune.choice([5, 10, 15, 20, 30, 40]),
                 "generations": tune.choice([10, 20, 30]),
                 "mutation_rate": tune.uniform(0.01, 0.3),
                 "crossover_rate": tune.uniform(0.5, 1.0),
-            }
+            }"""
 
-        ray.init(local_mode=True)  # Force Ray Tune à fonctionner en mode mono-thread
+        #ray.init(local_mode=True)  # Force Ray Tune à fonctionner en mode mono-thread
 
         self.set_process(0)
         self.progress = 0
@@ -53,11 +53,11 @@ class HyperbandOptimizer(AAlgorithm):
         self.set_process(round(self.progress * 100 / self.num_samples, 2 ))
         self.set_process_time(time())
 
-        algo = AlgorithmGenetic(data=data, is_minimise=is_minimise, verbose=False, **config) # convertir en int pas un dictionnaire 
+        algo: 'AAlgorithm' = AlgorithmGenetic(data=data, is_minimise=is_minimise, verbose=False, **config) # convertir en int pas un dictionnaire 
         algo.set_objective_function(self.get_objective_function())
 
         best_solution, fitness = algo.startbis()
-        tune.report({"fitness": float(fitness)})
+        #tune.report({"fitness": float(fitness)})
 
     def optimize(self, data, is_minimise=True):
         """
