@@ -32,15 +32,14 @@ class JSONFormat(AFormat):
         
         # Sérialisation JSON
         data = {aircraft.get_id_aircraft(): self.__export_one(aircraft) for aircraft in iterable}
-
-        return json.dumps(data, indent=4, default=self.__serialize_command)
+        return json.dumps(data, indent=4)
 
     def __export_one(self, obj: 'Aircraft') -> Dict:
         """
-        Exporte les informations d'un Aircraft sous forme de dictionnaire.
+        Exporte les informations du plan de vol timé d'un Aircraft sous forme de dictionnaire.
         """
         # Sérialiser les commandes et l'historique pour un seul avion
-        commands = [self.__serialize_command(c) for c in obj.get_commands()]
+        commands = obj.get_commands()
         history = {t: self.__serialize_command(info) for t, info in obj.get_history().items()}
         flight_plan = obj.get_flight_plan_timed()
 
@@ -50,14 +49,28 @@ class JSONFormat(AFormat):
                     self.FLIGHT_PLAN_KEY: flight_plan}
         return exported
 
+    # def __export_one(self, obj: 'Aircraft') -> Dict:
+    #     """
+    #     Exporte les informations d'un Aircraft sous forme de dictionnaire.
+    #     """
+    #     # Sérialiser les commandes et l'historique pour un seul avion
+    #     commands = [self.__serialize_command(c) for c in obj.get_commands()]
+    #     history = {t: self.__serialize_command(info) for t, info in obj.get_history().items()}
+    #     flight_plan = obj.get_flight_plan_timed()
 
-    def __serialize_command(self, obj):
-        if isinstance(obj, list):
-            return [self.__serialize_command(item) for item in obj]  # Sérialise les listes
-        elif isinstance(obj, dict):
-            return {k: self.__serialize_command(v) for k, v in obj.items()}  # Sérialise les dicts
-        else:
-            return obj.__dict__  # Retourne l'objet brut en dictionnaire s'il est déjà JSON
+    #     # Retourner les données sous forme de dictionnaire
+    #     exported = {self.COMMAND_KEY: commands, 
+    #                 self.HISTORY_KEY: history, 
+    #                 self.FLIGHT_PLAN_KEY: flight_plan}
+    #     return exported
+
+    # def __serialize_command(self, obj):
+    #     if isinstance(obj, list):
+    #         return [self.__serialize_command(item) for item in obj]  # Sérialise les listes
+    #     elif isinstance(obj, dict):
+    #         return {k: self.__serialize_command(v) for k, v in obj.items()}  # Sérialise les dicts
+    #     else:
+    #         return obj.__dict__  # Retourne l'objet brut en dictionnaire s'il est déjà JSON
 
     @override
     def parse(self, data: str) -> List['Aircraft']:

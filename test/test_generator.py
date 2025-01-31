@@ -3,7 +3,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 
 import random
-from generator.traffic_generator import PTrafficGenerator
+from model.traffic.traffic_generator import PTrafficGenerator
 from model.aircraft.aircraft import AircraftCollector
 from model.route import Airway
 

@@ -1,4 +1,4 @@
-from generator.static import AIRCRAFTS
+from model.traffic.static import AIRCRAFTS
 from model.configuration import MAIN_SECTOR, SECONDARY_SECTOR
 from model.aircraft.aircraft import Aircraft
 from model.route import Airway

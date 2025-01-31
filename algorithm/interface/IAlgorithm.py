@@ -8,7 +8,7 @@ from logging_config import setup_logging
 from utils.controller.database_dynamique import MetaDynamiqueDatabase
 
 from abc import ABC, abstractmethod
-from typing import List, Type
+from typing import List, Type, Any
 from typing_extensions import override
 from copy import deepcopy
 from time import time
@@ -55,7 +55,7 @@ class IAlgorithm(ABC):
 
     @abstractmethod
     def get_progress(self) -> float:
-        """Récupérer l'avancement de l'exécution, exprimée en %"""        
+        """Récupérer l'avancement de l'exécution, exprimée en % [0-100]"""        
         pass
 
     @abstractmethod
@@ -77,15 +77,22 @@ class AAlgorithm(IAlgorithm):
     """Classe abstraite pour un algorithme prenant une liste de ASimulatedAircraft"""
    
     @abstractmethod
-    def __init__(self, data: List[ASimulatedAircraft], is_minimise: bool, verbose: bool = False, timeout: float = 120.):
-        """Constructeur abstrait obligeant à passer:
-            @param: data
-                Liste de ASimulatedAircraft
-            @param: is_minimise
-                booléen pour minimisation ou non lorsque l'algorithme cherche une solution
-            @param: verbose
-                booléen pour afficher des logs ou non
+    def __init__(self, data: List[ASimulatedAircraft], 
+                 is_minimise: bool, 
+                 verbose: bool = False, 
+                 timeout: float = 120.,
+                 **kwargs):
         """
+        Constructeur abstrait imposant 4 paramètres obligatoires.
+
+        :param data: Liste de ASimulatedAircraft.
+        :param is_minimise: Booléen indiquant si l'algorithme doit minimiser.
+        :param verbose: Active ou non les logs (facultatif, par défaut False).
+        :param timeout: Temps maximum d'exécution en secondes (facultatif, par défaut 120s).
+        :param kwargs: Hyperparamètres supplémentaires que les classes dérivées peuvent utiliser.
+        """
+        super().__init__(data, is_minimise, timeout)  # Passe les hyperparamètres aux éventuelles classes parentes
+
         self.__fobjective  = None
         self.__data        = data
         self.__is_minimise= is_minimise
@@ -98,8 +105,13 @@ class AAlgorithm(IAlgorithm):
         self.__state               = AlgorithmState.NOT_STARTED
         self.__generator = np.random.default_rng(seed=sum(d.get_object().get_id_aircraft() for d in data))
         self.__verbose   = verbose
-
+        self.extra_params = kwargs  # Stocke les hyperparamètres supplémentaires        
+        
         self.logger = setup_logging(self.__class__.__name__)
+
+    def get_param(self, param_name: str, default=None) -> Any:
+        """Retourne un paramètre stocké ou la valeur par défaut"""
+        return self.extra_params.get(param_name, default)
 
     def get_data(self) -> List[ASimulatedAircraft]:
         """Renvoie la liste de ASimulatedAircraft stocker dans la classe"""
@@ -136,7 +148,7 @@ class AAlgorithm(IAlgorithm):
     
     @override
     def get_progress(self) -> float:
-        """Récupérer l'avancement de l'exécution, exprimée en %"""        
+        """Récupérer l'avancement de l'exécution, exprimée en % [0-100]"""        
         return self.__pourcentage_process
 
     def set_process(self, pourcentage: float) -> None:

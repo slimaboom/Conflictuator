@@ -28,13 +28,13 @@ class ObjectiveFunctionAbsoluteNumberConflict(AObjective):
             Calcule et retourne la différence absolue entre le nombre de conflits réels
             et le nombre de conflits attendus.
     """
-    def __init__(self, nunber_of_conflict_expected: int = 2):
+    def __init__(self, nunber_of_conflict_expected: int = 2, **kwargs):
         """
         Initialise la fonction objective avec un nombre de conflits attendu.
 
         :param number_of_conflict_expected: int, nombre de conflits attendus (par défaut 2)
         """
-        super().__init__()
+        super().__init__(**kwargs)
         self.__nb_expected_conflict = nunber_of_conflict_expected
 
     @override

@@ -28,6 +28,7 @@ def main_dynamic_discovering():
     from algorithm.interface.IObjective import AObjective
     from utils.formatter.AFormat import AFormat
     from utils.writter.AWritter import AWritter
+    from model.traffic.abstract.ATrafficGenerator import ATrafficGenerator
 
     # Découverte dynamique des formats pour les enregistrés dans une méta base: MetaDynamiqueDatabase depuis AFormat
     AFormat.discover_formatters('utils.formatter')
@@ -38,9 +39,11 @@ def main_dynamic_discovering():
     # Découverte dynamique des algorithms pour les enregistrés dans dans une méta base: MetaDynamiqueDatabase depuis AAlgorithm
     # Découverte dynamique des fonctions objectives pour les enregistrés dans une méta base: MetaDynamiqueDatabase depuis  Aobjective
     # Comme les deux classes abstraites sont dans algorithm.interface il suffit d'appeler une fois
-    AAlgorithm.discover_algorithms('algorithm.concrete')
+    AAlgorithm.discover_algorithms('algorithm')
     AObjective.discover_objective_functions('algorithm.objective_function')
 
     # Si AObjective est déplacé dans le répertoire objective_function
     #AObjective.discover_objective_functions('algorithm.objective_function')
 
+    # Découverte dynamique des générateurs de traffic
+    ATrafficGenerator.discover_traffic_generators('model.traffic')

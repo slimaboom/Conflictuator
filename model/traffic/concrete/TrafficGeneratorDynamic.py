@@ -1,11 +1,13 @@
 import random
 import numpy as np
 from model.route import Airway
-from model.balise import Balise
-from model.aircraft.aircraft import Aircraft, AircraftCollector
+from model.aircraft.aircraft import Aircraft
 from typing import List
 
-class PTrafficGenerator:
+from model.traffic.abstract.ATrafficGeneratorDynamic import ATrafficGeneratorDynamic
+
+@ATrafficGeneratorDynamic.register_traffic_generator
+class TrafficGeneratorDynamic(ATrafficGeneratorDynamic):
     def __init__(self, max_duration: int):
         """
         Initialise le générateur de trafic aérien.

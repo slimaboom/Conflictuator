@@ -5,8 +5,6 @@ from utils.controller.database_dynamique import MetaDynamiqueDatabase
 from typing import List
 from typing_extensions import Type, override
 
-import inspect
-
 # Interface 
 class IObjective(ABC):
     """Interface pour le calcul d'une fonction objectif a partir d'une liste de ISimulatedObject"""

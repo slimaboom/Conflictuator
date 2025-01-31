@@ -2,7 +2,7 @@ import sys, os
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from generator.traffic_generator import AIRCRAFTS
+from model.traffic.static import AIRCRAFTS
 from logging_config import setup_logging
 from utils.conversion import sec_to_time
 from model.aircraft.storage import DataStorage

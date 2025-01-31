@@ -22,10 +22,11 @@ class AlgorithmRecuit(AAlgorithm):
                  number_transitions: int = 2000,
                  heat_up_rate      : float = 1.5,
                  heat_up_acceptance: float = 0.8,
-                 cooling_rate      : float = 0.995):
+                 cooling_rate      : float = 0.995,
+                 **kwargs):
     
         # Attributs generaux
-        super().__init__(data=data, is_minimise=is_minimise, verbose=verbose, timeout=timeout)
+        super().__init__(data=data, is_minimise=is_minimise, verbose=verbose, timeout=timeout, **kwargs)
         self.__generator   = self.get_generator()
 
         self.logger = setup_logging(self.__class__.__name__)

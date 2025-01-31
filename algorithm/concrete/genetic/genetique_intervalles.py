@@ -4,6 +4,7 @@ import numpy as np
 
 from algorithm.interface.IAlgorithm import AAlgorithm
 from algorithm.interface.ISimulatedObject import ASimulatedAircraft
+from algorithm.concrete.genetic.genetique import AlgorithmGenetic
 from model.aircraft.storage import DataStorage
 
 from logging_config import setup_logging
@@ -22,10 +23,11 @@ class AlgorithmGeneticIntervalles(AAlgorithm):
                  generations: int = 100, 
                  mutation_rate: float = 0.1, 
                  crossover_rate: float = 0.8,
-                 time_window: float = 600):
+                 time_window: float = 600,
+                 **kwargs):
         
         # Attributs generaux
-        super().__init__(data=data, is_minimise=is_minimise, verbose=verbose)
+        super().__init__(data=data, is_minimise=is_minimise, verbose=verbose, **kwargs)
 
         # Paramètre de l'algorithme génétique
 

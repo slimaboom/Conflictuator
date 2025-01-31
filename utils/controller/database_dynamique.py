@@ -94,7 +94,7 @@ class MetaDynamiqueDatabase:
         params = {}
         params_without_annotations = {}
         for i, (name, param) in enumerate(signature.parameters.items()):
-            if not (param.name.lower() in ["self"]): # Exclure self
+            if not (param.name.lower() in ["self", "args", "kwargs"]): # Exclure self
                 if param.annotation != inspect.Parameter.empty:
                     params[name] = param
                 else:

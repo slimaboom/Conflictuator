@@ -22,6 +22,8 @@ class Aircraft:
     flight_plan: List[Balise]
 
     position: Point = field(init=False)
+    start_position: Point = field(init=False)
+    
     time: float = field(init=False)
     flight_time: float = field(init=False)
     take_off_time: Optional[float] = 0.

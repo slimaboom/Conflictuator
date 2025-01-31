@@ -23,10 +23,10 @@ class AlgorithmGenetic(AAlgorithm):
                  mutation_rate: float = 0.1, 
                  crossover_rate: float = 0.8,
                  early_stopping: int = 10,
-                 ):
+                 **kwargs):
         
         # Attributs generaux
-        super().__init__(data=data, is_minimise=is_minimise, verbose=verbose, timeout=timeout)
+        super().__init__(data=data, is_minimise=is_minimise, verbose=verbose, timeout=timeout, **kwargs)
 
         # Paramètre de l'algorithme génétique
         # les définir pour les rendre compatible a l'optimisation

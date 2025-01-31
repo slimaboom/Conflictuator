@@ -17,7 +17,8 @@ class HyperbandOptimizer(AAlgorithm):
     def __init__(self, data: List['ASimulatedAircraft'],
                  is_minimise : bool = True, 
                  num_samples: int = 20, 
-                 max_epochs: int =100):
+                 max_epochs: int =100,
+                 **kwargs):
         """
         Initialise l'optimiseur Hyperband.
 
@@ -27,7 +28,7 @@ class HyperbandOptimizer(AAlgorithm):
         :param max_epochs: Nombre max de générations pour l'optimisation
         """
         # Attributs generaux
-        super().__init__(data=data, is_minimise=is_minimise)
+        super().__init__(data=data, is_minimise=is_minimise, **kwargs)
 
         self.algorithm_class = None
         self.num_samples = num_samples
