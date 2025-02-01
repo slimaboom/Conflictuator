@@ -63,14 +63,37 @@ class MainWindow(QMainWindow):
         self.create_simulation_dialog()
 
     def create_simulation_dialog(self) -> None:
-        simulation_dialog = SimulationDialog(parent=self)
-        if simulation_dialog.exec_() == QDialog.Accepted:
-            self.traffic_generator_instance = simulation_dialog.get_parameters()
-            # Envoie de l'instance traffic generator lors de la création du simulation_controller
-            self.create_simulation_view()
-        else:
-            self.close()
-            sys.exit(0)
+        while True: # Boucle pour relancer en cas d'erreur
+            simulation_dialog = SimulationDialog(parent=self)
+        
+            if simulation_dialog.exec_() == QDialog.Accepted:
+                self.traffic_generator_instance = simulation_dialog.get_parameters()
+                
+                # Envoie de l'instance traffic generator lors de la création du simulation_controller
+                try:
+                    self.create_simulation_view()
+                    self.show()
+                    break
+                except Exception as e: # En cas de problème de parsage d'un format ou toute autre, faire remonter l'erreur
+                                        # Affichage de l'erreur dans une boîte de dialogue
+                    import traceback
+                    tb = traceback.format_exc()
+                    msg = f"An Error occured :\n"
+                    msg += f"{tb}"
+                    msg += f"{str(e)}"
+                    msg_box = QMessageBox()
+                    msg_box.setIcon(QMessageBox.Critical)
+                    msg_box.setWindowTitle("Error")
+                    msg_box.setText(msg)
+                    msg_box.setStandardButtons(QMessageBox.Retry | QMessageBox.Cancel)
+                    # Si l'utilisateur choisit d'annuler, on sort de la boucle
+                    if msg_box.exec_() == QMessageBox.Cancel:
+                        sys.exit(0)
+                        break
+
+            else:
+                self.close()
+                sys.exit(0)
 
 
     def create_simulation_view(self):
@@ -843,7 +866,6 @@ def main():
     # Apres gestion de la variable d'environnement: lancement de la fenetre
     app = QApplication(sys.argv)
     window = MainWindow()
-    window.show()
     sys.exit(app.exec_())
 
 # Application PyQt5
