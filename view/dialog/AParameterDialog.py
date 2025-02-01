@@ -1,12 +1,17 @@
-from PyQt5.QtWidgets import (QDialog, QLayout, QWidget,
-                             QVBoxLayout, QGridLayout,
+from PyQt5.QtWidgets import (QDialog, QWidget,
+                             QVBoxLayout, QHBoxLayout, QGridLayout,
                              QLabel, QComboBox, 
-                             QPushButton, QLineEdit, 
+                             QPushButton, QLineEdit, QSpinBox
 )
 
-from typing import Callable
+from datetime import time
+from enum import Enum
+from typing import Dict, Callable, List, Type
 from types import MappingProxyType
+from utils.controller.database_dynamique import MetaDynamiqueDatabase
+
 import inspect
+
 
 class AParamDialog(QDialog):
     """
@@ -16,7 +21,11 @@ class AParamDialog(QDialog):
     :param Parent (QWidget)
     """
 
-    def __init__(self, class_or_function_name: str, getters_function_or_method: Callable[[str], MappingProxyType[str, inspect.Parameter]], parent: QWidget=None):
+    TRUE_OR_FALSE_STR = ['True', 'False']
+
+    def __init__(self, class_or_function_name: str, 
+                 getters_function_or_method: Callable[[str], MappingProxyType[str, inspect.Parameter]], 
+                parent: QWidget=None):
         super().__init__(parent=parent)
         self.setWindowTitle(f"Configure hyper-parameters for {class_or_function_name}")
 
@@ -36,7 +45,10 @@ class AParamDialog(QDialog):
 
         # Définir le layout principal
         self.setLayout(self.__main_layout)
-        
+
+        self.str_bools = [self.true_str, self.false_str]
+
+
     def get_grid_layout(self) -> QGridLayout:
         return self.__grid_layout
 
@@ -46,7 +58,16 @@ class AParamDialog(QDialog):
     def get_class_or_function_name(self) -> str:
         return self.__class_or_function_name
 
-    def create_inputs(self) -> None:
+    def create_combox(self, items: List):
+        input_field = QComboBox(self)
+        input_field.setParent(self.parent())
+        input_field.addItems(items)
+        return input_field
+
+    def create_inputs(self, specific_inputs_types_dict: Dict[Type, List[str]] = {bool: TRUE_OR_FALSE_STR}) -> None:
+        # Sauvegardes types particuliers bool/Enum, ou AFormat, AWritter, AAlgorithm, ATrafficGenerator[Dynamic|Recorded]
+        self.specific_inputs_types_dict = specific_inputs_types_dict
+
         # Définition des titres de colonnes
         headers = ["Name", "Type", "Default", "Value"]
         row = self.__grid_layout.rowCount()
@@ -77,18 +98,53 @@ class AParamDialog(QDialog):
             self.__grid_layout.addWidget(default_label, row_placement, 2)
 
             # Si le type est `bool`, on utilise un menu déroulant (QComboBox)
-            if expected_type == bool:
-                input_field = QComboBox()
-                input_field.addItems([self.true_str, self.false_str])
-                # Sélectionner la valeur par défaut si elle est définie
+            # Sélection de l'input approprié
+            if specific_inputs_types_dict and expected_type in specific_inputs_types_dict:
+                input_field = self.create_combox(items=specific_inputs_types_dict.get(expected_type))
                 if param.default is not inspect.Parameter.empty:
                     input_field.setCurrentText(default_value)
+
+            elif expected_type == time:
+                input_field = self.add_time_input(param.default)  # Gestion du type `time`                
+
             else:
                 input_field = QLineEdit()
                 input_field.setText(default_value)
 
             self.__grid_layout.addWidget(input_field, row_placement, 3)
-            self.param_inputs[param_name] = input_field
+            input_field.setParent(self)
+            self.param_inputs[param_name] = input_field  # Stockage de l'input
+
+
+    def add_time_input(self, default_value):
+        """ Ajoute une entrée sous forme de 3 spinboxes (HH:MM:SS) pour les paramètres de type `time`. """
+        widget = QWidget()
+        layout = QHBoxLayout(widget)
+        widget.setLayout(layout)
+
+        # Créer les trois SpinBoxes pour heures, minutes et secondes
+        self.hours_spinbox = QSpinBox()
+        self.hours_spinbox.setRange(0, 99)
+        
+        self.minutes_spinbox = QSpinBox()
+        self.minutes_spinbox.setRange(0, 59)
+        
+        self.seconds_spinbox = QSpinBox()
+        self.seconds_spinbox.setRange(0, 59)
+
+        # Si une valeur par défaut existe, la convertir en HH:MM:SS
+        if isinstance(default_value, time):
+            h, m, s = default_value.hour, default_value.minute, default_value.second
+            self.hours_spinbox.setValue(h)
+            self.minutes_spinbox.setValue(m)
+            self.seconds_spinbox.setValue(s)
+
+        # Ajouter les widgets au layout
+        layout.addWidget(self.hours_spinbox)
+        layout.addWidget(self.minutes_spinbox)
+        layout.addWidget(self.seconds_spinbox)
+        return widget
+
 
     def get_parameters(self):
         """
@@ -98,9 +154,23 @@ class AParamDialog(QDialog):
         for param_name, input_field in self.param_inputs.items():
             expected_type = self.param_types[param_name]
 
-            if expected_type == bool:
+            if self.specific_inputs_types_dict and expected_type in self.specific_inputs_types_dict:
                 value = input_field.currentText()  # Récupérer la valeur sélectionnée dans le QComboBox
-                converted_params[param_name] = value == self.true_str # Convertir en booléen
+                if bool in self.specific_inputs_types_dict:
+                    converted_params[param_name] = value == self.TRUE_OR_FALSE_STR[0]
+                else:
+                    converted_params[param_name] = MetaDynamiqueDatabase.get_class(expected_type, value)
+                    # Par exemple ca renvoie ca
+                    # print(param_name, converted_params[param_name])
+                    # reader <class 'utils.reader.FileReader.FileReader'>
+                    # parser <class 'utils.formatter.format.JSONFormat'>
+                    
+            elif expected_type == time:  # Gérer le type `time`
+                hours = self.hours_spinbox.value()
+                minutes =self.minutes_spinbox.value()
+                seconds = self.seconds_spinbox.value()
+                converted_params[param_name] = time(hour=hours, minute=minutes, second=seconds)
+                #print(param_name, converted_params[param_name])  # Convertir en secondes
             else:
                 value = input_field.text().strip()
                 try:

@@ -8,11 +8,12 @@ from algorithm.concrete.genetic.genetique import AlgorithmGenetic
 from model.aircraft.storage import DataStorage
 
 from logging_config import setup_logging
+from utils.conversion import time_to_sec
 
 from typing import List
 from typing_extensions import override
 from copy import deepcopy
-from time import time
+from datetime import time, datetime
 
 @AAlgorithm.register_algorithm
 class AlgorithmGeneticIntervalles(AAlgorithm):
@@ -23,7 +24,7 @@ class AlgorithmGeneticIntervalles(AAlgorithm):
                  generations: int = 100, 
                  mutation_rate: float = 0.1, 
                  crossover_rate: float = 0.8,
-                 time_window: float = 600,
+                 time_window: time = time(hour=0, minute=10, second=0),
                  **kwargs):
         
         # Attributs generaux
@@ -35,9 +36,9 @@ class AlgorithmGeneticIntervalles(AAlgorithm):
         self.__generations     = generations
         self.__mutation_rate   = mutation_rate
         self.__crossover_rate  = crossover_rate
-        self.__time_window     = time_window
-        if time_window > 0:
-            self.__interval_index = int(3600//time_window)
+        self.__time_window     = time_to_sec(time_window.isoformat())
+        if self.__time_window > 0:
+            self.__interval_index = int(3600/self.__time_window)
         else:
             message = f"Time Window parameter cannot negative or null."
             raise ValueError(message)
@@ -229,7 +230,7 @@ class AlgorithmGeneticIntervalles(AAlgorithm):
                 self.logger.info(f"Il y a {len(self.get_data())} ASimulatedAircraft")
 
             self.set_process(0.)
-            self.set_start_time(start=time())
+            self.set_start_time(start=datetime.now().timestamp())
 
             population      = self.__generate_initial_population(self.get_data())
             best_individual = None
@@ -271,7 +272,7 @@ class AlgorithmGeneticIntervalles(AAlgorithm):
                 # Avancement du processus
 
                 self.set_process(int(((generation + 1) / self.__generations) * 100))
-                self.set_process_time(process_time=time() - self.get_start_time())
+                self.set_process_time(process_time=datetime.now().timestamp() - self.get_start_time())
 
                 if self.is_verbose():
                     self.logger.info(f"Generation {generation + 1}: Progress = {self.get_progress()}%")  

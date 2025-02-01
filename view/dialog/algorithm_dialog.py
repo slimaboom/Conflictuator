@@ -10,13 +10,11 @@ from algorithm.interface.IObjective import AObjective
 from view.dialog.AParameterDialog import AParamDialog
 from view.dialog.objectif_function_dialog import ObjectiveFunctionParamDialog
 
-from typing_extensions import Dict, override
-
 class AlgorithmParamDialog(AParamDialog):
     """
     :param algorithm_name (type: str): Nom de l'algorithme
     :param Parent (QWidget)
-    """
+    """    
     def __init__(self, algorithm_name, parent=None):
 
         super().__init__(class_or_function_name=algorithm_name, 
@@ -70,7 +68,7 @@ class AlgorithmParamDialog(AParamDialog):
     
     def creat_selection_objective_function(self) -> None:
         # Lister les fonctions objectives
-        self.objective_combo = QComboBox()
+        self.objective_combo = QComboBox(self)
         objective_functions = AObjective.get_available_objective_functions()
         self.objective_combo.addItems(objective_functions)
 

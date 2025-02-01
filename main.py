@@ -9,7 +9,7 @@ from PyQt5.QtWidgets import (QMainWindow, QVBoxLayout, QLayout,
                              QProgressBar, QSlider
 )
 
-from PyQt5.QtCore import Qt, QModelIndex
+from PyQt5.QtCore import Qt, QModelIndex, QPoint
 from PyQt5.QtGui import QCursor
 from PyQt5.QtWidgets import QMessageBox
 
@@ -17,6 +17,7 @@ from controller.controller_view import SimulationViewController
 from view.QtObject import QtAircraft, ConflictWindow
 from view.arrival_manager import ArrivalManagerWindow
 
+from view.dialog.simulation_dialog import SimulationDialog
 from view.dialog.record_dialog import RecordDialog
 from view.dialog.algorithm_dialog import AlgorithmParamDialog
 
@@ -50,12 +51,27 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
+        # Logger pour débuger
         self.logger = setup_logging(__class__.__name__)
-        
+
+        # Géométrie et Titre
         self.setWindowTitle("Conflictuator")
         self.setGeometry(150, 80, 1500, 1100)
+        self.view  = None
 
-        self.create_simulation_view()
+        # Création du dialogue entre utilisateur et machine
+        self.create_simulation_dialog()
+
+    def create_simulation_dialog(self) -> None:
+        simulation_dialog = SimulationDialog(parent=self)
+        if simulation_dialog.exec_() == QDialog.Accepted:
+            self.traffic_generator_instance = simulation_dialog.get_parameters()
+            # Envoie de l'instance traffic generator lors de la création du simulation_controller
+            self.create_simulation_view()
+        else:
+            self.close()
+            sys.exit(0)
+
 
     def create_simulation_view(self):
         # Mise en page principale
@@ -76,7 +92,10 @@ class MainWindow(QMainWindow):
         # Fenêtre des plans de vols
         self.arrival_manager = ArrivalManagerWindow()
         self.arrival_manager.closing.connect(lambda :self.arrival_manager_btn.setChecked(False))
-
+        self.simulation_controller.simulation.signal.aircrafts_moved.connect(
+            lambda : self.arrival_manager.add_aircrafts_list(aircraft_list=
+                        self.simulation_controller.simulation.get_aircrafts().values())
+            )
         # Mise en page principale
         main_layout = QVBoxLayout(container)  # Mise en page verticale principale
 
@@ -102,8 +121,7 @@ class MainWindow(QMainWindow):
 
     def create_control_panel(self):
         """Crée la barre de contrôle avec les boutons et curseurs."""
-        # Découverte dynamic des algorithms, fonctions objectifs
-        main_dynamic_discovering()
+
         
         # Créer le QWidget parent
         control_panel = QWidget()
@@ -159,9 +177,9 @@ class MainWindow(QMainWindow):
         speed_container.setLayout(speed_layout)
 
         # ComboBox pour les differents algorithmes
-        self.algobox_container = QWidget()
-        self.combobox = QComboBox()
-        
+        self.algobox_container = QWidget(self)
+        self.combobox = QComboBox(self)
+
         self.algobox = QVBoxLayout(self.algobox_container)
         self.algobox.addWidget(self.combobox)
 
@@ -172,9 +190,10 @@ class MainWindow(QMainWindow):
         
         # Connecter le signal
         self.combobox.view().pressed.connect(self.on_combobox_item_clicked)
+        self.combobox.highlighted.connect(self.save_highlighted_index)
         
         # Redéfinir showPopup
-        self.combobox.showPopup = self.show_popup_combox
+        self.combobox.showPopup = lambda : self.show_popup_combox(index=0)
         
         # Ajouter les widgets à la barre
         layout_one.addWidget(self.play_button)
@@ -201,12 +220,15 @@ class MainWindow(QMainWindow):
         # Troisième ligne : Ajout des QWidgets
         self.create_slider(layout_tree)
         return control_panel
+    
 
     def create_slider(self, layout: QLayout) -> QSlider:
+        interval =  self.simulation_controller.simulation.get_interval_timer()
+        sim_max = int(self.traffic_generator_instance.get_simulation_duration() / interval)
         self.time_slider = QSlider(Qt.Horizontal)  # Slider horizontal
-        self.time_slider.setRange(0, 36000)  # 1 heure = 3600 secondes * 10 (car pas de 0.1s)
+        self.time_slider.setRange(0, sim_max)  # 1 heure = 3600 secondes * 10 (car pas de 0.1s)
         self.time_slider.setSingleStep(1)  # Unité = 0.1s
-        self.time_slider.setTickInterval(600)  # Affichage des ticks toutes les minutes (60s * 10)
+        self.time_slider.setTickInterval(int(60 / interval))  # Affichage des ticks toutes les minutes (60s * 10)
         self.time_slider.setTickPosition(QSlider.TicksBelow)
 
         # Mettre à jour le label quand on déplace le slider
@@ -220,12 +242,24 @@ class MainWindow(QMainWindow):
         seconds = value * self.simulation_controller.simulation.get_interval_timer()  # Convertir en secondes
         self.simulation_controller.run_fast_simulation(elasped=seconds)
 
-    def show_popup_combox(self):
+    def save_highlighted_index(self, index):
+        """Sauvegarde l'index actuellement surligné (highlighted)."""
+        self.last_highlighted_index = index
+
+    def show_popup_combox(self, index: int):
         """Forcer la première option sélectionnée et afficher le menu déroulant."""
-        self.combobox.setCurrentIndex(0)  # Sélectionner toujours la première option
+        self.combobox.setCurrentIndex(index)  # Sélectionner toujours la première option
         self.combobox.view().scrollToTop()  # S'assurer que la vue commence au début
         QComboBox.showPopup(self.combobox)  # Appeler la méthode parent pour afficher le menu
-    
+
+    def moveEvent(self, event):
+        """Lorsque la fenêtre est déplacée, on met à jour la position du popup."""
+        # Sauvegarder l'index actuel et fermer le popup si la fenêtre est déplacée
+        if self.combobox.view().isVisible():  # Vérifie si le popup est visible
+            self.show_popup_combox(self.last_highlighted_index)
+
+        super().moveEvent(event)
+
     def freeze_interactions(self, freezing: bool) -> None:
         # Marquer le changement comme interne
         self.is_internal_change = freezing
@@ -250,18 +284,21 @@ class MainWindow(QMainWindow):
         try:
             # Ne lancer un algorithm que si c'est le premier
             if not self.simulation_controller.simulation.get_algorithm_manager().has_been_lauch():
-                # Gestion IHM
-                self.combobox.setCurrentIndex(index.row())  # S'assurer que l'élément sélectionné reste visible
-                self.freeze_interactions(True)
-                self.create_algorithm_panel()
-
                 # Gestion Algorithm class
                 aalgorithm = AAlgorithm.get_algorithm_class(selected_text)
                 # Demande des paramètres du constructeur de la classe dérivée AAlgorithm (dynamique)
                 algorithm_dialog = AlgorithmParamDialog(algorithm_name=selected_text, parent=self)
                 if algorithm_dialog.exec_() == QDialog.Accepted:
                     algo_constructor_parameters_objective_function_constructors_parameters = algorithm_dialog.get_parameters()   
-                    self.simulation_controller.start_algorithm(aalgorithm, **algo_constructor_parameters_objective_function_constructors_parameters)
+                    # Gestion IHM
+                    self.combobox.setCurrentIndex(index.row())  # S'assurer que l'élément sélectionné reste visible
+                    self.freeze_interactions(True)
+                    self.create_algorithm_panel()
+                    self.record_sim_btn.setDisabled(True)
+                    self.arrival_manager.setEnabledRefresh(False)
+                    self.time_slider.setDisabled(True)
+                    self.simulation_controller.start_algorithm(aalgortim=aalgorithm,
+                                                               **algo_constructor_parameters_objective_function_constructors_parameters)                
             else:
                 self.notify_algorithm_termination(AlgorithmState.ALREADY_LAUNCH)
         except Exception as e:
@@ -270,7 +307,7 @@ class MainWindow(QMainWindow):
 
             # Construire un message d'erreur informatif
             error_msg = (
-                f"Erreur dans la classe '{self.__class__.__name__}' --> {self.on_combobox_item_clicked.__qualname__}:\n\n"
+                f"Erreur dans la classe '{self.__class__.__name__}' --> {self.__class__.__qualname__}:\n\n"
                 f"{tb}"
             )
             self.notify_algorithm_error(AlgorithmState.ERROR, Exception(error_msg)) # Propager l'erreur avec le traceback 
@@ -384,7 +421,8 @@ class MainWindow(QMainWindow):
         self.time_label.setText(txt)
 
     def create_simulation_controller(self) -> SimulationViewController:
-        simulation_controller = SimulationViewController(self.scene)
+        simulation_controller = SimulationViewController(self.scene) #traffic_generator=self.traffic_generator_instance)
+        simulation_controller.set_traffic_generator(traffic_generator=self.traffic_generator_instance)
         # Connexion a l'affichage du temps
         simulation_controller.chronometer.connect(self.update_time_label)
         simulation_controller.simulation.signal.simulation_finished.connect(self.simulation_finished)
@@ -541,6 +579,7 @@ class MainWindow(QMainWindow):
             self.scene.clear()
 
             self.simulation_controller = self.create_simulation_controller()
+            # Comme le traffic generator est le meme, pas besoin de remettre a jour le slider sur la valeur max
             self.simulation_controller.draw()
 
         self.update_time_label(0)
@@ -575,13 +614,15 @@ class MainWindow(QMainWindow):
 
     def showEvent(self, event) -> None:
         super().showEvent(event)
-        self.view.fitInView(self.scene.sceneRect(), Qt.KeepAspectRatio)
-        self.simulation_controller.draw()
+        if self.view != None:
+            self.view.fitInView(self.scene.sceneRect(), Qt.KeepAspectRatio)
+            self.simulation_controller.draw()
 
     def resizeEvent(self, event) -> None:
         """ Resize la fenetre principale et la scene et envoie la mise a jour au controller"""
         #self.logger.info(f"Fenetre principale redimensionnee width={self.width()}, height={self.height()}")
-        self.view.fitInView(self.scene.sceneRect(), Qt.KeepAspectRatio)
+        if self.view != None:
+            self.view.fitInView(self.scene.sceneRect(), Qt.KeepAspectRatio)
 
     def show_conflicts_for_balise(self, qtbalise: 'QtBalise') -> None:
         """Affiche les conflits associés à une balise spécifique."""
@@ -597,11 +638,19 @@ class MainWindow(QMainWindow):
             is_error=True,
             algorithm_state=algorithm_state
         )
+        self.record_sim_btn.setEnabled(True)
+        self.arrival_manager.setEnabledRefresh(True)
+        self.time_slider.setEnabled(True)
+
     
     def notify_algorithm_termination(self, algorithm_state: AlgorithmState) -> None:
         """Notifie l'utilisateur que l'algorithme est terminé."""
         self.combobox.setStyleSheet("background-color: none;")
         self.combobox.setEnabled(True)
+        self.record_sim_btn.setEnabled(True)
+        self.arrival_manager.setEnabledRefresh(True)
+        self.time_slider.setEnabled(True)
+
 
         # Définir le message selon l'état
         if algorithm_state == AlgorithmState.ALREADY_LAUNCH:
@@ -787,6 +836,10 @@ def main():
         os.environ["QT_QPA_PLATFORM"] = "cocoa"
     else: # Windows
         pass
+
+    # Découverte dynamique des algorithms, fonctions objectifs, writters, formatters, traffic generator
+    main_dynamic_discovering()
+
     # Apres gestion de la variable d'environnement: lancement de la fenetre
     app = QApplication(sys.argv)
     window = MainWindow()

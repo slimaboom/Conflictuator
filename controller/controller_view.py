@@ -1,4 +1,5 @@
 from model.sector import SectorType
+from model.traffic.abstract import ATrafficGenerator
 from view.simulation_notifier import SimulationModelNotifier
 from view.QtObject import QtSector, QtBalise, QtAirway, QtAircraft
 from view.arrival_manager import ArrivalManagerWindow
@@ -53,6 +54,12 @@ class SimulationViewController(QObject):
         # Algorithme results
         self.simulation.signal.algorithm_terminated.connect(self.update_view_with_algorithm, type=Qt.QueuedConnection)  # Assure que le signal est traité dans le thread principal
         #self.logger.info(self.qt_aircrafts)
+
+    def set_traffic_generator(self, traffic_generator: ATrafficGenerator) -> None:
+        """Set le generateur de traffic au controleur"""
+        self.simulation.set_traffic_generator(traffic_generator=traffic_generator)
+        self.initialise_view() # reinitialisation de la vue
+        self.draw()
 
 
     def initialise_view(self) -> None:
@@ -109,7 +116,7 @@ class SimulationViewController(QObject):
             
             # Sauvegarde du QtAircraft dans l'attribut aircrafts
             self.qt_aircrafts[aircraft.get_id_aircraft()] = qtaircraft
-    
+        
     def draw_sectors(self) -> None:
         """Ajouter les secteurs a la scene"""
         # Ajouter les secteurs a la scene
@@ -332,7 +339,6 @@ class SimulationViewController(QObject):
             self.scene.addItem(qtaircraft_copy)
 
         self.update_qt_balises_color()
-        #self.logger.info(self.qt_aircrafts)
 
     def update_qt_balises_color(self) -> None:
         # Mettre à jour les couleurs des balises en fonction des conflits
@@ -353,8 +359,14 @@ class SimulationViewController(QObject):
         
         # Supprimer les avions de la scène
         for qtaircraft in list(self.qt_aircrafts.values()):
-            if qtaircraft in self.scene.items():
-                self.scene.removeItem(qtaircraft)
+            if self.simulation.delete_aircraft(qtaircraft.get_aircraft()):
+                self.logger.info(f"Deleting aircraft id: {qtaircraft.get_aircraft().get_id_aircraft()}")
+                if qtaircraft in self.scene.items():
+                    self.scene.removeItem(qtaircraft)
+
+        for qtbalise in self.qt_balises:
+            if qtbalise in self.scene.items():
+                self.scene.removeItem(qtbalise)
 
         # Nettoyer les listes internes
         self.qt_aircrafts.clear()

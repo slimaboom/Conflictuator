@@ -10,7 +10,7 @@ from algorithm.concrete.genetic.genetique import AlgorithmGenetic
 from algorithm.interface.ISimulatedObject import ASimulatedAircraft
 
 #import ray
-from time import time
+from datetime import datetime
 
 @AAlgorithm.register_algorithm
 class HyperbandOptimizer(AAlgorithm):
@@ -52,7 +52,7 @@ class HyperbandOptimizer(AAlgorithm):
         """
         self.progress += 1
         self.set_process(round(self.progress * 100 / self.num_samples, 2 ))
-        self.set_process_time(time())
+        self.set_process_time(datetime.now().timestamp())
 
         algo: 'AAlgorithm' = AlgorithmGenetic(data=data, is_minimise=is_minimise, verbose=False, **config) # convertir en int pas un dictionnaire 
         algo.set_objective_function(self.get_objective_function())
@@ -85,6 +85,6 @@ class HyperbandOptimizer(AAlgorithm):
     @override
     def run(self) : 
 
-        self.set_start_time(start=time())
+        self.set_start_time(start=datetime.now().timestamp())
 
         return self.optimize(self.data, is_minimise=True)

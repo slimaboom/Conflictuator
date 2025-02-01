@@ -2,7 +2,7 @@ from algorithm.interface.ISimulatedObject import ISimulatedObject, ASimulatedAir
 from algorithm.interface.IObjective import IObjective, AObjective
 from model.aircraft.storage import DataStorage
 
-from utils.conversion import sec_to_time
+from utils.conversion import sec_to_time, time_to_sec
 from logging_config import setup_logging
 
 from utils.controller.database_dynamique import MetaDynamiqueDatabase
@@ -11,7 +11,7 @@ from abc import ABC, abstractmethod
 from typing import List, Type, Any
 from typing_extensions import override
 from copy import deepcopy
-from time import time
+from datetime import time, datetime
 from enum import Enum
 
 import numpy as np
@@ -80,7 +80,7 @@ class AAlgorithm(IAlgorithm):
     def __init__(self, data: List[ASimulatedAircraft], 
                  is_minimise: bool, 
                  verbose: bool = False, 
-                 timeout: float = 120.,
+                 timeout: time = time(hour=0, minute=2, second=0),
                  **kwargs):
         """
         Constructeur abstrait imposant 4 paramètres obligatoires.
@@ -100,7 +100,7 @@ class AAlgorithm(IAlgorithm):
 
         self.__pourcentage_process = 0.
         self.__process_time        = 0.
-        self.__timeout_value       = timeout
+        self.__timeout_value       = time_to_sec(timeout.isoformat())
         self.__startime            = None
         self.__state               = AlgorithmState.NOT_STARTED
         self.__generator = np.random.default_rng(seed=sum(d.get_object().get_id_aircraft() for d in data))
@@ -201,10 +201,10 @@ class AAlgorithm(IAlgorithm):
     def is_timeout(self) -> bool:
         """L'algorithme est-il en timeout (trop longue duree d'execution)"""
         if self.__startime != None:
-            dt = time() - self.__startime
+            dt = datetime.now().timestamp() - self.__startime
         else:
             dt = 0.
-
+        print(dt)
         _is_timeout = dt >= self.get_timeout_value()
         if _is_timeout:
             msgtimeout = f"Timeout: {sec_to_time(self.get_timeout_value())}, running for {sec_to_time(dt)}"

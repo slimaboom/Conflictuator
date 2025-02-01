@@ -1,4 +1,4 @@
-from model.traffic.static import AIRCRAFTS
+from model.traffic.abstract.ATrafficGenerator import ATrafficGenerator
 from model.configuration import MAIN_SECTOR, SECONDARY_SECTOR
 from model.aircraft.aircraft import Aircraft
 from model.route import Airway
@@ -25,7 +25,7 @@ class SimulationModel:
     
     INTERVAL: int = 100 # Intervalle par défaut en millisecondes (100 ms)
 
-    def __init__(self):
+    def __init__(self, traffic_generator: ATrafficGenerator = None):
         # Logger pour logger et afficher des informations dans le terminal
         self.logger = setup_logging(__class__.__name__)
         
@@ -33,8 +33,9 @@ class SimulationModel:
         self.sectors: Dict[SectorType, Dict[str, List['Point']]]  = {}
         self.balises: Dict[str, 'Balise']      = {}
         self.routes: Dict[str, List['Balise']] = {}
-        self.aircrafts: Dict[int, Aircraft]  = {}
+        self.aircrafts: Dict[int, Aircraft]  = traffic_generator.generate_traffic() if traffic_generator else {}
         self.__aircraft_to_algo: Dict[int, Aircraft]  = {}
+        self.__traffic_generator = traffic_generator
 
         # Gestion de la simulation
         self.time_elapsed = 0 # En secondes
@@ -43,7 +44,6 @@ class SimulationModel:
 
         self._external_timer = None  # Timer externe, par défaut None
         self._speed_factor = 1
-
 
         # Enregistrer le gestionnaire comme observateur
         self.conflict_manager = ConflictManager(time_threshold=60)
@@ -56,6 +56,22 @@ class SimulationModel:
         # Algorithm manager
         self._algorithm_manager = AlgorithmManager()
 
+    def set_traffic_generator(self, traffic_generator: ATrafficGenerator) -> None:
+        """Set le generateur de traffic à la simulation sous certaine condition
+           Le simulateur n'a pas de generateur de traffic
+           et l'argument du setter est du type ATrafficGenerator
+        """
+        # Sinon il faut recalculer le self.aircrafts et refaire self.initialize()
+        if traffic_generator != None: # Protection 
+            # Mise a jour de l'attribut
+            self.__traffic_generator = traffic_generator
+            # Generation du traffic
+            self.aircrafts = traffic_generator.generate_traffic()
+            self.initialise_aircrafts()
+            self.initialise_conflicts()
+
+    def get_simulation_time(self) -> float:
+        return self.__traffic_generator.get_simulation_duration()
 
     def initialize(self) -> None:
         """Initialise les objets de simulation."""
@@ -78,7 +94,7 @@ class SimulationModel:
     def initialise_balises(self) -> None:
         """Balise initialisation"""
         for _, balise in Balise.get_available_balises().items():
-            self.add_balise(balise.deepcopy())
+            self.add_balise(balise)
         
     def initialise_routes(self) -> None:
         """Route/Airway initialisation"""
@@ -87,8 +103,8 @@ class SimulationModel:
 
     def initialise_aircrafts(self) -> None:
         """Aircraft initialisation"""
-        for aircraft in AIRCRAFTS.get_all().copy().values():
-            self.add_aircraft(aircraft.deepcopy(), register_to_manager=True)
+        for aircraft in self.aircrafts.values():
+            self.add_aircraft(aircraft, register_to_manager=True)
     
     def initialise_conflicts(self) -> None:
         """Conflict initialisation"""
@@ -130,7 +146,9 @@ class SimulationModel:
         aircraft_key = aircraft.get_id_aircraft()
         if self.aircrafts.get(aircraft_key):
             del self.aircrafts[aircraft_key]
-            return self.conflict_manager.delete_aircraft(aircraft)
+            deletion_okay = self.conflict_manager.delete_aircraft(aircraft)
+            Aircraft.remove_aircraft_from_registry(aircraft)
+            return deletion_okay
         else: return False
     
 
@@ -219,8 +237,6 @@ class SimulationModel:
         self.conflict_manager.set_time_simulation(self.time_elapsed)
         dt = self.get_interval_timer()
         elasped_minus = elasped - dt # retirer le temps du timer car aircraft.update(dt) va incrémenter 
-        from utils.conversion import sec_to_time
-        print(elasped, sec_to_time(elasped))
         for aircraft in self.aircrafts.values():
             # Préciser à l'avion à quelle heure il est
             aircraft.set_time(elasped_minus)

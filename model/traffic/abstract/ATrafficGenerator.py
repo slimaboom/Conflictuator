@@ -6,6 +6,7 @@ from typing import Type, Any
 class ATrafficGenerator(ITrafficGenerator):
     """Classe abstraite contenant des méthodes utilitaires communes."""
     
+    @abstractmethod
     def __init__(self, **kwargs):
         """
         Initialise la classe et stocke des paramètres supplémentaires via kwargs.

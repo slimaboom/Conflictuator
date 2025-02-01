@@ -40,13 +40,11 @@ class JSONFormat(AFormat):
         """
         # Sérialiser les commandes et l'historique pour un seul avion
         commands = obj.get_commands()
-        history = {t: self.__serialize_command(info) for t, info in obj.get_history().items()}
-        flight_plan = obj.get_flight_plan_timed()
+        flight_plan_timed = obj.get_flight_plan_timed()
 
         # Retourner les données sous forme de dictionnaire
         exported = {self.COMMAND_KEY: commands, 
-                    self.HISTORY_KEY: history, 
-                    self.FLIGHT_PLAN_KEY: flight_plan}
+                    self.FLIGHT_PLAN_KEY: flight_plan_timed}
         return exported
 
     # def __export_one(self, obj: 'Aircraft') -> Dict:

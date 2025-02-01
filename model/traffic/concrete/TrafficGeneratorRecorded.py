@@ -9,7 +9,7 @@ class TrafficGeneratorRecorded(ATrafficGeneratorRecorded):
         - reader: AReader, classe concrète héritant de AReader permettant de lire la donnée depuis le container.
         - parser: AFormat, classe concrète héritant de AFormat permettant de parser le contenu de la donnée (par exemple JSONFormat).
     """
-    def __init__(self, container: str, reader: AReader, parser: AFormat, **kwargs):
+    def __init__(self, reader: AReader, parser: AFormat, **kwargs):
         """
         Constructeur imposant trois paramètres obligatoires.
 
@@ -25,4 +25,4 @@ class TrafficGeneratorRecorded(ATrafficGeneratorRecorded):
 
             traffig_generator.generate_traffic()
         """
-        super().__init__(container=container, reader=reader, parser=parser)
+        super().__init__(reader=reader, parser=parser, **kwargs)

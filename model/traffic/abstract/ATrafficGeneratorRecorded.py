@@ -5,7 +5,7 @@ from utils.formatter.AFormat import AFormat
 from utils.controller.database_dynamique import MetaDynamiqueDatabase
 
 from model.aircraft.aircraft import Aircraft
-from typing import Dict, Type
+from typing import Dict
 
 from typing_extensions import override
 
@@ -18,7 +18,7 @@ class ATrafficGeneratorRecorded(ATrafficGenerator):
     """
 
     @abstractmethod
-    def __init__(self, container: str, reader: AReader, parser: AFormat, **kwargs):
+    def __init__(self, reader: AReader, parser: AFormat, **kwargs):
         """
         Constructeur imposant trois paramètres obligatoires.
 
@@ -29,8 +29,8 @@ class ATrafficGeneratorRecorded(ATrafficGenerator):
                        Le paramètre ne doit pas être instancié.
         """
         # Instanciation des classes concrètes
-        self.reader: AReader = reader(container)  # Le container est passé au lecteur 
-        self.parser: AFormat = parser()           # Instancie le parser
+        self.reader: AReader = reader  # Le container est passé au lecteur 
+        self.parser: AFormat = parser  # Instancie le parser
 
         # Appel au constructeur de la classe parente avec les arguments supplémentaires
         super().__init__(**kwargs)
@@ -48,20 +48,12 @@ class ATrafficGeneratorRecorded(ATrafficGenerator):
 
     @override
     def get_simulation_duration(self) -> float:
-        """Renvoie la durée de la simulation"""
+        """Renvoie la durée de la simulation en secondes"""
         return self.__simulation_duration
     
     def __find_simulation_duration(self, parsed_data: Dict[int, Aircraft]) -> float:
         # Liste des dernières valeurs des plans de vol de chaque avion
-        last_times = [list(a.get_flight_plan_timed().values())[-1] for a in parsed_data.values()]
+        last_times = [a.get_arrival_time_on_last_point() for a in parsed_data.values()]
         
         # Retourner la durée maximale
         return max(last_times) if last_times else 0.0  # 0.0 si aucune donnée n'est présente
-
-    @classmethod
-    def register_traffic_generator(cls, traffic_class: Type):
-        """
-        Enregistre un generateur de traffic à partir de la classe ATrafficGeneratorRecorded.
-        Exception: TypeError
-        """
-        return MetaDynamiqueDatabase.register(subclass=traffic_class)

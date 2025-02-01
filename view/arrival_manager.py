@@ -54,14 +54,29 @@ class ArrivalManagerWindow(QWidget):
         # Timer pour declencher la mise a jour des couleurs des boutons
         self.timer = None
         self.aircraft_button_format = "Aircraft %s: %s"
-    
-    def show_aircrafts(self, aircraft_list: List['Aircraft']):
-        for a in sorted(aircraft_list, key= lambda a: (a.get_take_off_time(), a.get_id_aircraft())):
-            id = a.get_id_aircraft()
-            if not id in self.buttons:
-                aircraft_btn = self.__add_aircraft_buttons(a)
-                self.buttons[id] = (a, aircraft_btn)
 
+        # Desactivation/Activation du refresh (par exemple si la fenetre est ouverte et qu'un algorithme tourne)
+        # Il y a cette erreur
+        #    self.btns_layout.removeWidget(button)
+        # RuntimeError: wrapped C/C++ object of type QPushButton has been deleted
+        self.__is_refresh_possible = True
+    
+    def setEnabledRefresh(self, refresh_action: bool) -> bool:
+        if self.isVisible():
+            self.__is_refresh_possible = refresh_action
+
+    def is_refresh_possible(self) -> bool:
+        return self.__is_refresh_possible
+    
+    def add_aircrafts_list(self, aircraft_list: List['Aircraft']) -> None:
+        for a in sorted(aircraft_list, key= lambda a: (a.get_take_off_time(), a.get_id_aircraft())):
+                id = a.get_id_aircraft()
+                if not id in self.buttons and not a.has_reached_final_point():
+                    aircraft_btn = self.__add_aircraft_buttons(a)
+                    self.buttons[id] = (a, aircraft_btn)
+
+    def show_aircrafts(self, aircraft_list: List['Aircraft']) -> None:
+        self.add_aircrafts_list(aircraft_list=aircraft_list)
         self.setVisible(True)
 
     def __add_aircraft_buttons(self, aircraft: 'Aircraft') -> QPushButton:
@@ -217,17 +232,18 @@ class ArrivalManagerWindow(QWidget):
 
         # Réorganiser les boutons dans le layout sans les supprimer ni les réajouter
         for i, (aircraft_id, (aircraft, button)) in enumerate(sorted_buttons):
-            self.__update_button(aircraft, button)
-            self.btns_layout.removeWidget(button)  # Retirer temporairement du layout
-            self.btns_layout.insertWidget(i, button)  # Réinsérer dans l'ordre trié
-        
+            if button.isVisible():  # Vérifier si le bouton est toujours visible et existant
+                self.__update_button(aircraft, button)
+                self.btns_layout.removeWidget(button)  # Retirer temporairement du layout
+                self.btns_layout.insertWidget(i, button)  # Réinsérer dans l'ordre trié
+
         if len(self.buttons_deleted) != len(self.buttons): # Si ils doivent tous etre supprimés, on les garde
             for aircraft_id, (_, button) in self.buttons_deleted.items():
-                self.btns_layout.removeWidget(button)
-                button.deleteLater()
-                del self.buttons[aircraft_id]
-
-
+                if button.isVisible():  # Vérifier si le bouton est toujours visible et existant
+                    self.btns_layout.removeWidget(button)
+                    button.deleteLater()
+                    del self.buttons[aircraft_id]
+            self.buttons_deleted.clear()
 
     def __remove_btns(self) -> None:
         """Supprime les boutons de l'interface et de leur layout."""
@@ -266,7 +282,10 @@ class ArrivalManagerWindow(QWidget):
     def setVisible(self, visible):
         if self.timer:
             if visible:
-                self.timer.start()
+                if self.is_refresh_possible():
+                    self.timer.start()
+                else:
+                    self.timer.stop()
             else:
                 self.timer.stop()
         super().setVisible(visible)

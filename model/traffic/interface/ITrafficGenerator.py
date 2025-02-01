@@ -12,5 +12,5 @@ class ITrafficGenerator(ABC):
 
     @abstractmethod
     def get_simulation_duration(self) -> float:
-        """Renvoie la durée de la simulation"""
+        """Renvoie la durée de la simulation en secondes"""
         pass
