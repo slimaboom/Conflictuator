@@ -55,7 +55,7 @@ def main_dynamic_discovering():
     from utils.writter.AWritter import AWritter
     from utils.reader.AReader import AReader
     from model.traffic.abstract.ATrafficGenerator import ATrafficGenerator
-
+    from model import configuration
     # Découverte dynamique des formats pour les enregistrés dans une méta base: MetaDynamiqueDatabase depuis AFormat
     AFormat.discover_formatters('utils.formatter')
 

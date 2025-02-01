@@ -4,11 +4,9 @@ from typing_extensions import override, TYPE_CHECKING
 
 from algorithm.data import DataStorage
 from model.aircraft.aircraft import Information
-
+from model.aircraft.aircraft import Aircraft
+from model.route import Airway
 import json
-
-if TYPE_CHECKING:
-    from model.aircraft.aircraft import Aircraft
 
 @AFormat.register_format
 class JSONFormat(AFormat):
@@ -32,7 +30,7 @@ class JSONFormat(AFormat):
         
         # Sérialisation JSON
         data = {aircraft.get_id_aircraft(): self.__export_one(aircraft) for aircraft in iterable}
-        return json.dumps(data, indent=4)
+        return json.dumps(data, indent=4, default=self.__serialize_command)
 
     def __export_one(self, obj: 'Aircraft') -> Dict:
         """
@@ -62,22 +60,22 @@ class JSONFormat(AFormat):
     #                 self.FLIGHT_PLAN_KEY: flight_plan}
     #     return exported
 
-    # def __serialize_command(self, obj):
-    #     if isinstance(obj, list):
-    #         return [self.__serialize_command(item) for item in obj]  # Sérialise les listes
-    #     elif isinstance(obj, dict):
-    #         return {k: self.__serialize_command(v) for k, v in obj.items()}  # Sérialise les dicts
-    #     else:
-    #         return obj.__dict__  # Retourne l'objet brut en dictionnaire s'il est déjà JSON
+    def __serialize_command(self, obj):
+        if isinstance(obj, list):
+            return [self.__serialize_command(item) for item in obj]  # Sérialise les listes
+        elif isinstance(obj, dict):
+            return {k: self.__serialize_command(v) for k, v in obj.items()}  # Sérialise les dicts
+        else:
+            return obj.__dict__  # Retourne l'objet brut en dictionnaire s'il est déjà JSON
 
     @override
-    def parse(self, data: str) -> List['Aircraft']:
+    def parse(self, data: str) -> Dict[int, 'Aircraft']:
         """Renvoie le parsing de l'argument <data> qui est une chaine en un objet List['Aircraft']"""
         data_dict = json.loads(data) # C'est la classe JSONFormat ici donc on peut utiliser le module json
-        aircraft_list = []
+        aircrafts_dict = {}
         for aircraft_id in data_dict:
             aircraft_dict = data_dict.get(aircraft_id) # key: self.***_KEY
-
+            id = int(aircraft_id)
             for type_info in aircraft_dict: # Parcourt des informations
                 details = aircraft_dict.get(type_info)
                 # Commands
@@ -92,5 +90,8 @@ class JSONFormat(AFormat):
                     flight_plan_timed = details
 
             # Creation instance Aircraft enregistres
-            aircraft_list.append((commands, history, flight_plan_timed))
-        return aircraft_list
+            aircraft = Aircraft(flight_plan=Airway.transform(list(flight_plan_timed.keys())),
+                                speed=commands[0].speed,
+                                id=id)
+            aircrafts_dict[id] = aircraft
+        return aircrafts_dict
