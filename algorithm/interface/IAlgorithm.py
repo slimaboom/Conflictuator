@@ -204,7 +204,6 @@ class AAlgorithm(IAlgorithm):
             dt = datetime.now().timestamp() - self.__startime
         else:
             dt = 0.
-        print(dt)
         _is_timeout = dt >= self.get_timeout_value()
         if _is_timeout:
             msgtimeout = f"Timeout: {sec_to_time(self.get_timeout_value())}, running for {sec_to_time(dt)}"

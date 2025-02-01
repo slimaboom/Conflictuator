@@ -1,5 +1,13 @@
 {
     "1": {
+        "commands": [
+            {
+                "id": 1,
+                "speed": 0.003,
+                "time": 0.0,
+                "heading": 5.516356508438049
+            }
+        ],
         "flight_plan": {
             "ATN": 31.68,
             "BURGO": 57.47,

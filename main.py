@@ -256,7 +256,14 @@ class MainWindow(QMainWindow):
 
         # Mettre à jour le label quand on déplace le slider
         self.time_slider.valueChanged.connect(self.update_slider)
-    
+        # Connexion du slider au temps elasped défilant signal chronometer du controller_view
+        self.simulation_controller.chronometer.connect(lambda elapsed: 
+            self.time_slider.setValue(int(elapsed / interval)))
+
+
+        # Connexion du slider à l'afficheur du temps pour qu'il évolue en même temps.
+        # Attention le slider attend un entier car l'unité du slider est par exemple 0.1 s
+        # simulation_controller.chronometer.connect(lambda value: 
         # Ajouter les widgets au layout
         layout.addWidget(self.time_slider)
 
@@ -319,6 +326,7 @@ class MainWindow(QMainWindow):
                     self.create_algorithm_panel()
                     self.record_sim_btn.setDisabled(True)
                     self.arrival_manager.setEnabledRefresh(False)
+                    self.time_slider.setValue(0) # Remettre les avions à la position initiale
                     self.time_slider.setDisabled(True)
                     self.simulation_controller.start_algorithm(aalgortim=aalgorithm,
                                                                **algo_constructor_parameters_objective_function_constructors_parameters)                
@@ -564,8 +572,10 @@ class MainWindow(QMainWindow):
         if checked:
             # Lancement des mise a jour
             self.simulation_controller.start_simulation() # Passer l'attribut a True
+            self.combobox.setDisabled(True) # Bloquer la possibilité de lancer un algorithme quand la simulation est en route
         else:
             self.simulation_controller.stop_simulation() # Passer l'attribut a False
+            self.combobox.setEnabled(True) # Remettre la possibilité de lancer un algorithme quand la simulation est en arret
 
     def manage_play_pause_button(self, checked: bool) -> None:
         """Bascule l'affichage du bouton entre Pause ou Play."""
@@ -665,7 +675,6 @@ class MainWindow(QMainWindow):
         self.arrival_manager.setEnabledRefresh(True)
         self.time_slider.setEnabled(True)
 
-    
     def notify_algorithm_termination(self, algorithm_state: AlgorithmState) -> None:
         """Notifie l'utilisateur que l'algorithme est terminé."""
         self.combobox.setStyleSheet("background-color: none;")
