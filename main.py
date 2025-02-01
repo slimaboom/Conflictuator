@@ -259,11 +259,8 @@ class MainWindow(QMainWindow):
         # Connexion du slider au temps elasped défilant signal chronometer du controller_view
         self.simulation_controller.chronometer.connect(lambda elapsed: 
             self.time_slider.setValue(int(elapsed / interval)))
-
-
-        # Connexion du slider à l'afficheur du temps pour qu'il évolue en même temps.
         # Attention le slider attend un entier car l'unité du slider est par exemple 0.1 s
-        # simulation_controller.chronometer.connect(lambda value: 
+        
         # Ajouter les widgets au layout
         layout.addWidget(self.time_slider)
 

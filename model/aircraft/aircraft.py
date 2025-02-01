@@ -53,7 +53,7 @@ class Aircraft:
 
         # Premiere position autour de la premiere balise
         self.start_position = self.generate_position_near_balise(self.flight_plan[self.current_target_index])
-        self.position       = self.start_position
+        self.position       = deepcopy(self.start_position)
         self.time           = 0.
         self.flight_time    = 0.
         self.take_off_time  = take_off_time
@@ -284,7 +284,7 @@ class Aircraft:
 
     def update(self, timestep: float) -> None:
         """Mise à jour des attributs de l'avion pour le faire avancer en utilisant get_position_from_time"""
-        self.time = self.__round(self.time + timestep)
+        self.time     = self.__round(self.time + timestep)
         self.position = self.get_position_from_time(time=self.time)
 
     # def update(self, timestep: float) -> None:
@@ -428,6 +428,13 @@ class Aircraft:
         return self.__find_next_position(target_time=time)
 
     def __find_next_position(self, target_time: float) -> Point:
+        """Methode qui calcul par interpolation linéaire sa position 
+        en fonction de la cible temporelle passéé en paramètre
+        
+        /!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\
+        /!\     Cette méthode est très sensibe au modification !!!        /!\
+        /!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\
+        """
         def find_keys(flight_plan_timed: Dict[str, float], time: float):
             """Chercher entre quelle balise l'avion est en fonction du time"""
             # Convertir en liste triée de tuples, elle est deja triee si tout va bien.
@@ -446,41 +453,46 @@ class Aircraft:
         self.flight_time = max(0, target_time - self.take_off_time) # si target_time < take_off alors avion pas décollé
         #self.time = target_time
         if target_time < self.take_off_time: # L'avion ne bouge pas
-           self._is_finished = False
-           self.position = self.start_position
-           self.heading = self.calculate_heading(self.start_position, self.flight_plan[0])
-           return self.start_position
+            self._is_finished = False
+            self.position = self.start_position
+            self.heading  = self.calculate_heading(self.start_position, self.flight_plan[0])
+            return self.start_position
         else: # L'avion doit bouger
             # Trouver les balises entre lesquelles se trouve l'avion
-            balise_name, next_balise_name = find_keys(flight_plan_timed=self.flight_plan_timed, time=target_time)                
+            previous_balise_name, next_balise_name = find_keys(flight_plan_timed=self.flight_plan_timed, time=target_time)
+
+            #-------------- Cas 1 --------------------------
             if next_balise_name == None:  # L'avion est arrivé à sa dernière balise
                 self._is_finished = True
+                x, y = self.flight_plan[-1].get_point().getXY() # se positionner sur la balise
+                self.position = Point(x, y, z=self.position.getZ())
                 return self.position
-            elif balise_name == None: # L'avion a démarré et est entre sa position_start et la next_balise (1ere)
-                balise = self.start_position # Artificiellement la premiere position en fait une 'Balise'
-            else: # balise_name ET next_balise_name ne sont pas None
-                # Récupérer les objets Balise
-                balise      = Balise.get_balise_by_name(balise_name)              
-                next_balise = Balise.get_balise_by_name(next_balise_name)
+            else: # L'avion a une prochaine balise donc recuperation du temps de passage a la balise
+                next_balise      = Balise.get_balise_by_name(next_balise_name)
+                next_balise_time = self.flight_plan_timed.get(next_balise_name)
+            
+            #-------------- Cas 2 --------------------------
+            if previous_balise_name == None: # L'avion a démarré et est entre sa position_start et la next_balise (1ere)
+                previous_balise      = self.start_position
+                previous_balise_time = self.take_off_time # L'avion etait au depart si il n'y a pas de balise précédante
+            else: # L'avion connait sa balise precedante
+                previous_balise       = Balise.get_balise_by_name(previous_balise_name)
+                previous_balise_time  = self.flight_plan_timed.get(previous_balise_name)
 
-            # Récupérer les temps des balises
-            balise_time      = self.flight_plan_timed.get(balise_name)
-            next_balise_time = self.flight_plan_timed.get(next_balise_name)
-
-            if balise_time == None or next_balise_time == None:
-                return self.position  # Évite les erreurs en cas de données manquantes
-
+            # La gestion des cas a ete faite:
+            # les différentes variables sont définies et différentes de None
             # Calcul de la fraction du trajet effectuée
-            progress = (self.__round(target_time) - balise_time) / (next_balise_time - balise_time)
+            progress = (self.__round(target_time) - previous_balise_time) / (next_balise_time - previous_balise_time)
 
             # Interpolation linéaire entre les balises
-            new_x = balise.getX() + progress * (next_balise.getX() - balise.getX())
-            new_y = balise.getY() + progress * (next_balise.getY() - balise.getY())
+            new_x = previous_balise.getX() + progress * (next_balise.getX() - previous_balise.getX())
+            new_y = previous_balise.getY() + progress * (next_balise.getY() - previous_balise.getY())
             new_z = self.position.getZ() #+ progress * (next_balise.getZ() - balise.getZ())
 
             # Mettre à jour le heading de l'avion
             new_point = Point(new_x, new_y, new_z)
             self.heading = self.calculate_heading(new_point, next_balise)
+            self.position = new_point
             self._is_finished = False
             #return self.controle_position(new_x, new_y, new_z) # modifie le heading pour faire un rebond 
             return new_point # raise error si les new_xyz sortent de MinMax Value
