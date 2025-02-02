@@ -138,7 +138,7 @@ class AAlgorithm(IAlgorithm):
 
     def display_layers(self) -> None:
         for i, layer in enumerate(self.__layers):
-            self.logger.info(f"{self.get_name()}: layer {i} --> {layer.get_name()}")
+            self.logger.info(f"{self.get_name()}: layer {i+1} --> {layer.get_name()}")
 
     def get_data(self) -> List[ASimulatedAircraft]:
         """Renvoie la liste de ASimulatedAircraft stocker dans la classe"""
