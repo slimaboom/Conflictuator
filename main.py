@@ -6,10 +6,10 @@ from PyQt5.QtWidgets import (QMainWindow, QVBoxLayout, QLayout,
                              QMenu, QAction, 
                              QInputDialog, QDialog, 
                              QDoubleSpinBox, QDialogButtonBox,
-                             QProgressBar, QSlider
+                             QProgressBar, QSlider, QScrollArea
 )
 
-from PyQt5.QtCore import Qt, QModelIndex, QPoint
+from PyQt5.QtCore import Qt, QModelIndex
 from PyQt5.QtGui import QCursor
 from PyQt5.QtWidgets import QMessageBox
 
@@ -108,11 +108,23 @@ class MainWindow(QMainWindow):
         self.control_panel = self.create_control_panel()
 
         # Fenêtre des conflits
+        self.scroll_area_conflict_window = QScrollArea(container)
         self.conflict_window = ConflictWindow()
+        self.scroll_area_conflict_window.setWidget(self.conflict_window)
+        self.scroll_area_conflict_window.setWidgetResizable(True)
+
+        self.conflict_window.close_button.clicked.connect(lambda :self.scroll_area_conflict_window.setVisible(False))
+
 
         # Fenêtre des plans de vols
+        self.scroll_area_arrival_manager = QScrollArea(container)
         self.arrival_manager = ArrivalManagerWindow()
-        self.arrival_manager.closing.connect(lambda :self.arrival_manager_btn.setChecked(False))
+        self.scroll_area_arrival_manager.setWidget(self.arrival_manager)
+        self.scroll_area_arrival_manager.setWidgetResizable(True)
+
+
+        self.arrival_manager.closing.connect(self.on_close_arrival_manager)
+
         self.simulation_controller.simulation.signal.aircrafts_moved.connect(
             lambda : self.arrival_manager.add_aircrafts_list(aircraft_list=
                         self.simulation_controller.simulation.get_aircrafts().values())
@@ -125,19 +137,24 @@ class MainWindow(QMainWindow):
 
         # Ajouter une disposition horizontale pour la fenêtre des conflits et la vue principale
         content_layout = QHBoxLayout()
-        content_layout.addWidget(self.conflict_window)  # Fenêtre des conflits à gauche
+        content_layout.addWidget(self.scroll_area_conflict_window)  # Fenêtre des conflits à gauche
         content_layout.addWidget(self.view)  # Vue principale au centre
-        content_layout.addWidget(self.arrival_manager) # Fenêtre de l'arrival manager à droite (A-MAN)
+        content_layout.addWidget(self.scroll_area_arrival_manager) # Fenêtre de l'arrival manager à droite (A-MAN)
 
+        # Ajustement des facteurs d'étirement pour les widgets dans le QHBoxLayout
+        content_layout.setStretchFactor(self.scroll_area_conflict_window, 1)  # La fenêtre des conflits prend une petite part
+        content_layout.setStretchFactor(self.view, 5)  # La vue principale prend plus d'espace par défaut
+        content_layout.setStretchFactor(self.scroll_area_arrival_manager, 1)  # Initialement, A-MAN occupe une petite place
+  
         # Ajouter la disposition horizontale au layout principal
         main_layout.addLayout(content_layout)
 
         container.setLayout(main_layout)
 
         # Masquer la fenêtre des conflits au démarrage
-        self.conflict_window.setVisible(False)
+        self.scroll_area_conflict_window.setVisible(False)
         # Masquer la fenêtre de l'A-MAN
-        self.arrival_manager.setVisible(False)
+        self.scroll_area_arrival_manager.setVisible(False)
 
 
     def create_control_panel(self):
@@ -721,6 +738,7 @@ class MainWindow(QMainWindow):
 
     def show_conflicts_for_balise(self, qtbalise: 'QtBalise') -> None:
         """Affiche les conflits associés à une balise spécifique."""
+        self.scroll_area_conflict_window.setVisible(True)
         self.conflict_window.update_conflicts(qtbalise)
         self.conflict_window.show()
     
@@ -893,7 +911,8 @@ class MainWindow(QMainWindow):
             #self.play_button.setDisabled(True) # Forcer le bouton a ne pas avoir d'interaction:
             # (freeze_interactions): le bloque
             # toggle_simulation: le reactive
-
+        else:
+            self.record_sim_btn.setChecked(False)
 
     def __on_simulation_finished(self, dialog: RecordDialog, is_okay: bool, container: str) -> None:
         """Cette méthode est appelée lorsque la simulation est terminée"""
@@ -912,12 +931,18 @@ class MainWindow(QMainWindow):
         """Afficher l'arrival manager"""
         if not self.arrival_manager_btn.isChecked():
             self.arrival_manager.hide()
+            self.scroll_area_arrival_manager.close()
             return
         
-        self.arrival_manager_btn.setChecked(True)        
+        self.arrival_manager_btn.setChecked(True)
+        self.scroll_area_arrival_manager.setVisible(True)
         self.simulation_controller.display_arrival_manager(self.arrival_manager)
 
-        self.arrival_manager.closing.connect(lambda :self.arrival_manager_btn.setChecked(False))
+
+    def on_close_arrival_manager(self) -> None:
+        self.arrival_manager_btn.setChecked(False)
+        self.scroll_area_arrival_manager.setVisible(False)
+
 
     def simulation_finished(self, is_finished: bool) -> None:
         if is_finished:

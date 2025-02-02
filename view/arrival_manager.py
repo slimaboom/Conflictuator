@@ -28,7 +28,6 @@ class ArrivalManagerWindow(QWidget):
         """
         super().__init__(parent)
         self.setWindowTitle("Arrival Manager")
-        self.setGeometry(100, 100, 600, 500)  # Position et taille initiale
 
         # Layout principal
         self.main_layout = QVBoxLayout(self)
@@ -60,7 +59,8 @@ class ArrivalManagerWindow(QWidget):
         #    self.btns_layout.removeWidget(button)
         # RuntimeError: wrapped C/C++ object of type QPushButton has been deleted
         self.__is_refresh_possible = True
-    
+        self.adjustSize()
+        
     def setEnabledRefresh(self, refresh_action: bool) -> bool:
         if self.isVisible():
             self.__is_refresh_possible = refresh_action
