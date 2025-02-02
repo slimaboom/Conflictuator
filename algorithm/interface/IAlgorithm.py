@@ -116,9 +116,10 @@ class AAlgorithm(IAlgorithm):
         self.__state               = AlgorithmState.NOT_STARTED
         self.__generator = np.random.default_rng(seed=sum(d.get_object().get_id_aircraft() for d in data))
         self.__verbose   = verbose
-        self.__layers    = []
+        self.__layers: List[AAlgorithm]    = []
         self.__number_of_layers = number_of_layers
-        self.extra_params = kwargs  # Stocke les hyperparamètres supplémentaires        
+        self.extra_params = kwargs  # Stocke les hyperparamètres supplémentaires
+        self.__name = self.__class__.__name__       
         
         self.logger = setup_logging(self.__class__.__name__)
 
@@ -126,9 +127,26 @@ class AAlgorithm(IAlgorithm):
         """Retourne un paramètre stocké ou la valeur par défaut"""
         return self.extra_params.get(param_name, default)
 
+    def get_name(self):
+        """Renvoie le nom de l'algorithme"""
+        return self.__name
+    
+    def set_name(self, name: str) -> None:
+        """Modifie le nom de l'algorithme stocké dans l'attribut"""
+        self.__name = name
+        self.logger.info(name)
+
+    def display_layers(self) -> None:
+        for i, layer in enumerate(self.__layers):
+            self.logger.info(f"{self.get_name()}: layer {i} --> {layer.get_name()}")
+
     def get_data(self) -> List[ASimulatedAircraft]:
         """Renvoie la liste de ASimulatedAircraft stocker dans la classe"""
         return self.__data
+
+    def set_data(self, data: List[ASimulatedAircraft]) -> None:
+        """Modifie l'attribut data (List[ASimulatedAircraft]) en enoyant l'argument dans l'attribut"""
+        self.__data = data
 
     def get_layers(self) -> List['AAlgorithm']:
         """Récupération de la liste des différentes couches de AAlgorithm"""

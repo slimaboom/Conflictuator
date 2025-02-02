@@ -29,6 +29,7 @@ class AlgorithmParamDialog(AParamDialog):
         self.__params_algorithm = None
         self.__params_objective = None
         self.__recursif = recursif
+        self.__main_algo_name = algorithm_name
 
     def get_parameters(self):
         """
@@ -93,8 +94,8 @@ class AlgorithmParamDialog(AParamDialog):
         """
         # Ouvre un dialogue pour choisir l'algorithme
         algo_name, ok = QInputDialog.getItem(
-            self,
-            f"Select Algorithm for Layer {layer_number + 1}",
+            self.parent(),
+            f"Main Algo: {self.__main_algo_name}, Select Algorithm for its Layer {layer_number + 1}",
             "Choose an algorithm:",
             AAlgorithm.get_available_algorithms(),  # Liste des algos disponibles
             0,
@@ -112,7 +113,7 @@ class AlgorithmParamDialog(AParamDialog):
         """
         Ouvre la boîte de dialogue pour configurer les hyperparamètres de l'algorithme sélectionné.
         """
-        algorithm_dialog = AlgorithmParamDialog(algorithm_name=algorithm_name, parent=self, recursif=False)
+        algorithm_dialog = AlgorithmParamDialog(algorithm_name=algorithm_name, parent=self.parent(), recursif=False)
         if algorithm_dialog.exec_() == QDialog.Accepted:
             return algorithm_dialog.get_parameters()
         return {}

@@ -32,10 +32,6 @@ class ObjectiveFunctionMaxConflict(AObjective):
                 total_conflicts += nc
         return (total_conflicts * 0.5)
     
-    @override
-    def name(self) -> str:
-        return f"{self.__class__.__name__}"
-    
 #-----------------------------------------------------------------------
 #-----------------------------------------------------------------------
 #------------- ObjectiveFunctionMaxConflictMinVariation ----------------
@@ -280,7 +276,3 @@ class ObjectiveFunctionConflictInternal(AObjective):
 
         total = conflicts + penalisation 
         return total
-    
-    @override
-    def name(self) -> str:
-        return f"{self.__class__.__name__}"

@@ -1,6 +1,6 @@
 from threading import Thread
 from queue import Queue
-from typing import Any, List, Tuple
+from typing import Any, Dict, List, Tuple
 
 from algorithm.interface.IAlgorithm import AlgorithmState, AAlgorithm
 from algorithm.interface.IObjective import AObjective
@@ -45,11 +45,64 @@ class AlgorithmManager:
             #        'ObjectiveFunctionMaxConflict': {}}}}
             if layers_dict:
                 layers = []
+                available_algorithms = AAlgorithm.get_available_algorithms()
+                available_objectives = AObjective.get_available_objective_functions()
                 for layer_number, params in layers_dict.items():
-                    print(layer_number, params)
-                    continue
+                    layer = self.create_layer(layer_number,
+                                              params,
+                                              available_algorithms,
+                                              available_objectives)
+                    layers.append(layer)
+                self._instance.set_layers(layers=layers)
+        self._instance.display_layers()
 
+    def create_layer(self, layer_number: int, layer_dictionnary: Dict[str, Dict], available_algorithms: List[str], available_functions: List[str]):
+        """Create a layer for main algorithm"""
+        algorithm_layer           = None
+        objective_function_layer  = None
+        for algo_name_or_objective_function_name, hyperparameters in layer_dictionnary.items():
+            is_algorithm = algo_name_or_objective_function_name in available_algorithms
+            is_function  = algo_name_or_objective_function_name in available_functions
+            if (not is_algorithm) and (not is_function):
+                error = f"Layer {layer_number} Error for main algorithm {self._algorithm.__name}"
+                error += f"\n{algo_name_or_objective_function_name} not registed in AAlgorithm neither in AObjective"
+                error += f"\n\nDepending on which kind of class it's, register in the corrected class, using"
+                error += f"\n@AAlgorithm.register_algorithm above your class or @AObjective.register_objective_function"
+                raise ValueError(error)
+            
+            # Instanciation
+            if is_algorithm:
+                algorithm_layer = AAlgorithm.create_algorithm(algo_name_or_objective_function_name, 
+                                                              self._data_to_algo,
+                                                              **hyperparameters)
+                # Nom de l'algorithm de la layer
+                name = f"{self._algorithm.__name__}: Layer {layer_number} - Algo: {algo_name_or_objective_function_name}"
+                algorithm_layer.set_name(name)
+            
+            if is_function:
+                objective_function_layer = AObjective.create_objective_function(algo_name_or_objective_function_name, **hyperparameters)
+                # Nom de la fonction objective de la layer
+                objective_name = f"{self._algorithm.__name__}: Layer {layer_number} - ObjectiveFunction: {algo_name_or_objective_function_name}"
+                objective_function_layer.set_name(objective_name)
 
+        # Sortir de la configuration de la layer
+        if algorithm_layer == None:
+            error = f"Main algorithm: {self._algorithm.__name__}\n"
+            error += f"No algorithm found in layer {layer_number}"
+            raise ValueError(error)
+
+        if objective_function_layer == None:
+            error = f"Main algorithm: {self._algorithm.__name__}\n"
+            error += f"No objective found in layer {layer_number}\n"
+            error += f"used for {algorithm_layer.__name}"
+            raise ValueError(error)
+
+        algorithm_layer.set_objective_function(objective_function_layer)
+        msg = f"Created layer {layer_number} for {self._algorithm.__name__} using\n"
+        msg += f"as internal algorithm: {algorithm_layer.get_name()}\n"
+        msg += f"with objective function {algorithm_layer.get_objective_function().get_name()}"
+        self.logger.info(msg)
+        return algorithm_layer
     
     def get_algorithm(self) -> AAlgorithm:
         """Renvoie l'algorithme actuellement configuré."""

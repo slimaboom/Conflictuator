@@ -417,6 +417,7 @@ class MainWindow(QMainWindow):
 
         # Ajouter le layout horizontal à algobox
         self.algobox.addLayout(time_layout)
+        self.combobox.setDisabled(True)
 
     def clear_algorithm_panel(self):
         """Supprime tous les widgets et layouts sauf le premier (la ComboBox) du panneau d'algorithme."""

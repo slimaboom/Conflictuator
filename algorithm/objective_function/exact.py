@@ -51,7 +51,3 @@ class ObjectiveFunctionAbsoluteNumberConflict(AObjective):
         #print("c'est la ", self.nb_conflicts, total_conflicts)
         total = abs(self.__nb_expected_conflict - (total_conflicts * 0.5))
         return total
-    
-    @override
-    def name(self) -> str:
-        return f"{self.__class__.__name__}"

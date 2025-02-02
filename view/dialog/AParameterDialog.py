@@ -1,7 +1,8 @@
 from PyQt5.QtWidgets import (QDialog, QWidget,
                              QVBoxLayout, QHBoxLayout, QGridLayout,
                              QLabel, QComboBox, 
-                             QPushButton, QLineEdit, QSpinBox, QDoubleSpinBox
+                             QPushButton, QLineEdit, QSpinBox, QDoubleSpinBox,
+                             QSizePolicy
 )
 
 from datetime import time
@@ -9,6 +10,7 @@ from typing import Dict, Callable, List, Type
 from types import MappingProxyType
 from utils.controller.database_dynamique import MetaDynamiqueDatabase
 
+import numpy as np
 import inspect
 import locale  # Avec locale.atof(), le programme prend en compte automatiquement le séparateur décimal (. ou ,) selon la configuration de l'utilisateur.
 
@@ -107,7 +109,37 @@ class AParamDialog(QDialog):
                 input_field = self.add_time_input(param.default)  # Gestion du type `time`                
 
             elif expected_type == int or expected_type == float:
-                input_field = QDoubleSpinBox(self)
+                if expected_type == int:
+                    input_field = QSpinBox(self)
+                    input_field.setMinimum(0)
+                    input_field.setSingleStep(1)
+
+                elif expected_type == float:
+                    input_field = QDoubleSpinBox(self)
+                    input_field.setMaximum(float('inf'))
+                            # Calcul de l'ordre de grandeur du pas
+                    if param.default != inspect.Parameter.empty and param.default != 0:
+                        exponent = np.floor(np.log10(abs(param.default)))  # Exponent de la valeur
+                        if exponent <0:
+                            exponent = exponent - 2
+                            step = 10**(exponent)  # Un ordre de grandeur plus bas
+                        else:
+                            exponent = -1
+                            step = 0.1
+                    else:
+                        exponent = -3
+                        step = 1e-3  # Valeur par défaut si 0
+
+                    num_decimals = max(0, abs(int(exponent)))
+                    input_field.setDecimals(num_decimals)  # Ajuster le nombre de décimales dynamiquement
+
+                    # Ajuster la taille de la spinbox pour bien voir les valeurs
+                    input_field.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+                    input_field.setSingleStep(step)
+
+                else:
+                    continue
+
                 if param.default is not inspect.Parameter.empty:
                     input_field.setValue(param.default)
 
