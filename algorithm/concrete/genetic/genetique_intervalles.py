@@ -266,6 +266,9 @@ class AlgorithmGeneticIntervalles(AAlgorithm):
                 if self.is_verbose():
                     self.logger.info(f"Generation {generation + 1}: Best Fitness = {best_fitness}, Best Individual = {best_individual}")
 
+                # Maj du critiere
+                self.set_best_critere(best_fitness) 
+
                 # Calcul de la Prochaine population
                 population = self.__next_population(population, fitnesses)
 

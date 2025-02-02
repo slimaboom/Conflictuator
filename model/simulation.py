@@ -295,3 +295,13 @@ class SimulationModel:
     def is_finished(self) -> bool:
         """Renvoie True si tous les avions ont atteints leur destination finale"""
         return all(a.has_reached_final_point() for a in self.get_aircrafts().values())
+    
+    def calcul_number_of_conflicts(self):
+        """Calcul le nombre total de conflits entre les avions de la simulation"""
+        total_conflicts = 0
+        nc = 0.
+        for _, aircraft in self.aircrafts.items():
+            for conflicts in aircraft.get_conflicts().get_all().values():
+                nc = len(conflicts)
+                total_conflicts += nc
+        return (total_conflicts * 0.5)

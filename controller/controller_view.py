@@ -353,6 +353,7 @@ class SimulationViewController(QObject):
     def cleanup(self) -> None:
         self.stop_simulation()
         self.stop_algorithm()
+        self.simulation.stop_timers()
 
         #self.logger.info("Nettoyage des objets de l'ancienne vue...")
         self.disable_aircraft_interactions()

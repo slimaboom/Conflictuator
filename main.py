@@ -175,6 +175,25 @@ class MainWindow(QMainWindow):
         # Afficher le temps de simulation
         self.time_label = QLabel("Elapsed Time: 00:00:00.00")
 
+        # Nombre de conflicts
+        self.conflict_label = QLabel("Number of conflicts")
+        self.conflict_label.setAlignment(Qt.AlignCenter) 
+        style_conflict_label = """            
+        QLabel {
+                background-color: lightgray;
+                color: black;
+                border: 2px solid #8f8f91;
+                border-radius: 5px;
+                font-size: 15px;
+                padding: 5px;
+            }
+"""
+        self.conflict_label.setStyleSheet(style_conflict_label)
+        self.conflict_value_label = QLabel("")
+        self.conflict_value_label.setAlignment(Qt.AlignCenter) 
+        self.conflict_value_label.setStyleSheet(style_conflict_label)
+        self.simulation_controller.simulation.signal.simulation_conflicts.connect(self.update_number_of_conflicts)
+
         # Layout de vitesse (QLabel + QDoubleSpinBox)
         speed_layout = QHBoxLayout()
         # Curseur pour régler la vitesse
@@ -220,6 +239,8 @@ class MainWindow(QMainWindow):
         layout_one.addWidget(self.play_button)
         layout_one.addWidget(self.stop_button)
         layout_one.addWidget(self.time_label)  # Ajouter le QLabel au panneau
+        layout_one.addWidget(self.conflict_label)
+        layout_one.addWidget(self.conflict_value_label)
         layout_one.addWidget(self.speed_label)
         layout_one.addWidget(speed_container)
         layout_one.addWidget(self.algobox_container)
@@ -356,6 +377,40 @@ class MainWindow(QMainWindow):
         # Créer un layout horizontal pour les deux QLCDNumber
         time_layout = QHBoxLayout()
 
+        # Label du critere
+        critere_label = QLabel("Best criteria")
+        critere_label.setAlignment(Qt.AlignCenter)
+        style_critere_label = """
+            QLabel {
+                background-color: black;
+                color: lightblue;
+                border: 2px solid #8f8f91;
+                border-radius: 5px;
+                font-size: 15px;
+                padding: 5px;
+            }
+"""
+        critere_label.setStyleSheet(style_critere_label)
+
+        # Valeur du critere
+        self.critere_value_label = QLabel("")
+        self.critere_value_label.setAlignment(Qt.AlignCenter) 
+        style_critere_value_label =  """
+            QLabel {
+                background-color: lightgray;
+                color: black;
+                border: 2px solid #8f8f91;
+                border-radius: 5px;
+                font-size: 15px;
+                padding: 5px;
+            }
+"""
+        self.critere_value_label.setStyleSheet(style_critere_value_label)
+        time_layout.addWidget(critere_label)
+        time_layout.addWidget(self.critere_value_label)
+
+        self.simulation_controller.simulation.signal.algorithm_critere.connect(self.update_algo_critere)
+
         # Temps écoulé pour l'algorithme
         elapsed_time_algo_label = QLabel("Elapsed Algorithm")
         elapsed_time_algo_label.setAlignment(Qt.AlignCenter)  # Centrer le texte horizontalement et verticalement
@@ -470,6 +525,7 @@ class MainWindow(QMainWindow):
         # Connexion lors de la fin d'un algorithm pour re-enable les elements d'interactions
         simulation_controller.simulation.signal.algorithm_terminated.connect(self.connect_elements)
         simulation_controller.simulation.signal.algorithm_error.connect(self.notify_algorithm_error)
+        simulation_controller.simulation.signal.simulation_conflicts.connect(self.update_number_of_conflicts)
         simulation_controller.algorithm_terminated.connect(self.notify_algorithm_termination)
         return simulation_controller
     
@@ -615,6 +671,9 @@ class MainWindow(QMainWindow):
             self.scene.clear()
 
             self.simulation_controller = self.create_simulation_controller()
+            # Reconnecter
+            self.simulation_controller.simulation.signal.simulation_conflicts.connect(self.update_number_of_conflicts)
+
             # Comme le traffic generator est le meme, pas besoin de remettre a jour le slider sur la valeur max
             self.simulation_controller.draw()
 
@@ -768,7 +827,9 @@ class MainWindow(QMainWindow):
         self.progress_bar.setValue(int(percentage))
         self.progress_bar.setFormat(fmt)
 
-        
+    def update_algo_critere(self, critere: float) -> None:
+        self.critere_value_label.setText(str(critere))
+
     def update_algo_elapsed(self, elapsed: float) -> None:
         elapsed_fmt = sec_to_time(seconds=elapsed)
         self.elapsed_time_display.setText(elapsed_fmt)
@@ -857,7 +918,12 @@ class MainWindow(QMainWindow):
     def simulation_finished(self, is_finished: bool) -> None:
         if is_finished:
             self.toggle_simulation(not is_finished)
-            
+    
+    def update_number_of_conflicts(self, value: float) -> None:
+        """Met a jour le label du nombre de conflits"""
+        self.logger.info(value)
+        self.conflict_value_label.setText(str(value))
+
 #----------------------------------------------------------------------------
 #---------------------   MAIN PART  -----------------------------------------
 #----------------------------------------------------------------------------

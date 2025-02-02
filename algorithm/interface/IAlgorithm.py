@@ -120,14 +120,14 @@ class AAlgorithm(IAlgorithm):
         self.__number_of_layers = number_of_layers
         self.extra_params = kwargs  # Stocke les hyperparamètres supplémentaires
         self.__name = self.__class__.__name__       
-        
+        self.__best_critere = None
         self.logger = setup_logging(self.__class__.__name__)
 
     def get_param(self, param_name: str, default=None) -> Any:
         """Retourne un paramètre stocké ou la valeur par défaut"""
         return self.extra_params.get(param_name, default)
 
-    def get_name(self):
+    def get_name(self) -> str:
         """Renvoie le nom de l'algorithme"""
         return self.__name
     
@@ -135,6 +135,14 @@ class AAlgorithm(IAlgorithm):
         """Modifie le nom de l'algorithme stocké dans l'attribut"""
         self.__name = name
         self.logger.info(name)
+
+    def get_best_critere(self) -> float:
+        """Retourne le meilleur crietre obtenu"""
+        return self.__best_critere
+
+    def set_best_critere(self, critere: float) -> None:
+        """Modifie la valeur du meilleure critere"""
+        self.__best_critere = critere
 
     def display_layers(self) -> None:
         for i, layer in enumerate(self.__layers):

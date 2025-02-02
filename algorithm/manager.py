@@ -160,3 +160,7 @@ class AlgorithmManager:
     
     def is_algorithm_error(self) -> bool:
         return self.get_algorithm_state() == AlgorithmState.ERROR
+    
+    def get_best_critere(self) -> float:
+        if self._instance:
+            return self._instance.get_best_critere()

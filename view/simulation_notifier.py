@@ -18,6 +18,10 @@ class SimulationModelNotifier(SimulationModel):
         self.qtimer = QTimer()
         self.qtimer.timeout.connect(self._watch_queue)
 
+        self.qtimer_conflicts = QTimer()
+        self.qtimer_conflicts.timeout.connect(self.watch_conflits)
+        self.qtimer_conflicts.start(1000) # Toutes les secondes
+
     @override
     def run(self) -> None:
         """Permet d'executer la methode run de la classe parente
@@ -46,6 +50,8 @@ class SimulationModelNotifier(SimulationModel):
         interval = int(self.get_interval_timer() * 1000)
         interval = interval if interval else self.INTERVAL
         self.qtimer.start(int(interval)) # msec
+        self.qtimer_conflicts.stop()
+        self.qtimer_conflicts.start(int(interval))
 
     @override
     def stop_algorithm(self) -> None:
@@ -67,10 +73,12 @@ class SimulationModelNotifier(SimulationModel):
         
         progression = self.get_progress_algorithm()
         elasped, timeout = self.get_process_time_algorithm()
+        best_critere = self.get_algorithm_manager().get_best_critere()
         
         self.signal.algorithm_progress.emit(progression)
         self.signal.algorithm_elapsed.emit(elasped)
         self.signal.algorithm_timeout_value.emit(timeout)
+        self.signal.algorithm_critere.emit(best_critere)
     
     def disconnect(self) -> None:
         self.signal.disconnect()
@@ -82,3 +90,11 @@ class SimulationModelNotifier(SimulationModel):
         if is_finished:
             self.signal.simulation_finished.emit(True)
         return is_finished
+    
+    def watch_conflits(self):
+        """Regarde le nombre de conflits que la simulation a et notifie la vue"""
+        self.signal.simulation_conflicts.emit(self.calcul_number_of_conflicts())
+    
+    def stop_timers(self) -> None:
+        self.qtimer.stop()
+        self.qtimer_conflicts.stop()

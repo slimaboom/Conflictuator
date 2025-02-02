@@ -90,6 +90,8 @@ class AlgorithmRecuit(AAlgorithm):
                 #self.logger.info(f"At T={temperature}, yi={yi}, yj={yj}")
                 if self.__accept(yi, yj, temperature):
                     accept_counter += 1
+                    # Maj du critiere
+                    self.set_best_critere(yj)
                 #    self.logger.info(f"At T={temperature}, yi={yi}, yj={yj} ({accept_counter}/{self._nb_transitions})")
 
             # Count rate of accepted transitions
@@ -134,6 +136,8 @@ class AlgorithmRecuit(AAlgorithm):
 
                         xj = xi
                         yi = yj
+                        # Maj du critiere
+                        self.set_best_critere(yj)
 
                         if self.is_verbose():
                             msg = f"Iteration {k}/{self.__nb_transitions} - Temperature: {temperature} - critere: {yi}"
@@ -142,7 +146,9 @@ class AlgorithmRecuit(AAlgorithm):
 
 
         self.logger.info(f"End of colling - Before restoring: Best {best_state}")
-        best_state.restore_state(best_state)
+        best_state.restore_state(best_state)                    # Maj du critiere
+        self.set_best_critere(best_state.get_critere())
+
         self.logger.info(f"End of colling - After restoring: Best {best_state}")
         self.stop()
         return best_state

@@ -59,6 +59,7 @@ class HyperbandOptimizer(AAlgorithm):
 
         best_solution, fitness = algo.startbis()
         #tune.report({"fitness": float(fitness)})
+        self.set_best_critere(fitness)
 
     def optimize(self, data, is_minimise=True):
         """
