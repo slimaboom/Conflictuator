@@ -28,8 +28,10 @@ class AParamDialog(QDialog):
                  getters_function_or_method: Callable[[str], MappingProxyType[str, inspect.Parameter]], 
                 parent: QWidget=None):
         super().__init__(parent=parent)
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.setWindowTitle(f"Configure hyper-parameters for {class_or_function_name}")
-
+        self.adjustSize()
+        
         self.__main_layout = QVBoxLayout()
         self.__main_layout.addWidget(QLabel(f"Enter parameter value for {class_or_function_name}:"))
 
@@ -49,6 +51,11 @@ class AParamDialog(QDialog):
 
         self.str_bools = [self.true_str, self.false_str]
 
+    def adjustSize(self):
+        super().adjustSize()
+        font_metrics = self.fontMetrics()
+        title_width = font_metrics.width(self.windowTitle())  # Ajoute un peu d'espace
+        self.setMinimumWidth(max(self.minimumWidth(), int(1.5*title_width)))
 
     def get_grid_layout(self) -> QGridLayout:
         return self.__grid_layout

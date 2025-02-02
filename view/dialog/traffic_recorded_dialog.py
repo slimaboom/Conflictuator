@@ -19,6 +19,8 @@ class ATrafficGeneratorRecordedDialog(AParamDialog):
         super().__init__(class_or_function_name=traffic_generator_recorded_name, 
                          getters_function_or_method=ATrafficGeneratorRecorded.get_class_constructor_params,
                          parent=parent)
+        
+        self.adjustSize()
 
         specific_inputs_types_dict = {
             AFormat: AFormat.get_available_formats(),
@@ -26,6 +28,7 @@ class ATrafficGeneratorRecordedDialog(AParamDialog):
         }
         self.create_inputs(specific_inputs_types_dict)
         self.create_ok_button()
+
 
     def create_file_input(self):
         """Ajoute un bouton pour choisir un fichier (associé à AReader)."""

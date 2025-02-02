@@ -345,6 +345,7 @@ class MainWindow(QMainWindow):
             self.notify_algorithm_error(AlgorithmState.ERROR, Exception(error_msg)) # Propager l'erreur avec le traceback 
 
     def create_algorithm_panel(self) -> None:
+        self.clear_algorithm_panel()
         self.progress_bar = QProgressBar()
         self.progress_bar.setRange(0, 100)
         self.progress_bar.setValue(0)
