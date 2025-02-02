@@ -21,10 +21,10 @@ class AlgorithmManager:
     def create_algorithm(self, aalgorithm: AAlgorithm, *args, **kwargs) -> None:
         """Définit l'algorithme à utiliser."""
         self._algorithm = aalgorithm
-
+        self.logger.info(kwargs)
         # Parse les arguments
         aalgorithm_constructor_parameters = kwargs.pop(aalgorithm.__name__)
-        aobjective_function_name = list(kwargs)[0] # Il ne doit rester qu'une seule clé
+        aobjective_function_name = list(kwargs)[0] # Il ne doit rester qu'une seule clé + la clé AAlgorithm.NUMBER_OF_LAYERS_KEY
         aobjective_function_constructor_parameters = kwargs.pop(aobjective_function_name)
 
         # Creation de l'instance de AAlgorithm
@@ -33,6 +33,23 @@ class AlgorithmManager:
         # Création de l'instance de AObjective
         aobjective_function = AObjective.create_objective_function(aobjective_function_name, **aobjective_function_constructor_parameters)
         self._instance.set_objective_function(aobjective_function)
+ 
+        # Création des layers/couches pour self._instance
+        number_of_layers = aalgorithm_constructor_parameters.get(AAlgorithm.NUMBER_OF_LAYERS_KEY)
+        if number_of_layers:
+            layers_dict = kwargs.pop(AAlgorithm.NUMBER_OF_LAYERS_KEY)
+            # Exemple:
+            #  {1: {'HyperbandOptimizer': 
+            #         {'is_minimise': True, 'num_samples': 20, 'max_epochs': 99, 
+            #           'verbose': False, 'timeout': datetime.time(0, 2)}, 
+            #        'ObjectiveFunctionMaxConflict': {}}}}
+            if layers_dict:
+                layers = []
+                for layer_number, params in layers_dict.items():
+                    print(layer_number, params)
+                    continue
+
+
     
     def get_algorithm(self) -> AAlgorithm:
         """Renvoie l'algorithme actuellement configuré."""

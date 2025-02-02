@@ -1,17 +1,16 @@
 from PyQt5.QtWidgets import (QDialog, QWidget,
                              QVBoxLayout, QHBoxLayout, QGridLayout,
                              QLabel, QComboBox, 
-                             QPushButton, QLineEdit, QSpinBox
+                             QPushButton, QLineEdit, QSpinBox, QDoubleSpinBox
 )
 
 from datetime import time
-from enum import Enum
 from typing import Dict, Callable, List, Type
 from types import MappingProxyType
 from utils.controller.database_dynamique import MetaDynamiqueDatabase
 
 import inspect
-
+import locale  # Avec locale.atof(), le programme prend en compte automatiquement le séparateur décimal (. ou ,) selon la configuration de l'utilisateur.
 
 class AParamDialog(QDialog):
     """
@@ -60,7 +59,7 @@ class AParamDialog(QDialog):
 
     def create_combox(self, items: List):
         input_field = QComboBox(self)
-        input_field.setParent(self.parent())
+        input_field.setParent(self.parent().parent())
         input_field.addItems(items)
         return input_field
 
@@ -106,6 +105,11 @@ class AParamDialog(QDialog):
 
             elif expected_type == time:
                 input_field = self.add_time_input(param.default)  # Gestion du type `time`                
+
+            elif expected_type == int or expected_type == float:
+                input_field = QDoubleSpinBox(self)
+                if param.default is not inspect.Parameter.empty:
+                    input_field.setValue(param.default)
 
             else:
                 input_field = QLineEdit()
@@ -170,10 +174,13 @@ class AParamDialog(QDialog):
                 minutes =self.minutes_spinbox.value()
                 seconds = self.seconds_spinbox.value()
                 converted_params[param_name] = time(hour=hours, minute=minutes, second=seconds)
-                #print(param_name, converted_params[param_name])  # Convertir en secondes
+                #print(param_name, converted_params[param_name])  # Convertir en secondes                
             else:
+
                 value = input_field.text().strip()
                 try:
+                    if expected_type == int or expected_type == float:
+                        value = locale.atof(value)
                     converted_params[param_name] = expected_type(value)  # Conversion directe
                 except ValueError as e:
                     raise ValueError(f"\n\nConversion error for '{param_name}': impossible to convert '{value}' in {expected_type}") from e

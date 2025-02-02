@@ -68,9 +68,10 @@ def main_dynamic_discovering():
 
     # Découverte dynamique des algorithms pour les enregistrés dans dans une méta base: MetaDynamiqueDatabase depuis AAlgorithm
     # Découverte dynamique des fonctions objectives pour les enregistrés dans une méta base: MetaDynamiqueDatabase depuis  Aobjective
+    
     # Comme les deux classes abstraites sont dans algorithm.interface il suffit d'appeler une fois
     AAlgorithm.discover_algorithms('algorithm')
-    AObjective.discover_objective_functions('algorithm.objective_function')
+    #AObjective.discover_objective_functions('algorithm.objective_function')
 
     # Si AObjective est déplacé dans le répertoire objective_function
     #AObjective.discover_objective_functions('algorithm.objective_function')

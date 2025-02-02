@@ -1,3 +1,4 @@
+import inspect
 from algorithm.interface.ISimulatedObject import ISimulatedObject, ASimulatedAircraft
 from algorithm.interface.IObjective import IObjective, AObjective
 from model.aircraft.storage import DataStorage
@@ -76,11 +77,14 @@ class IAlgorithm(ABC):
 class AAlgorithm(IAlgorithm):
     """Classe abstraite pour un algorithme prenant une liste de ASimulatedAircraft"""
    
+    NUMBER_OF_LAYERS_KEY: str = "number_of_layers"
+
     @abstractmethod
     def __init__(self, data: List[ASimulatedAircraft], 
                  is_minimise: bool, 
                  verbose: bool = False, 
                  timeout: time = time(hour=0, minute=2, second=0),
+                 number_of_layers: int = 0,
                  **kwargs):
         """
         Constructeur abstrait imposant 4 paramètres obligatoires.
@@ -89,6 +93,13 @@ class AAlgorithm(IAlgorithm):
         :param is_minimise: Booléen indiquant si l'algorithme doit minimiser.
         :param verbose: Active ou non les logs (facultatif, par défaut False).
         :param timeout: Temps maximum d'exécution en secondes (facultatif, par défaut 120s).
+        :param number_of_layers: Nombre de couches récursive que l'algorithme peut avoir
+            Par exemple AlgorithmGenetic pourrait avoir 2 couches c'est à dire qu'il pourrait 
+                lancer dans la premiere couche 1 algorithme différent de lui (ou pas)
+                et dans la seconde couche un autre algorithme différent possiblement des deux
+                Chacune des deux couches aurait donc son propre algorithme avec
+                    ses hyper-paramètres
+                    sa fonction objective
         :param kwargs: Hyperparamètres supplémentaires que les classes dérivées peuvent utiliser.
         """
         super().__init__(data, is_minimise, timeout)  # Passe les hyperparamètres aux éventuelles classes parentes
@@ -105,6 +116,8 @@ class AAlgorithm(IAlgorithm):
         self.__state               = AlgorithmState.NOT_STARTED
         self.__generator = np.random.default_rng(seed=sum(d.get_object().get_id_aircraft() for d in data))
         self.__verbose   = verbose
+        self.__layers    = []
+        self.__number_of_layers = number_of_layers
         self.extra_params = kwargs  # Stocke les hyperparamètres supplémentaires        
         
         self.logger = setup_logging(self.__class__.__name__)
@@ -116,6 +129,21 @@ class AAlgorithm(IAlgorithm):
     def get_data(self) -> List[ASimulatedAircraft]:
         """Renvoie la liste de ASimulatedAircraft stocker dans la classe"""
         return self.__data
+
+    def get_layers(self) -> List['AAlgorithm']:
+        """Récupération de la liste des différentes couches de AAlgorithm"""
+        return self.__layers
+    
+    def set_layers(self, layers: List['AAlgorithm']) -> None:
+        """Mise à jour de la liste des différentes couches de AAlgorithm
+        Exception: ValueError si la la taille en entrée est différente du nombre de layers demandés dans le constructeur (number_of_layers)
+        """
+        if len(layers) != self.__number_of_layers:
+            error = f"layers arugment is not the same size as expected in the construction of the instance (number_of_layers)"
+            error += f"\nExpected size {self.__number_of_layers}, got {len(layers)}"
+            raise ValueError(error)
+        
+        self.__layers = layers
 
     @override
     def start(self) -> List[List[DataStorage]]:
@@ -297,10 +325,21 @@ class AAlgorithm(IAlgorithm):
         Retourne les paramètres du constructeur de l'algorithme spécifiée.
         Exception: TypeError
         """
-        params = MetaDynamiqueDatabase.get_class_constructor_params(cls, class_name)
-        ignored_param_names = ['data']
-        # MappingProxyType[str, Parameter] est immutable donc on passe par un dictionnaire temporaire
+        params        = MetaDynamiqueDatabase.get_class_constructor_params(cls, class_name)
+        params_parent = inspect.signature(cls.__init__).parameters
+        ignored_param_names = ['data', 'self', 'args', 'kwargs'] # self, kwargs, args, pour le parent
+
+
+        # Création d'une copie mutable du dictionnaire
         new_params = dict(params)
+
+        # Fusionner sans écraser les clés existantes
+        # Privilégier les clés de la classe dérivée par rapport à la parente
+        for key, value in params_parent.items():
+            if key not in new_params and key not in ignored_param_names:
+                new_params[key] = value
+
+        # MappingProxyType[str, Parameter] est immutable donc on passe par un dictionnaire temporaire
         for ignored_param_name in ignored_param_names:
             if new_params.get(ignored_param_name):
                 del new_params[ignored_param_name]

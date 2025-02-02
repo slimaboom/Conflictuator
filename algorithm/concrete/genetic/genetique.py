@@ -26,7 +26,9 @@ class AlgorithmGenetic(AAlgorithm):
                  **kwargs):
         
         # Attributs generaux
-        super().__init__(data=data, is_minimise=is_minimise, verbose=verbose, timeout=timeout, **kwargs)
+        super().__init__(data=data, is_minimise=is_minimise, verbose=verbose, 
+                         timeout=timeout,
+                         **kwargs)
 
         # Paramètre de l'algorithme génétique
         # les définir pour les rendre compatible a l'optimisation

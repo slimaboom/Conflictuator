@@ -36,7 +36,7 @@ import os
 from platform import system
 from enum import Enum
 
-from typing import TYPE_CHECKING
+from typing import Dict, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from view.QtObject import QtBalise
@@ -64,36 +64,34 @@ class MainWindow(QMainWindow):
 
     def create_simulation_dialog(self) -> None:
         while True: # Boucle pour relancer en cas d'erreur
-            simulation_dialog = SimulationDialog(parent=self)
+            # Envoie de l'instance traffic generator lors de la création du simulation_controller
+            try:
+                simulation_dialog = SimulationDialog(parent=self)
         
-            if simulation_dialog.exec_() == QDialog.Accepted:
-                self.traffic_generator_instance = simulation_dialog.get_parameters()
-                
-                # Envoie de l'instance traffic generator lors de la création du simulation_controller
-                try:
+                if simulation_dialog.exec_() == QDialog.Accepted:
+                    self.traffic_generator_instance = simulation_dialog.get_parameters()
                     self.create_simulation_view()
                     self.show()
                     break
-                except Exception as e: # En cas de problème de parsage d'un format ou toute autre, faire remonter l'erreur
-                                        # Affichage de l'erreur dans une boîte de dialogue
-                    import traceback
-                    tb = traceback.format_exc()
-                    msg = f"An Error occured :\n"
-                    msg += f"{tb}"
-                    msg += f"{str(e)}"
-                    msg_box = QMessageBox()
-                    msg_box.setIcon(QMessageBox.Critical)
-                    msg_box.setWindowTitle("Error")
-                    msg_box.setText(msg)
-                    msg_box.setStandardButtons(QMessageBox.Retry | QMessageBox.Cancel)
-                    # Si l'utilisateur choisit d'annuler, on sort de la boucle
-                    if msg_box.exec_() == QMessageBox.Cancel:
-                        sys.exit(0)
-                        break
-
-            else:
-                self.close()
-                sys.exit(0)
+                else:
+                    self.close()
+                    sys.exit(0)
+            except Exception as e: # En cas de problème de parsage d'un format ou toute autre, faire remonter l'erreur
+                                    # Affichage de l'erreur dans une boîte de dialogue
+                import traceback
+                tb = traceback.format_exc()
+                msg = f"An Error occured :\n"
+                msg += f"{tb}"
+                msg += f"{str(e)}"
+                msg_box = QMessageBox()
+                msg_box.setIcon(QMessageBox.Critical)
+                msg_box.setWindowTitle("Error")
+                msg_box.setText(msg)
+                msg_box.setStandardButtons(QMessageBox.Retry | QMessageBox.Cancel)
+                # Si l'utilisateur choisit d'annuler, on sort de la boucle
+                if msg_box.exec_() == QMessageBox.Cancel:
+                    sys.exit(0)
+                    break
 
 
     def create_simulation_view(self):
@@ -305,6 +303,13 @@ class MainWindow(QMainWindow):
             self.toggle_simulation(checked=not freezing) # False
         # Ne rien faire si freezing = False
 
+    def configure_algorithm(self, algorithme_name: str) -> Dict[str, dict]:
+        """Configure User Hyper Parameters for Algorithm with Objective function"""
+        algorithm_dialog = AlgorithmParamDialog(algorithm_name=algorithme_name, parent=self)
+        if algorithm_dialog.exec_() == QDialog.Accepted:
+            algo_constructor_parameters_objective_function_constructors_parameters = algorithm_dialog.get_parameters()
+            return  algo_constructor_parameters_objective_function_constructors_parameters
+    
     def on_combobox_item_clicked(self, index: QModelIndex) -> None:
         """Déclenche une action uniquement quand l'utilisateur clique sur une option."""
         selected_text = self.combobox.itemText(index.row())
@@ -314,19 +319,18 @@ class MainWindow(QMainWindow):
                 # Gestion Algorithm class
                 aalgorithm = AAlgorithm.get_algorithm_class(selected_text)
                 # Demande des paramètres du constructeur de la classe dérivée AAlgorithm (dynamique)
-                algorithm_dialog = AlgorithmParamDialog(algorithm_name=selected_text, parent=self)
-                if algorithm_dialog.exec_() == QDialog.Accepted:
-                    algo_constructor_parameters_objective_function_constructors_parameters = algorithm_dialog.get_parameters()   
-                    # Gestion IHM
-                    self.combobox.setCurrentIndex(index.row())  # S'assurer que l'élément sélectionné reste visible
-                    self.freeze_interactions(True)
-                    self.create_algorithm_panel()
-                    self.record_sim_btn.setDisabled(True)
-                    self.arrival_manager.setEnabledRefresh(False)
-                    self.time_slider.setValue(0) # Remettre les avions à la position initiale
-                    self.time_slider.setDisabled(True)
-                    self.simulation_controller.start_algorithm(aalgortim=aalgorithm,
-                                                               **algo_constructor_parameters_objective_function_constructors_parameters)                
+                algo_constructor_parameters_objective_function_constructors_parameters = self.configure_algorithm(selected_text)
+
+                # Gestion IHM
+                self.combobox.setCurrentIndex(index.row())  # S'assurer que l'élément sélectionné reste visible
+                self.freeze_interactions(True)
+                self.create_algorithm_panel()
+                self.record_sim_btn.setDisabled(True)
+                self.arrival_manager.setEnabledRefresh(False)
+                self.time_slider.setValue(0) # Remettre les avions à la position initiale
+                self.time_slider.setDisabled(True)
+                self.simulation_controller.start_algorithm(aalgortim=aalgorithm,
+                                                           **algo_constructor_parameters_objective_function_constructors_parameters)                
             else:
                 self.notify_algorithm_termination(AlgorithmState.ALREADY_LAUNCH)
         except Exception as e:
@@ -789,7 +793,7 @@ class MainWindow(QMainWindow):
 
             # Afficher un message indiquant que l'enregistrement a commencé
 
-            dialog.show_accepted_message(message='Recording...\nSimulation will start')
+            dialog.show_accepted_message(message='Recording...')
 
             # Connecter un slot temporaire pour l'enregistrement
             def recorder(is_terminated: bool):
@@ -798,31 +802,32 @@ class MainWindow(QMainWindow):
 
                     self.__on_simulation_finished(dialog, is_okay, container=awritter.get_container())
                     # Déconnecter le signal après l'exécution
-                    self.simulation_controller.stop_simulation()
+                    #self.simulation_controller.stop_simulation()
                     self.simulation_controller.simulation.signal.simulation_finished.disconnect(recorder)
 
-                    self.simulation_controller.set_simulation_speed(1)
-                    self.freeze_interactions(False)
-                    self.toggle_simulation(False) # Démarre la simulation
-                    self.play_button.setDisabled(False) # Forcer le bouton a ne pas avoir d'interaction:
-                    self.arrival_manager.setVisible(False)
-                    if arrival_open:
-                        self.arrival_manager.setVisible(True)
-                        self.arrival_manager_btn.setChecked(True)
-                    else:
-                        self.arrival_manager_btn.setChecked(False)
+                    #self.simulation_controller.set_simulation_speed(1)
+                    #self.freeze_interactions(False)
+                    #self.toggle_simulation(False) # Démarre la simulation
+                    #self.play_button.setDisabled(False) # Forcer le bouton a ne pas avoir d'interaction:
+                    #self.arrival_manager.setVisible(False)
+                    # if arrival_open:
+                    #     self.arrival_manager.setVisible(True)
+                    #     self.arrival_manager_btn.setChecked(True)
+                    # else:
+                    #     self.arrival_manager_btn.setChecked(False)
 
             # Connecter le signal `finished` à un slot temporaire
             self.simulation_controller.simulation.signal.simulation_finished.connect(recorder)
+            recorder(True) # Déclenche la boite de dialogue de terminaison de recording
 
             # Lancer l'enregistrement
             # self.simulation_controller.set_simulation_speed(100)
             # 1h de simulation exécuté pendant l'interval du timer (0.1 sec par defaut)
             # 1h de simulation --> 0.1 temps réeel : speed_factor = TpsSim/TpsRéel
-            self.simulation_controller.set_simulation_speed(36000)
-            self.freeze_interactions(True)
-            self.toggle_simulation(True) # Démarre la simulation
-            self.play_button.setDisabled(True) # Forcer le bouton a ne pas avoir d'interaction:
+            #self.simulation_controller.set_simulation_speed(36000)
+            #self.freeze_interactions(True)
+            #self.toggle_simulation(True) # Démarre la simulation
+            #self.play_button.setDisabled(True) # Forcer le bouton a ne pas avoir d'interaction:
             # (freeze_interactions): le bloque
             # toggle_simulation: le reactive
 

@@ -25,7 +25,9 @@ class OptimizedGeneticAlgorithm(AAlgorithm):
                  time_window: int = 1200,
                  **kwargs):
         
-        super().__init__(data=data, is_minimise=is_minimise, verbose=verbose, timeout=timeout, **kwargs)
+        super().__init__(data=data, is_minimise=is_minimise, verbose=verbose, 
+                         timeout=timeout,
+                         **kwargs)
         
         self.__population_size = population_size
         self.__generations  = generations
