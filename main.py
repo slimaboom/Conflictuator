@@ -910,6 +910,10 @@ class MainWindow(QMainWindow):
 
     def show_arrival_manager(self) -> None:
         """Afficher l'arrival manager"""
+        if not self.arrival_manager_btn.isChecked():
+            self.arrival_manager.hide()
+            return
+        
         self.arrival_manager_btn.setChecked(True)        
         self.simulation_controller.display_arrival_manager(self.arrival_manager)
 
