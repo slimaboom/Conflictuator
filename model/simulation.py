@@ -54,7 +54,7 @@ class SimulationModel:
         self.initialize()
 
         # Algorithm manager
-        self._algorithm_manager = AlgorithmManager()
+        self._algorithm_manager = AlgorithmManager(simulation_duration=None)
 
     def set_traffic_generator(self, traffic_generator: ATrafficGenerator) -> None:
         """Set le generateur de traffic à la simulation sous certaine condition
@@ -65,6 +65,7 @@ class SimulationModel:
         if traffic_generator != None: # Protection 
             # Mise a jour de l'attribut
             self.__traffic_generator = traffic_generator
+            self._algorithm_manager.set_simulation_duration(self.get_simulation_time())
             # Generation du traffic
             self.aircrafts = traffic_generator.generate_traffic()
             self.initialise_aircrafts()

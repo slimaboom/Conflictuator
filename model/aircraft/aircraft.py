@@ -405,9 +405,9 @@ class Aircraft:
 
     def update_conflicts(self, recalcul = True, dt:int = 0):
         """ Recalcul les conflits posterieurs a la date courante"""
-        if recalcul == True : 
+        if recalcul:
             # Recalculer le plan de vol
-            self.flight_plan_timed = self.clear_flight_plan_timed()
+            #self.flight_plan_timed = self.clear_flight_plan_timed()
             self.calculate_estimated_times_commands()
         elif dt != 0: 
             self.flight_plan_timed_delayed(dt)

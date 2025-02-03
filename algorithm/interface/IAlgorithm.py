@@ -120,12 +120,21 @@ class AAlgorithm(IAlgorithm):
         self.__number_of_layers = number_of_layers
         self.extra_params = kwargs  # Stocke les hyperparamètres supplémentaires
         self.__name = self.__class__.__name__       
-        self.__best_critere = None
+        self.__best_critere = float('inf') if is_minimise else -float('inf')
+        self.__simulation_duration : float= None
         self.logger = setup_logging(self.__class__.__name__)
 
     def get_param(self, param_name: str, default=None) -> Any:
         """Retourne un paramètre stocké ou la valeur par défaut"""
         return self.extra_params.get(param_name, default)
+    
+    def set_simulation_duration(self, simulation_duration:float) -> None:
+        """Modifie l'attribut de temps totale de la simulation"""
+        self.__simulation_duration = simulation_duration
+
+    def get_simulation_duration(self) -> float:
+        """ Renvoie la durée totale de simulation """
+        return self.__simulation_duration
 
     def get_name(self) -> str:
         """Renvoie le nom de l'algorithme"""

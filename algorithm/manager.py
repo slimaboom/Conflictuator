@@ -10,13 +10,17 @@ from algorithm.data import SimulatedAircraftImplemented
 from logging_config import setup_logging
 
 class AlgorithmManager:
-    def __init__(self):
+    def __init__(self, simulation_duration: float):
         self._algorithm: 'AAlgorithm' = None
         self._data: List['ASimulatedAircraft'] = None
         self._thread: Thread = None
         self._instance: 'AAlgorithm' = None
         self.__singleton_start = False
+        self.__simulation_duration = simulation_duration
         self.logger = setup_logging(__class__.__name__)
+
+    def set_simulation_duration(self, simulation_duration: float) -> None:
+        self.__simulation_duration = simulation_duration
 
     def create_algorithm(self, aalgorithm: AAlgorithm, *args, **kwargs) -> None:
         """Définit l'algorithme à utiliser."""
@@ -29,7 +33,7 @@ class AlgorithmManager:
 
         # Creation de l'instance de AAlgorithm
         self._instance = AAlgorithm.create_algorithm(aalgorithm.__name__, self._data_to_algo, **aalgorithm_constructor_parameters)
-        
+        self._instance.set_simulation_duration(self.__simulation_duration)
         # Création de l'instance de AObjective
         aobjective_function = AObjective.create_objective_function(aobjective_function_name, **aobjective_function_constructor_parameters)
         self._instance.set_objective_function(aobjective_function)
@@ -78,6 +82,7 @@ class AlgorithmManager:
                 # Nom de l'algorithm de la layer
                 name = f"{self._algorithm.__name__}: Layer {layer_number} - Algo: {algo_name_or_objective_function_name}"
                 algorithm_layer.set_name(name)
+                algorithm_layer.set_simulation_duration(self.__simulation_duration)
             
             if is_function:
                 objective_function_layer = AObjective.create_objective_function(algo_name_or_objective_function_name, **hyperparameters)

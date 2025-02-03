@@ -950,7 +950,7 @@ class MainWindow(QMainWindow):
     
     def update_number_of_conflicts(self, value: float) -> None:
         """Met a jour le label du nombre de conflits"""
-        self.logger.info(value)
+        #self.logger.info(value)
         self.conflict_value_label.setText(str(value))
 
 #----------------------------------------------------------------------------
