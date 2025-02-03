@@ -1,6 +1,7 @@
 import random
 
 import numpy as np
+from algorithm.concrete.genetic.genetique import AlgorithmGenetic
 
 from algorithm.interface.IAlgorithm import AAlgorithm
 from algorithm.interface.ISimulatedObject import ASimulatedAircraft

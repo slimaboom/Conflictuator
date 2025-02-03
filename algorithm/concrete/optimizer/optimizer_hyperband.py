@@ -1,7 +1,11 @@
-#from ray import tune
-#from ray.tune.schedulers import ASHAScheduler
+import copy
+from ray import tune
+import ray
+from ray.tune.schedulers import ASHAScheduler
 from functools import partial
 from typing import List
+import numpy as np
+import random
 
 from typing_extensions import override
 
@@ -33,31 +37,35 @@ class HyperbandOptimizer(AAlgorithm):
         self.num_samples = num_samples
         self.max_epochs = max_epochs
         self.data = data
-        """self.search_space = {
-                "population_size": tune.choice([5, 10, 15, 20, 30, 40]),
-                "generations": tune.choice([10, 20, 30]),
+        self.search_space = {
+                "population_size": tune.choice([5, 10, 15, 20, 30]),
+                "generations": tune.choice([10, 20, 30,]),
                 "mutation_rate": tune.uniform(0.01, 0.3),
                 "crossover_rate": tune.uniform(0.5, 1.0),
-            }"""
+            }
 
-        #ray.init(local_mode=True)  # Force Ray Tune à fonctionner en mode mono-thread
+        ray.init(local_mode=True)  # Force Ray Tune à fonctionner en mode mono-thread
 
         self.set_process(0)
         self.progress = 0
 
-    def evaluate(self, config, data, is_minimise=True):
+    def evaluate(self, config, data:List['ASimulatedAircraft'], is_minimise=True):
         """
         Exécute un algorithme avec des hyperparamètres donnés et retourne sa performance.
         """
+
         self.progress += 1
         self.set_process(round(self.progress * 100 / self.num_samples, 2 ))
         self.set_process_time(time())
+        print("data : ", data)
+        cloned_data = copy.deepcopy(data)
+        objective_function = copy.deepcopy(self.get_objective_function())
 
-        algo: 'AAlgorithm' = AlgorithmGenetic(data=data, is_minimise=is_minimise, verbose=False, **config) # convertir en int pas un dictionnaire 
-        algo.set_objective_function(self.get_objective_function())
+        algo: 'AAlgorithm' = AlgorithmGenetic(data=cloned_data, is_minimise=is_minimise, verbose=False, **config) # convertir en int pas un dictionnaire 
+        algo.set_objective_function(objective_function)
 
-        best_solution, fitness = algo.startbis()
-        #tune.report({"fitness": float(fitness)})
+        best_solution, fitness, bests = algo.startbis()
+        tune.report({"fitness": float(fitness)})
 
     def optimize(self, data, is_minimise=True):
         """

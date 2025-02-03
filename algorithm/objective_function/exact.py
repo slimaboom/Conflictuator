@@ -1,3 +1,4 @@
+import numpy as np
 from algorithm.interface.IObjective import AObjective
 from algorithm.interface.ISimulatedObject import ASimulatedAircraft
 

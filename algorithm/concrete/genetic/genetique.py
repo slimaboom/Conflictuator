@@ -13,7 +13,7 @@ import numpy as np
 
 @AAlgorithm.register_algorithm
 class AlgorithmGenetic(AAlgorithm):
-    @method_control_type(List[ASimulatedAircraft])
+    #@method_control_type(List[ASimulatedAircraft])
     def __init__(self, data: List[ASimulatedAircraft], 
                  is_minimise: bool = False,
                  verbose    : bool = False,
@@ -36,19 +36,32 @@ class AlgorithmGenetic(AAlgorithm):
         self.__crossover_rate  = crossover_rate
 
         # Attribut pour sauvegarder les meilleurs résultats
-        self.best_results = []
-        self.best_fitness = None
+        self.best_results = [] # Garder en memoire les état avec la meme fitness
+        self.best_fitness = None # Garder en memoire la meilleurs solution
+
+        #Early Stopping : nombre d'individus dans la liste best_resultats avant d'arréter
         self.early_stopping = early_stopping
+
+        # Attribut pour evité de generer un population initial
+        self.__initial_population: List[List[List[DataStorage]]] = None, # setter
 
         # Autres attributs
         self.logger = setup_logging(self.__class__.__name__)
 
 
+    def set_initial_population(self, initial_population : List[List[List[DataStorage]]] ) -> None :
+        """ Initialise la population de l'algo genetique """
+        self.__initial_population = initial_population
+
+    def has_initial_population(self) ->bool :
+        """ renvoie si la population de l'algo genetique est initialisé """
+        return self.__initial_population != None
+
     def __generate_individuals(self, data: List[ASimulatedAircraft]) -> List[List[DataStorage]]:
         """Generation d'un individu (commandes) pour chaque ASimulatedAircraft"""
         return list(map(lambda obj: obj.initialize(), data))
     
-    @method_control_type(List[ASimulatedAircraft])
+    #@method_control_type(List[ASimulatedAircraft])
     def __generate_initial_population(self, data: List[ASimulatedAircraft]) -> List[List[List[DataStorage]]]:
         """Generation d'une population initiale.
             C'est pour chaque element de data, il y a generation d'individus (de plusieurs jeux de commandes pour chaque ASimulatedAircraft)
@@ -64,41 +77,37 @@ class AlgorithmGenetic(AAlgorithm):
 
 
     def __select_parents(self, population: List[List[List[DataStorage]]], fitnesses: List[int]) -> List[List[List[DataStorage]]]:
-        """Selection des parents dans la population en fonction des fitnesses"""
-        total_fitness = sum(fitnesses)
+        """Selection des parents dans la population aleatoirement """
         n = len(population)
-        # Il faut au moins deux elements non nul pour tirer 2 elements
-        # Il faut au moins k elements non nuls pour tirer k elements
-        if fitnesses.count(0) >= n - 2:
-            selected_indices = self.get_generator().choice(n, size=2, replace=False).tolist()
-            return [population[i] for i in selected_indices] #np.random.sample(population, 2)
-        
-        #Pour un problème de min
-        if self.is_minimisation :
-            # Inverser la fitness pour la minimisation
-            max_fitness = max(fitnesses)
-            adjusted_fitnesses = [max_fitness - f for f in fitnesses]
-
-            # Calcul des probabilités
-            total_fitness = sum(adjusted_fitnesses)
-            if total_fitness == 0 : 
-                    probabilities = [1 / len(adjusted_fitnesses) for f in adjusted_fitnesses]
+        if all(f == 0 for f in fitnesses):
+            probabilities = [1 / len(fitnesses) for _ in fitnesses]
+        else:
+            if self.is_minimisation:
+                max_fitness = max(fitnesses)
+                adjusted_fitnesses = [max_fitness - f for f in fitnesses]
+                total_fitness = sum(adjusted_fitnesses)
+                probabilities = [f / total_fitness if total_fitness > 0 else 1 / len(adjusted_fitnesses) for f in adjusted_fitnesses]
             else:
-                probabilities = [f / (total_fitness) for f in adjusted_fitnesses]
-        else: #Pour un problème de max
-            if total_fitness == 0 :
-                probabilities = [1 / len(fitnesses) for f in fitnesses]
-            else : 
-                probabilities = [f / (total_fitness) for f in adjusted_fitnesses]
-
-        selected_indices = self.get_generator().choice(n, size=2, replace=False, p=probabilities).tolist()#random.choices(population, weights=probabilities, k=2)
+                total_fitness = sum(fitnesses)
+                probabilities = [f / total_fitness if total_fitness > 0 else 1 / len(fitnesses) for f in fitnesses]
+         
+        selected_indices = self.get_generator().choice(n, size=2, replace=False, p=probabilities).tolist()
         return [population[i] for i in selected_indices]
+    
+    def __select_parents_tournament(self, population: List[List[List[DataStorage]]], fitnesses: List[int]) -> List[List[List[DataStorage]]]:
+        """Sélection par tournoi"""
+        k = 5  # nombre d'individus tournoi
+        indices = np.random.choice(len(population), k, replace=False)
+        best_index = max(indices, key=lambda i: fitnesses[i]) if not self.is_minimisation() else min(indices, key=lambda i: fitnesses[i])
+        return [population[best_index], population[np.random.choice(indices)]] #roulette aleatoire pour le deuxieme parent
+
+
     
     def __crossover(self, parent1: List[List[DataStorage]], parent2: List[List[DataStorage]]) -> List[List[DataStorage]]:
         """Croisement d'individus entre deux parents"""
         offspring = []
         for traj1, traj2 in zip(parent1, parent2):
-            if self.get_generator().random() < self.__crossover_rate:#random.random() < self.crossover_rate:
+            if self.get_generator().random() < self.__crossover_rate: #random.random() < self.crossover_rate:
                 point = self.get_generator().integers(low=1, high=len(traj1) - 1, endpoint=True) if len(traj1) > 1 else 1 #random.randint(1, len(traj1) - 1) if len(traj1) > 1 else 1
                 child = deepcopy(traj1[:point]) + deepcopy(traj2[point:])
                 offspring.append(child)
@@ -115,30 +124,13 @@ class AlgorithmGenetic(AAlgorithm):
             for j, data in enumerate(trajectory):
                 if j == 0:  # Première commande (temps de départ et vitesse initiale)
                     if self.get_generator().random() < self.__mutation_rate * 2:
-
-                        # updated_data = DataStorage(
-                        #     speed=random.uniform(self.speed_min, self.speed_max),  # Nouvelle vitesse initiale
-                        #     id=data.id,
-                        #     time=max(data.time + random.uniform(-25.0, 25.0), 0.0),  # Temps de départ ajusté
-                        #     heading=data.heading
-                        # )
                         # Regenerer 
                         updated_data = asimulated_aircraft.generate_commands()[j]
                         new_trajectory.append(updated_data)
                     else:
                         new_trajectory.append(data)
-                else:  # Autres commandes
+                else:  # On y passe que si on a plusieurs commandes
                     if self.get_generator().random() < self.__mutation_rate:
-                        # updated_data = DataStorage(
-                        #     speed=random.uniform(self.speed_min, self.speed_max),
-                        #     id=data.id,
-                        #     time=data.time,
-                        #     heading=data.heading
-                        # )
-                        
-                        # trajectory est une liste de DataStorage representant des commandes pour l'asimulated_aircraft
-                        # L'asimulated_aircraft genere donc une nouvelle liste de taille egale a la precedante
-                        # mais data (element de trajectory) n'est pas forcement de la meme taille
 
                         updated_datas = asimulated_aircraft.generate_commands()
 
@@ -172,20 +164,89 @@ class AlgorithmGenetic(AAlgorithm):
         """Calcul la prochaine population en fonction de la precedante et des valeurs de fitnesses"""
         next_population = []
 
-        if (f == 0 for f in fitnesses) :
+        if all(f == 0 for f in fitnesses) :
             return population
         else : 
             for _ in range(self.__population_size // 2):
                 try:
                     parent1, parent2 = self.__select_parents(population, fitnesses)
+                    offspring1 = self.__crossover(parent1, parent2)
+                    offspring2 = self.__crossover(parent2, parent1)
+                    next_population.append(self.__mutate(offspring1))
+                    next_population.append(self.__mutate(offspring2))
                 except Exception as e:
                     msg = f"Selection of parents in class {self.__class__.__name__} error\n{e}"
                     self.logger.error(msg)
+                    return population
+
+            return next_population
+    
+    def __next_population_elitism(self, population: List[List[List[DataStorage]]], fitnesses: List[float]) -> List[List[List[DataStorage]]]:
+        """Calcul de la prochaine population avec élitisme et surproduction"""
+        
+        next_population = []
+        
+        # Sélection des élites
+        elite_factor = 0.1 # 10%
+        elite_size = max(1, int(elite_factor * self.__population_size)) 
+        
+        # Trier la population par fitness et garder les meilleurs
+        sorted_indices = np.argsort(fitnesses) if self.is_minimisation() else np.argsort(fitnesses)[::-1]
+        elites = [population[i] for i in sorted_indices[:elite_size]]
+        
+        next_population.extend(elites)  # Ajouter les élites à la nouvelle population
+        
+        # Génération des nouveaux individus
+        while len(next_population) < self.__population_size:
+            try:
+                parent1, parent2 = self.__select_parents(population, fitnesses)
                 offspring1 = self.__crossover(parent1, parent2)
                 offspring2 = self.__crossover(parent2, parent1)
                 next_population.append(self.__mutate(offspring1))
-                next_population.append(self.__mutate(offspring2))
-            return next_population
+                if len(next_population) < self.__population_size:  
+                    next_population.append(self.__mutate(offspring2))
+            except Exception as e:
+                self.logger.error(f"Erreur lors de la sélection des parents: {e}")
+                return population  # En cas d'erreur, on ne change pas la population
+        
+        return next_population
+    
+    def __next_population_elitism_surprod(self, population: List[List[List[DataStorage]]], fitnesses: List[float]) -> List[List[List[DataStorage]]]:
+        """Calcul de la prochaine population avec élitisme et surproduction"""
+        
+        next_population = []
+        
+        # Sélection des élites
+        elite_factor = 0.1 # 10%
+        elite_size = max(1, int(elite_factor * self.__population_size)) 
+        sorted_indices = np.argsort(fitnesses) if self.is_minimisation() else np.argsort(fitnesses)[::-1]
+        elites = [population[i] for i in sorted_indices[:elite_size]]  # Meilleurs individus actuels
+        
+        # Surproduction
+        surprod_factor = 1.5 # 150% de la population cible
+        surproduction_size = int(surprod_factor * self.__population_size) 
+        temp_population = elites[:]  #copier les élites
+        
+        while len(temp_population) < surproduction_size:
+            try:
+                parent1, parent2 = self.__select_parents(population, fitnesses)
+                offspring1 = self.__crossover(parent1, parent2)
+                offspring2 = self.__crossover(parent2, parent1)
+                temp_population.append(self.__mutate(offspring1))
+                if len(temp_population) < surproduction_size:
+                    temp_population.append(self.__mutate(offspring2))
+            except Exception as e:
+                self.logger.error(f"Erreur lors de la sélection des parents: {e}")
+                return population  # En cas d'erreur, garder la population actuelle
+
+        # Sélection finale des meilleurs individus pour la nouvelle génération
+        new_fitnesses = self.__calculate_fitnesses(temp_population)
+        sorted_indices = np.argsort(new_fitnesses) if self.is_minimisation() else np.argsort(new_fitnesses)[::-1]
+        next_population = [temp_population[i] for i in sorted_indices[:self.__population_size]]
+
+        return next_population
+
+
 
     @override
     def run(self) -> List[List[DataStorage]]:
@@ -203,6 +264,9 @@ class AlgorithmGenetic(AAlgorithm):
             if not self.is_running():
                 break  
 
+            # Mutation rate evolutif
+            self.__mutation_rate = max(0.01, self.__mutation_rate * 0.99)  # Diminuer progressivement
+
             # Calcul fitnesses
             fitnesses = self.__calculate_fitnesses(population)
             #self.logger.info(f"Generation {generation + 1} Fitnesses: {fitnesses}")
@@ -211,17 +275,23 @@ class AlgorithmGenetic(AAlgorithm):
             if self.is_minimisation():
                 optimal_fitness = min(fitnesses)
                 if (generation <= 0) or (optimal_fitness < best_fitness) or (best_fitness == None):
-                    best_fitness   = deepcopy(optimal_fitness)
-                    best_individual = deepcopy(population[fitnesses.index(optimal_fitness)])
+                    # Maj variable locale
+                    best_fitness   = optimal_fitness
+                    best_individual = population[fitnesses.index(optimal_fitness)]
+                    # Maj attribut
                     self.best_results = [best_individual]
+                    self.best_fitness = best_fitness
                 elif optimal_fitness == best_fitness : 
                     self.best_results.append(population[fitnesses.index(optimal_fitness)])
             else: # Maximisation
                 optimal_fitness = max(fitnesses)
                 if (generation <= 0) or (optimal_fitness > best_fitness) or (best_fitness == None):
-                    best_fitness   = deepcopy(optimal_fitness)
-                    best_individual = deepcopy(population[fitnesses.index(optimal_fitness)])
+                    # Maj variable locale
+                    best_fitness    = optimal_fitness
+                    best_individual = population[fitnesses.index(optimal_fitness)]
+                    # Maj attribut
                     self.best_results = [best_individual]
+                    self.best_fitness = best_fitness
                 elif optimal_fitness == best_fitness : 
                     self.best_results.append(population[fitnesses.index(optimal_fitness)])
 
@@ -238,7 +308,6 @@ class AlgorithmGenetic(AAlgorithm):
 
             if self.is_verbose():
                 self.logger.info(f"Generation {generation + 1}: Progress = {self.get_progress()}%")
-
         self.stop()
         self.logger.info(f"Final Best Solution(fitness: {best_fitness}): {best_individual}")
         self.reinitialize_data()
@@ -253,24 +322,37 @@ class AlgorithmGenetic(AAlgorithm):
         self.set_process(0.)
         self.set_start_time(start=time())
 
-        population      = self.__generate_initial_population(self.get_data())
-        best_individual = None
-        best_fitness    = None
+        # Commencer avec une population predefinie
+        if (not self.has_initial_population()): 
+            population      = self.__generate_initial_population(self.get_data())
+            best_individual = None
+            best_fitness    = None
+        else : 
+            population = self.__initial_population
+            fitnesses = self.__calculate_fitnesses(population)
+            if self.is_minimisation():
+                best_fitness = min(fitnesses)
+            else : 
+                best_fitness = max(fitnesses)
+            best_individual = population[fitnesses.index(best_fitness)]
+            self.best_results.append(best_individual)
+
 
         for generation in range(self.__generations):
             print(f"Génération {generation + 1}/{self.__generations}")
-        
-
             # Calcul fitnesses
             fitnesses = self.__calculate_fitnesses(population)
+            
            # self.logger.info(f"Generation {generation + 1} Fitnesses: {fitnesses}")
 
             # Acceptation ou non du critere
             if self.is_minimisation():
                 optimal_fitness = min(fitnesses)
                 if (generation <= 0) or (optimal_fitness < best_fitness) or (best_fitness == None):
-                    best_fitness   = deepcopy(optimal_fitness)
-                    best_individual = deepcopy(population[fitnesses.index(optimal_fitness)])
+                    # Maj variable locale
+                    best_fitness   = optimal_fitness
+                    best_individual = population[fitnesses.index(optimal_fitness)]
+                    # Maj attribut
                     self.best_results = [best_individual]
                     self.best_fitness = best_fitness
                 elif optimal_fitness == best_fitness : 
@@ -278,8 +360,10 @@ class AlgorithmGenetic(AAlgorithm):
             else: # Maximisation
                 optimal_fitness = max(fitnesses)
                 if (generation <= 0) or (optimal_fitness > best_fitness) or (best_fitness == None):
-                    best_fitness   = deepcopy(optimal_fitness)
-                    best_individual = deepcopy(population[fitnesses.index(optimal_fitness)])
+                    # Maj variable locale
+                    best_fitness    = optimal_fitness
+                    best_individual = population[fitnesses.index(optimal_fitness)]
+                    # Maj attribut
                     self.best_results = [best_individual]
                     self.best_fitness = best_fitness
                 elif optimal_fitness == best_fitness : 
@@ -306,5 +390,5 @@ class AlgorithmGenetic(AAlgorithm):
 
         #self.stop()
         self.logger.info(f"Final Best Solution(fitness: {best_fitness}): {best_individual}")
-        self.reinitialize_data()
-        return best_individual, best_fitness
+        #self.reinitialize_data()
+        return best_individual, best_fitness, self.best_results

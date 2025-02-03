@@ -286,3 +286,55 @@ class ObjectiveFunctionConflictInternal(AObjective):
     @override
     def name(self) -> str:
         return f"{self.__class__.__name__}"
+    
+
+
+#-----------------------------------------------------------------------
+#-----------------------------------------------------------------------
+#------------- Calcul de l'ecartype des temps des avions ---------------
+#---------------- décollant dans une fenetre temporelle-----------------
+#-----------------------------------------------------------------------
+
+@AObjective.register_objective_function 
+class ObjectiveFunctionTimeStdDev(AObjective):
+    """
+    Fonction objective calculant l'écart-type des temps de passage aux balises
+    pour les avions ayant décollé entre t1 et t2.
+    """
+    def __init__(self):
+        """
+        Initialise la fonction objective avec une fenêtre temporelle.
+        
+        :param time_window_start: float, début de la fenêtre temporelle
+        :param time_window_end: float, fin de la fenêtre temporelle
+        """
+        super().__init__()
+
+        # Calcul des temps de la fenetre temporelle sur lequelle on 
+    
+
+    @override
+    def evaluate(self, data: List[ASimulatedAircraft] = None) -> float:
+        """
+        Calcule l'écart-type des temps de passage aux balises.
+        Utile pour un genetique qui maximise l'écartype 
+        
+        :param data: Liste des avions simulés
+        :return: Écart-type des temps de passage
+        """
+        departure_times = [aircraft.get_object().get_commands()[0].time for aircraft in data]
+        first_departure = min(departure_times) if departure_times else float('inf') 
+        last_departure = max(departure_times) if departure_times else float('inf') 
+
+        self.time_window_start = first_departure
+        self.time_window_end = last_departure
+
+        passage_times = []
+        # on recupere les temps de passage a toutes les balises
+
+        if len(departure_times) > 1:
+            return - np.std(departure_times)
+        return 0.0  # Retourne 0 si pas assez de données pour un calcul significatif
+
+    def name(self) -> str:
+        return f"{self.__class__.__name__}"

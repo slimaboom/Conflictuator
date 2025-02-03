@@ -52,21 +52,22 @@ class SimulatedAircraftImplemented(ASimulatedAircraft):
         # Générer les autres commandes
         current_time = departure_time
         additionnal_commands = 0 #self.__random_generator.integers(1, self.NB_MAXIMUM_COMMANDS) # Au moins un changement
-        for _ in range(additionnal_commands + 1):
-            speed = self.__generate_random_speed()
-            random_time = self.__generate_random_time(low=0., high=120.)
-            time = round(current_time + random_time, 2)
-            heading = None#self.__aircraft.get_heading() # NotImplemented
-            # DataStorage
-            ds = DataStorage(id=self.__aircraft.get_id_aircraft(),
-                             time=time,
-                             speed=speed,
-                             heading=heading)
-            cmds.append(ds)
-            current_time = time
+        if additionnal_commands > 0 : 
+            for _ in range(additionnal_commands):
+                speed = self.__generate_random_speed()
+                random_time = self.__generate_random_time(low=0., high=120.)
+                time = round(current_time + random_time, 2)
+                heading = None#self.__aircraft.get_heading() # NotImplemented
+                # DataStorage
+                ds = DataStorage(id=self.__aircraft.get_id_aircraft(),
+                                time=time,
+                                speed=speed,
+                                heading=heading)
+                cmds.append(ds)
+                current_time = time
 
-        # Liste des changements ordonnée dans le temps
-        cmds.sort(key=lambda ds: ds.time)
+            # Liste des changements ordonnée dans le temps
+            cmds.sort(key=lambda ds: ds.time)
         return cmds
     
     @override
@@ -105,10 +106,11 @@ class SimulatedAircraftImplemented(ASimulatedAircraft):
         max_changes = min(len(self.__commands), self.NB_MAXIMUM_COMMANDS)
 
         # Nombre de commandes à modifier (au moins 1, jusqu'à max_changes)
-        num_changes = self.__random_generator.integers(1, max_changes)
+        num_changes = self.__random_generator.integers(1, max_changes + 1)
 
         # Sélectionne aléatoirement les indices des commandes à modifier
         indexis = self.__random_generator.integers(0, max_changes, size=num_changes)
+        
         for i in indexis:
             # Selectionne la commande à modifier
             cmd = self.__commands[i]
@@ -131,10 +133,9 @@ class SimulatedAircraftImplemented(ASimulatedAircraft):
                 elif var == VariableName.TIME:
                     if i == 0: # Premiere commande : ajustement du temps de depart
                         # Ajustement si proba de tirer uniforme entre 0 et 1 < 0.1
-                        if self.__random_generator.random() < 0.1:
-                            random_time = self.__generate_random_time(low=-25.0, high=25.0)
-                            time = max(cmd.time + random_time, 0.) # Temps de départ ajusté
-                    else:
+                        if self.__random_generator.random() < 1: # seuil a modifier
+                            random_time = self.__generate_random_time(low=-250.0, high=250.0)
+                            time = max(cmd.time + random_time, 0.) # Temps de départ ajusté                    else:
                         random_time = self.__generate_random_time(low=-10.0, high=10.0)
                         time = max(cmd.time + random_time, 0.) # Temps de commande ajusté                   
                 else: # VariableName.HEADING
