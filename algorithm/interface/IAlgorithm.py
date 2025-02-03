@@ -191,9 +191,11 @@ class AAlgorithm(IAlgorithm):
             self.set_state(AlgorithmState.FINISHED)
             return result
         except Exception as e:
-            self.set_state(AlgorithmState.ERROR)
-            return e # Propager l'erreur avec le traceback
-
+            #import traceback
+            #tb = traceback.format_exc()
+            #self.set_state(AlgorithmState.ERROR)
+            #raise type(e)(f"{e}\nTraceback:\n{tb}") from e # Propager l'erreur avec le traceback
+            raise e
     @override
     def stop(self) -> None:
         """Stopper l'algorithme. Ne renvoie pas de solution"""

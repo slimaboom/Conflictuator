@@ -1,0 +1,79 @@
+{
+    "1": {
+        "commands": [
+            {
+                "id": 1,
+                "speed": 0.0012,
+                "time": 96.87,
+                "heading": null
+            }
+        ],
+        "flight_plan": {
+            "ATN": 176.08,
+            "BURGO": 240.54,
+            "BOJOL": 324.71,
+            "LSE": 408.28,
+            "LTP": 479.45,
+            "GRENA": 639.69,
+            "SANTO": 765.07,
+            "JAMBI": 905.55,
+            "SICIL": 1073.38,
+            "SODRI": 1141.36
+        }
+    },
+    "2": {
+        "commands": [
+            {
+                "id": 2,
+                "speed": 0.0014,
+                "time": 47.01,
+                "heading": null
+            }
+        ],
+        "flight_plan": {
+            "GAI": 68.33,
+            "MEN": 251.5,
+            "LANZA": 321.88,
+            "MINDI": 387.27,
+            "LSE": 545.35,
+            "BOJOL": 616.99,
+            "BURGO": 689.13,
+            "ATN": 744.39
+        }
+    },
+    "3": {
+        "commands": [
+            {
+                "id": 3,
+                "speed": 0.0016,
+                "time": 93.01,
+                "heading": null
+            }
+        ],
+        "flight_plan": {
+            "JAMBI": 107.81,
+            "MTL": 339.87,
+            "LTP": 502.42,
+            "MOZAO": 589.26,
+            "SEVET": 676.74,
+            "RAPID": 767.88
+        }
+    },
+    "4": {
+        "commands": [
+            {
+                "id": 4,
+                "speed": 0.0012,
+                "time": 85.89,
+                "heading": null
+            }
+        ],
+        "flight_plan": {
+            "MAJOR": 128.5,
+            "MTL": 280.13,
+            "MINDI": 431.97,
+            "CFA": 604.8,
+            "ETAMO": 848.31
+        }
+    }
+}

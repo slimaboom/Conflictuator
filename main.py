@@ -30,6 +30,8 @@ from algorithm.data import DataStorage
 from utils.controller.dynamic_discover_packages import main_dynamic_discovering
 
 from logging_config import setup_logging
+from view.dialog.scroll_message_box import ScrollableMessageBox
+
 
 import sys
 import os
@@ -354,13 +356,13 @@ class MainWindow(QMainWindow):
         try:
             # Ne lancer un algorithm que si c'est le premier
             if not self.simulation_controller.simulation.get_algorithm_manager().has_been_lauch():
+                # Gestion IHM
+                self.combobox.setCurrentIndex(index.row())  # S'assurer que l'élément sélectionné reste visible
                 # Gestion Algorithm class
                 aalgorithm = AAlgorithm.get_algorithm_class(selected_text)
                 # Demande des paramètres du constructeur de la classe dérivée AAlgorithm (dynamique)
                 algo_constructor_parameters_objective_function_constructors_parameters = self.configure_algorithm(selected_text)
 
-                # Gestion IHM
-                self.combobox.setCurrentIndex(index.row())  # S'assurer que l'élément sélectionné reste visible
                 self.freeze_interactions(True)
                 self.create_algorithm_panel()
                 self.record_sim_btn.setDisabled(True)
@@ -789,12 +791,13 @@ class MainWindow(QMainWindow):
         self.combobox.setStyleSheet("background-color: none;")
         self.combobox.setEnabled(True)
 
+
+        #msg_box = ScrollableMessageBox(self)
         msg_box = QMessageBox(self)
         msg_box.setIcon(QMessageBox.Critical if is_error else QMessageBox.Information)
         msg_box.setWindowTitle(title)
         msg_box.setText(message)
         msg_box.setStandardButtons(QMessageBox.Ok)
-
         # Récupérer le bouton OK
         ok_button = msg_box.button(QMessageBox.Ok)
 

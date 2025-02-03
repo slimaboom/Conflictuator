@@ -301,8 +301,10 @@ class SimulationModel:
         """Calcul le nombre total de conflits entre les avions de la simulation"""
         total_conflicts = 0
         nc = 0.
-        for _, aircraft in self.aircrafts.items():
-            for conflicts in aircraft.get_conflicts().get_all().values():
-                nc = len(conflicts)
-                total_conflicts += nc
+        for aircraft_id, aircraft in self.aircrafts.items():
+            if aircraft_id > 0:
+                aircraft_conflicts = aircraft.get_conflicts().get_all()
+                for conflicts in aircraft_conflicts.values():
+                    nc = len(conflicts)
+                    total_conflicts += nc
         return (total_conflicts * 0.5)

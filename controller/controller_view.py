@@ -116,6 +116,7 @@ class SimulationViewController(QObject):
             
             # Sauvegarde du QtAircraft dans l'attribut aircrafts
             self.qt_aircrafts[aircraft.get_id_aircraft()] = qtaircraft
+            self.logger.info(f"{aircraft.get_id_aircraft()}, {aircraft.get_conflicts().get_all()}")
         
     def draw_sectors(self) -> None:
         """Ajouter les secteurs a la scene"""
