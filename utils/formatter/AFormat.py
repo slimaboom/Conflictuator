@@ -1,6 +1,5 @@
 from abc import abstractmethod
-from typing import List, Type, TYPE_CHECKING
-from typing_extensions import override
+from typing import List, Type, TYPE_CHECKING, Dict
 
 from utils.formatter.IFormat import IFormat
 from utils.controller.database_dynamique import MetaDynamiqueDatabase
@@ -14,11 +13,13 @@ class AFormat(IFormat):
     def __init__(self):
         pass
 
+    @abstractmethod
     def export(self, iterable: List['Aircraft']) -> str:
         """Renvoie l'export de la liste des Aircraft dans une chaine de caractère correspond au format souhaité"""
         pass
 
-    def parse(self, data: str) -> List['Aircraft']:
+    @abstractmethod
+    def parse(self, data: str) -> Dict[int, 'Aircraft']:
         """Renvoie le parsing de l'argument <data> qui est une chaine en un objet List['Aircraft']"""
         pass
 

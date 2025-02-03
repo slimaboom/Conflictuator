@@ -14,14 +14,15 @@ from algorithm.concrete.genetic.genetique import AlgorithmGenetic
 from algorithm.interface.ISimulatedObject import ASimulatedAircraft
 
 #import ray
-from time import time
+from datetime import datetime
 
 @AAlgorithm.register_algorithm
 class HyperbandOptimizer(AAlgorithm):
     def __init__(self, data: List['ASimulatedAircraft'],
                  is_minimise : bool = True, 
                  num_samples: int = 20, 
-                 max_epochs: int =100):
+                 max_epochs: int =100,
+                 **kwargs):
         """
         Initialise l'optimiseur Hyperband.
 
@@ -31,7 +32,7 @@ class HyperbandOptimizer(AAlgorithm):
         :param max_epochs: Nombre max de générations pour l'optimisation
         """
         # Attributs generaux
-        super().__init__(data=data, is_minimise=is_minimise)
+        super().__init__(data=data, is_minimise=is_minimise, **kwargs)
 
         self.algorithm_class = None
         self.num_samples = num_samples
@@ -56,7 +57,7 @@ class HyperbandOptimizer(AAlgorithm):
 
         self.progress += 1
         self.set_process(round(self.progress * 100 / self.num_samples, 2 ))
-        self.set_process_time(time())
+        self.set_process_time(datetime.now().timestamp()) 
         print("data : ", data)
         cloned_data = copy.deepcopy(data)
         objective_function = copy.deepcopy(self.get_objective_function())
@@ -64,8 +65,9 @@ class HyperbandOptimizer(AAlgorithm):
         algo: 'AAlgorithm' = AlgorithmGenetic(data=cloned_data, is_minimise=is_minimise, verbose=False, **config) # convertir en int pas un dictionnaire 
         algo.set_objective_function(objective_function)
 
-        best_solution, fitness, bests = algo.startbis()
-        tune.report({"fitness": float(fitness)})
+        best_solution, fitness = algo.startbis()
+        #tune.report({"fitness": float(fitness)})
+        self.set_best_critere(fitness)
 
     def optimize(self, data, is_minimise=True):
         """
@@ -92,6 +94,6 @@ class HyperbandOptimizer(AAlgorithm):
     @override
     def run(self) : 
 
-        self.set_start_time(start=time())
+        self.set_start_time(start=datetime.now().timestamp())
 
         return self.optimize(self.data, is_minimise=True)

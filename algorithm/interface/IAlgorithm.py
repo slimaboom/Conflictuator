@@ -1,17 +1,18 @@
+import inspect
 from algorithm.interface.ISimulatedObject import ISimulatedObject, ASimulatedAircraft
 from algorithm.interface.IObjective import IObjective, AObjective
 from model.aircraft.storage import DataStorage
 
-from utils.conversion import sec_to_time
+from utils.conversion import sec_to_time, time_to_sec
 from logging_config import setup_logging
 
 from utils.controller.database_dynamique import MetaDynamiqueDatabase
 
 from abc import ABC, abstractmethod
-from typing import List, Type
+from typing import List, Type, Any
 from typing_extensions import override
 from copy import deepcopy
-from time import time
+from datetime import time, datetime
 from enum import Enum
 
 import numpy as np
@@ -55,7 +56,7 @@ class IAlgorithm(ABC):
 
     @abstractmethod
     def get_progress(self) -> float:
-        """Récupérer l'avancement de l'exécution, exprimée en %"""        
+        """Récupérer l'avancement de l'exécution, exprimée en % [0-100]"""        
         pass
 
     @abstractmethod
@@ -76,16 +77,33 @@ class IAlgorithm(ABC):
 class AAlgorithm(IAlgorithm):
     """Classe abstraite pour un algorithme prenant une liste de ASimulatedAircraft"""
    
+    NUMBER_OF_LAYERS_KEY: str = "number_of_layers"
+
     @abstractmethod
-    def __init__(self, data: List[ASimulatedAircraft], is_minimise: bool, verbose: bool = False, timeout: float = 120.):
-        """Constructeur abstrait obligeant à passer:
-            @param: data
-                Liste de ASimulatedAircraft
-            @param: is_minimise
-                booléen pour minimisation ou non lorsque l'algorithme cherche une solution
-            @param: verbose
-                booléen pour afficher des logs ou non
+    def __init__(self, data: List[ASimulatedAircraft], 
+                 is_minimise: bool, 
+                 verbose: bool = False, 
+                 timeout: time = time(hour=0, minute=2, second=0),
+                 number_of_layers: int = 0,
+                 **kwargs):
         """
+        Constructeur abstrait imposant 4 paramètres obligatoires.
+
+        :param data: Liste de ASimulatedAircraft.
+        :param is_minimise: Booléen indiquant si l'algorithme doit minimiser.
+        :param verbose: Active ou non les logs (facultatif, par défaut False).
+        :param timeout: Temps maximum d'exécution en secondes (facultatif, par défaut 120s).
+        :param number_of_layers: Nombre de couches récursive que l'algorithme peut avoir
+            Par exemple AlgorithmGenetic pourrait avoir 2 couches c'est à dire qu'il pourrait 
+                lancer dans la premiere couche 1 algorithme différent de lui (ou pas)
+                et dans la seconde couche un autre algorithme différent possiblement des deux
+                Chacune des deux couches aurait donc son propre algorithme avec
+                    ses hyper-paramètres
+                    sa fonction objective
+        :param kwargs: Hyperparamètres supplémentaires que les classes dérivées peuvent utiliser.
+        """
+        super().__init__(data, is_minimise, timeout)  # Passe les hyperparamètres aux éventuelles classes parentes
+
         self.__fobjective  = None
         self.__data        = data
         self.__is_minimise= is_minimise
@@ -93,17 +111,65 @@ class AAlgorithm(IAlgorithm):
 
         self.__pourcentage_process = 0.
         self.__process_time        = 0.
-        self.__timeout_value       = timeout
+        self.__timeout_value       = time_to_sec(timeout.isoformat())
         self.__startime            = None
         self.__state               = AlgorithmState.NOT_STARTED
         self.__generator = np.random.default_rng(seed=sum(d.get_object().get_id_aircraft() for d in data))
         self.__verbose   = verbose
-
+        self.__layers: List[AAlgorithm]    = []
+        self.__number_of_layers = number_of_layers
+        self.extra_params = kwargs  # Stocke les hyperparamètres supplémentaires
+        self.__name = self.__class__.__name__       
+        self.__best_critere = None
         self.logger = setup_logging(self.__class__.__name__)
+
+    def get_param(self, param_name: str, default=None) -> Any:
+        """Retourne un paramètre stocké ou la valeur par défaut"""
+        return self.extra_params.get(param_name, default)
+
+    def get_name(self) -> str:
+        """Renvoie le nom de l'algorithme"""
+        return self.__name
+    
+    def set_name(self, name: str) -> None:
+        """Modifie le nom de l'algorithme stocké dans l'attribut"""
+        self.__name = name
+        self.logger.info(name)
+
+    def get_best_critere(self) -> float:
+        """Retourne le meilleur crietre obtenu"""
+        return self.__best_critere
+
+    def set_best_critere(self, critere: float) -> None:
+        """Modifie la valeur du meilleure critere"""
+        self.__best_critere = critere
+
+    def display_layers(self) -> None:
+        for i, layer in enumerate(self.__layers):
+            self.logger.info(f"{self.get_name()}: layer {i+1} --> {layer.get_name()}")
 
     def get_data(self) -> List[ASimulatedAircraft]:
         """Renvoie la liste de ASimulatedAircraft stocker dans la classe"""
         return self.__data
+
+    def set_data(self, data: List[ASimulatedAircraft]) -> None:
+        """Modifie l'attribut data (List[ASimulatedAircraft]) en enoyant l'argument dans l'attribut"""
+        self.__data = data
+
+    def get_layers(self) -> List['AAlgorithm']:
+        """Récupération de la liste des différentes couches de AAlgorithm"""
+        return self.__layers
+    
+    def set_layers(self, layers: List['AAlgorithm']) -> None:
+        """Mise à jour de la liste des différentes couches de AAlgorithm
+        Exception: ValueError si la la taille en entrée est différente du nombre de layers demandés dans le constructeur (number_of_layers)
+        """
+        if len(layers) != self.__number_of_layers:
+            error = f"layers arugment is not the same size as expected in the construction of the instance (number_of_layers)"
+            error += f"\nExpected size {self.__number_of_layers}, got {len(layers)}"
+            raise ValueError(error)
+        
+        self.__layers = layers
 
     @override
     def start(self) -> List[List[DataStorage]]:
@@ -136,7 +202,7 @@ class AAlgorithm(IAlgorithm):
     
     @override
     def get_progress(self) -> float:
-        """Récupérer l'avancement de l'exécution, exprimée en %"""        
+        """Récupérer l'avancement de l'exécution, exprimée en % [0-100]"""        
         return self.__pourcentage_process
 
     def set_process(self, pourcentage: float) -> None:
@@ -189,10 +255,9 @@ class AAlgorithm(IAlgorithm):
     def is_timeout(self) -> bool:
         """L'algorithme est-il en timeout (trop longue duree d'execution)"""
         if self.__startime != None:
-            dt = time() - self.__startime
+            dt = datetime.now().timestamp() - self.__startime
         else:
             dt = 0.
-
         _is_timeout = dt >= self.get_timeout_value()
         if _is_timeout:
             msgtimeout = f"Timeout: {sec_to_time(self.get_timeout_value())}, running for {sec_to_time(dt)}"
@@ -286,10 +351,21 @@ class AAlgorithm(IAlgorithm):
         Retourne les paramètres du constructeur de l'algorithme spécifiée.
         Exception: TypeError
         """
-        params = MetaDynamiqueDatabase.get_class_constructor_params(cls, class_name)
-        ignored_param_names = ['data']
-        # MappingProxyType[str, Parameter] est immutable donc on passe par un dictionnaire temporaire
+        params        = MetaDynamiqueDatabase.get_class_constructor_params(cls, class_name)
+        params_parent = inspect.signature(cls.__init__).parameters
+        ignored_param_names = ['data', 'self', 'args', 'kwargs'] # self, kwargs, args, pour le parent
+
+
+        # Création d'une copie mutable du dictionnaire
         new_params = dict(params)
+
+        # Fusionner sans écraser les clés existantes
+        # Privilégier les clés de la classe dérivée par rapport à la parente
+        for key, value in params_parent.items():
+            if key not in new_params and key not in ignored_param_names:
+                new_params[key] = value
+
+        # MappingProxyType[str, Parameter] est immutable donc on passe par un dictionnaire temporaire
         for ignored_param_name in ignored_param_names:
             if new_params.get(ignored_param_name):
                 del new_params[ignored_param_name]

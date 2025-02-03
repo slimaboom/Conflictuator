@@ -11,21 +11,22 @@ from typing import List
 from typing_extensions import override
 
 import numpy as np
-from time import time
+from datetime import time, datetime
 
 @AAlgorithm.register_algorithm
 class AlgorithmRecuit(AAlgorithm):
     @method_control_type(List[ASimulatedAircraft])
     def __init__(self, data: List[ASimulatedAircraft], is_minimise: bool = False, 
                  verbose           : bool = False,
-                 timeout           : float = 120.,
+                 timeout           : time = time(hour=0, minute=2, second=0),
                  number_transitions: int = 2000,
                  heat_up_rate      : float = 1.5,
                  heat_up_acceptance: float = 0.8,
-                 cooling_rate      : float = 0.995):
+                 cooling_rate      : float = 0.995,
+                 **kwargs):
     
         # Attributs generaux
-        super().__init__(data=data, is_minimise=is_minimise, verbose=verbose, timeout=timeout)
+        super().__init__(data=data, is_minimise=is_minimise, verbose=verbose, timeout=timeout, **kwargs)
         self.__generator   = self.get_generator()
 
         self.logger = setup_logging(self.__class__.__name__)
@@ -37,7 +38,7 @@ class AlgorithmRecuit(AAlgorithm):
         self.__cooling_rate   = cooling_rate
 
         # Timeout
-        self.set_timeout_value(timeout)
+        self.set_timeout_value(self.get_timeout_value())
 
     def __accept(self, yi: float, yj: float, temperature: float) -> bool:
         """Principle of Acceptation in Maximisation or Minimisation"""
@@ -59,7 +60,10 @@ class AlgorithmRecuit(AAlgorithm):
 
     def __heat_up_loop(self) -> float:
         """Determine the initial temperature"""
-        self.set_start_time(start=time())
+        start_time = datetime.now().timestamp()
+
+        self.set_start_time(start=start_time)
+
         accept_counter = 0
         temperature    = 0.01
         accept_rate    = 0.0
@@ -71,7 +75,7 @@ class AlgorithmRecuit(AAlgorithm):
         while accept_rate < self.__heat_up_accept and self.is_running(): # 80% of transifition must be accepted
             accept_counter    = 0
             for k in range(self.__nb_transitions):
-                self.set_process_time(process_time=time() - self.get_start_time())
+                self.set_process_time(process_time=datetime.now().timestamp() - self.get_start_time())
 
                 # Generation of state point
                 xi.initialize_random()
@@ -86,6 +90,8 @@ class AlgorithmRecuit(AAlgorithm):
                 #self.logger.info(f"At T={temperature}, yi={yi}, yj={yj}")
                 if self.__accept(yi, yj, temperature):
                     accept_counter += 1
+                    # Maj du critiere
+                    self.set_best_critere(yj)
                 #    self.logger.info(f"At T={temperature}, yi={yi}, yj={yj} ({accept_counter}/{self._nb_transitions})")
 
             # Count rate of accepted transitions
@@ -98,7 +104,7 @@ class AlgorithmRecuit(AAlgorithm):
 
     def __cooling_loop(self, initial_temperature: float) -> Etat:
         """Coolling loop of temperature"""
-        self.set_start_time(start=time())
+        self.set_start_time(start=datetime.now().timestamp())
         self.logger.info(f"Start colling at temperature: {initial_temperature}")
 
         xi = Etat(self.get_data())
@@ -119,7 +125,7 @@ class AlgorithmRecuit(AAlgorithm):
             
             else:
                 for k in range(self.__nb_transitions):
-                    self.set_process_time(process_time=time()-self.get_start_time())
+                    self.set_process_time(process_time=datetime.now().timestamp()-self.get_start_time())
 
                     xj.copy(xi)
                     xj.generate_neighborhood()
@@ -130,6 +136,8 @@ class AlgorithmRecuit(AAlgorithm):
 
                         xj = xi
                         yi = yj
+                        # Maj du critiere
+                        self.set_best_critere(yj)
 
                         if self.is_verbose():
                             msg = f"Iteration {k}/{self.__nb_transitions} - Temperature: {temperature} - critere: {yi}"
@@ -138,7 +146,9 @@ class AlgorithmRecuit(AAlgorithm):
 
 
         self.logger.info(f"End of colling - Before restoring: Best {best_state}")
-        best_state.restore_state(best_state)
+        best_state.restore_state(best_state)                    # Maj du critiere
+        self.set_best_critere(best_state.get_critere())
+
         self.logger.info(f"End of colling - After restoring: Best {best_state}")
         self.stop()
         return best_state

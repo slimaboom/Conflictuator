@@ -1,17 +1,16 @@
 import numpy as np
 import random
 from algorithm.interface.IAlgorithm import AAlgorithm
-from algorithm.genetic.genetique import AlgorithmGenetic
+from algorithm.concrete.genetic.genetique import AlgorithmGenetic
 from algorithm.interface.ISimulatedObject import ASimulatedAircraft
-from algorithm.storage import DataStorage
-from logging_config import setup_logging
-from utils.controller.argument import method_control_type
-from algorithm.objective_function.function import ObjectiveFunctionConflict
+from model.aircraft.storage import DataStorage
+
+from utils.conversion import time_to_sec
 
 from typing import List, Dict, Tuple
 from typing_extensions import override
 from copy import deepcopy
-from time import time
+from datetime import time, datetime
 from collections import defaultdict
 
 #@AAlgorithm.register_algorithm
@@ -26,9 +25,10 @@ class OptimizedGeneticAlgorithm(AAlgorithm):
                  early_stopping: int = 10,
                  interval_type: str = "time",  # "time" or "group"
                  interval_value: int = 5,  # Minutes or number of aircraft
-                 t: int = 1200):
+                 t: time = time(hour=0, minute=20, second=0), 
+                 **kwargs):
         
-        super().__init__(data=data, is_minimise=is_minimise, verbose=verbose)
+        super().__init__(data=data, is_minimise=is_minimise, verbose=verbose, **kwargs)
         
         self.population_size: int = population_size
         self.generations: int = generations
@@ -36,7 +36,7 @@ class OptimizedGeneticAlgorithm(AAlgorithm):
         self.crossover_rate: float = crossover_rate
         self.early_stopping: int = early_stopping
         self.interval_type: str = interval_type
-        self.__t: int = t
+        self.__t: int = time_to_sec(t.isoformat())
         
         self.best_solutions: List[List[DataStorage]] = []
         self.aircraft_intervals: Dict[int, List[List[DataStorage]]] = defaultdict(list)

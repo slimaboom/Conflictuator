@@ -112,6 +112,10 @@ class ConflictManager:
         """
         #self.logger.info(f"Calcul des conflits pour:  {[aircraft.get_id_aircraft() for aircraft in aircraft_list]}")
 
+        # Sécurité quand on supprimer des avions, ça recalcul les conflits et si la liste est vide il y a plus rien
+        # SimulationViewController.cleanup() appelle Simulation.delete_aircraft
+        if not aircraft_list: return aircraft_list
+        
         # Identifier l'avion cible 
         target_aircraft = aircraft_list[0]
         target_id = target_aircraft.get_id_aircraft()
@@ -120,8 +124,8 @@ class ConflictManager:
         impacted_aircraft_ids = {aircraft.get_id_aircraft() for aircraft in aircraft_list}
 
         # Étape 1 : Nettoyer les conflits pour chaque avion impliqué
-        for aircraft in aircraft_list:
-            if (aircraft.id != target_id):
+        for i, aircraft in enumerate(aircraft_list):
+            if (aircraft.get_id_aircraft() != target_id):
                 aircraft.clear_conflicts(target_id)
             target_aircraft.clear_conflicts(aircraft)
         

@@ -1,17 +1,13 @@
 import numpy as np
-import random
 from algorithm.interface.IAlgorithm import AAlgorithm
-from algorithm.genetic.genetique import AlgorithmGenetic
+from algorithm.concrete.genetic.genetique import AlgorithmGenetic
 from algorithm.interface.ISimulatedObject import ASimulatedAircraft
-from algorithm.storage import DataStorage
-from logging_config import setup_logging
-from utils.controller.argument import method_control_type
-from algorithm.objective_function.function import ObjectiveFunctionConflict
+from model.aircraft.storage import DataStorage
 
 from typing import List, Dict, Tuple
 from typing_extensions import override
 from copy import deepcopy
-from time import time
+from datetime import time, datetime
 from collections import defaultdict
 
 #@AAlgorithm.register_algorithm
@@ -19,16 +15,19 @@ class OptimizedGeneticAlgorithm(AAlgorithm):
     def __init__(self, data: List[ASimulatedAircraft],
                  is_minimise: bool = True,
                  verbose: bool = False,
-                 timeout: float = 120,
+                 timeout: time = time(hour=0, minute=2, second=0),
                  population_size: int = 10,
                  generations: int = 10,
                  mutation_rate: float = 0.1,
                  crossover_rate: float = 0.8,
                  early_stopping: int = 10,
                  interval_value: int = 5,
-                 time_window: int = 1200):
+                 time_window: int = 1200,
+                 **kwargs):
         
-        super().__init__(data=data, is_minimise=is_minimise, verbose=verbose, timeout=timeout)
+        super().__init__(data=data, is_minimise=is_minimise, verbose=verbose, 
+                         timeout=timeout,
+                         **kwargs)
         
         self.__population_size = population_size
         self.__generations  = generations
@@ -171,7 +170,7 @@ class OptimizedGeneticAlgorithm(AAlgorithm):
             self.logger.info(f"Il y a {len(self.get_data())} ASimulatedAircraft")
 
         self.set_process(0.)
-        self.set_start_time(start=time())
+        self.set_start_time(start=datetime.now().timestamp())
 
         population      = [self.__generate_individuals(self.get_data())]
         best_individual = population[0]
@@ -213,7 +212,7 @@ class OptimizedGeneticAlgorithm(AAlgorithm):
 
             # Avancement du processus
             self.set_process(int(((generation + 1) / self.generations) * 100))
-            self.set_process_time(process_time=time() - self.get_start_time())
+            self.set_process_time(process_time=datetime.now().timestamp() - self.get_start_time())
 
             if self.is_verbose():
                 self.logger.info(f"Generation {generation + 1}: Progress = {self.get_progress()}%")

@@ -49,7 +49,7 @@ class RecordDialog(QDialog):
     def open_file_dialog(self) -> None:
         """Ouvre une boîte de dialogue pour choisir un fichier avec une extension valide."""
 
-        file_name, _ = QFileDialog.getSaveFileName(self, "Type a file", "", "JSON File (*.json);;Tous les fichiers (*)")
+        file_name, _ = QFileDialog.getSaveFileName(self, "Type a file", "", "JSON File (*.json);;All files (*)")
         
         if file_name:
             # Vérifie si le fichier choisi a une extension valide

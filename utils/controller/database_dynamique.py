@@ -94,11 +94,12 @@ class MetaDynamiqueDatabase:
         params = {}
         params_without_annotations = {}
         for i, (name, param) in enumerate(signature.parameters.items()):
-            if not (param.name.lower() in ["self"]): # Exclure self
+            if not (param.name.lower() in ["self", "args", "kwargs"]): # Exclure self, *args et **kwargs pour l'IHM...
                 if param.annotation != inspect.Parameter.empty:
                     params[name] = param
                 else:
                     params_without_annotations[name] =  param
+
         if not params_without_annotations:
             return MappingProxyType(params)
         error = f"Annotations on parameters error, Please annotate the type of the parameters:\n{params_without_annotations}"

@@ -8,7 +8,7 @@ from utils.controller.argument import method_control_type
 from typing import List
 from typing_extensions import override
 from copy import deepcopy
-from time import time
+from datetime import time, datetime
 import numpy as np
 
 @AAlgorithm.register_algorithm
@@ -17,16 +17,18 @@ class AlgorithmGenetic(AAlgorithm):
     def __init__(self, data: List[ASimulatedAircraft], 
                  is_minimise: bool = False,
                  verbose    : bool = False,
-                 timeout: float = 120,
+                 timeout: time = time(hour=0, minute=2, second=0),
                  population_size: int = 50, 
                  generations: int = 100, 
                  mutation_rate: float = 0.1, 
                  crossover_rate: float = 0.8,
                  early_stopping: int = 10,
-                 ):
+                 **kwargs):
         
         # Attributs generaux
-        super().__init__(data=data, is_minimise=is_minimise, verbose=verbose, timeout=timeout)
+        super().__init__(data=data, is_minimise=is_minimise, verbose=verbose, 
+                         timeout=timeout,
+                         **kwargs)
 
         # Paramètre de l'algorithme génétique
         # les définir pour les rendre compatible a l'optimisation
@@ -254,7 +256,7 @@ class AlgorithmGenetic(AAlgorithm):
             self.logger.info(f"Il y a {len(self.get_data())} ASimulatedAircraft")
 
         self.set_process(0.)
-        self.set_start_time(start=time())
+        self.set_start_time(start=datetime.now().timestamp())
 
         population      = self.__generate_initial_population(self.get_data())
         best_individual = None
@@ -299,12 +301,15 @@ class AlgorithmGenetic(AAlgorithm):
             if self.is_verbose():
                 self.logger.info(f"Generation {generation + 1}: Best Fitness = {best_fitness}, Best Individual = {best_individual}")
 
+            # Maj du critiere
+            self.set_best_critere(best_fitness)
+
             # Calcul de la Prochaine population
             population = self.__next_population(population, fitnesses)
 
             # Avancement du processus
             self.set_process(int(((generation + 1) / self.__generations) * 100))
-            self.set_process_time(process_time=time() - self.get_start_time())
+            self.set_process_time(process_time=datetime.now().timestamp() - self.get_start_time())
 
             if self.is_verbose():
                 self.logger.info(f"Generation {generation + 1}: Progress = {self.get_progress()}%")
@@ -320,7 +325,7 @@ class AlgorithmGenetic(AAlgorithm):
             self.logger.info(f"Il y a {len(self.get_data())} ASimulatedAircraft")
 
         self.set_process(0.)
-        self.set_start_time(start=time())
+        self.set_start_time(start=datetime.now().timestamp())
 
         # Commencer avec une population predefinie
         if (not self.has_initial_population()): 
@@ -378,7 +383,7 @@ class AlgorithmGenetic(AAlgorithm):
 
             # Avancement du processus
             self.set_process(int(((generation + 1) / self.__generations) * 100))
-            self.set_process_time(process_time=time() - self.get_start_time())
+            self.set_process_time(process_time=datetime.now().timestamp() - self.get_start_time())
 
             if self.is_verbose():
                 self.logger.info(f"Generation {generation + 1}: Progress = {self.get_progress()}%")

@@ -7,5 +7,8 @@ class ObjectiveFunctionParamDialog(AParamDialog):
         super().__init__(class_or_function_name=objective_function_name, 
                          getters_function_or_method=AObjective.get_class_constructor_params,
                          parent=parent)
+
+        self.adjustSize()
+
         self.create_inputs()
         self.create_ok_button()

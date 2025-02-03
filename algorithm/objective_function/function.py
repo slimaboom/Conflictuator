@@ -8,10 +8,6 @@ import numpy as np
 #-------------------------------------------------#
 # Implementation de l'interface des fonctions objectives
 
-
-
-
-
 #----------------------------------------------------------
 #----------------------------------------------------------
 #------------- ObjectiveFunctionMaxConflict ---------------
@@ -23,8 +19,8 @@ class ObjectiveFunctionMaxConflict(AObjective):
     Fonction objective simple:
     calculant le nombre de conflits de chaque ASimulatedAircraft
     """
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
     @override
     def evaluate(self, data: List[ASimulatedAircraft]) -> float:
@@ -35,10 +31,6 @@ class ObjectiveFunctionMaxConflict(AObjective):
                 nc = len(conflicts)
                 total_conflicts += nc
         return (total_conflicts * 0.5)
-    
-    @override
-    def name(self) -> str:
-        return f"{self.__class__.__name__}"
     
 #-----------------------------------------------------------------------
 #-----------------------------------------------------------------------
@@ -68,7 +60,8 @@ class ObjectiveFunctionMaxConflictMinVariation(AObjective):
                        weight_command_penality: float = 1.0,
                        threshold_min_time_variation_command: float = 150.,
                        threshold_max_time_proximity: float = 30.0,
-                       threshold_speed_variation: float = 0.0005):
+                       threshold_speed_variation: float = 0.0005,
+                       **kwargs):
         """
         Constructeur de la classe ObjectiveFunctionMaxConflictMinVariation.
 
@@ -124,7 +117,7 @@ class ObjectiveFunctionMaxConflictMinVariation(AObjective):
         Cette classe permet de définir et d'ajuster les paramètres nécessaires pour évaluer et optimiser les trajectoires des ASimulatedAircraft maximisant les conflits tout en minimisant les variations de vitesse et les commandes rapprochées dans le temps.
         """
 
-        super().__init__()
+        super().__init__(**kwargs)
 
         # Weights used for evaluation
         self.__weight_conflicts               = weight_conflicts
@@ -244,9 +237,10 @@ class ObjectiveFunctionConflictInternal(AObjective):
     def __init__(self,
                 nb_expected_conflict: int = 2,
                 weight_conflicts: float = 1,
-                weight_external_penality: float= 0.1):
+                weight_external_penality: float= 0.1,
+                **kwargs):
 
-        super().__init__()
+        super().__init__(**kwargs)
 
         # Nombre de conflit voulu
         self.nb_expected_conflict: int = 2
@@ -283,9 +277,6 @@ class ObjectiveFunctionConflictInternal(AObjective):
         total = conflicts + penalisation 
         return total
     
-    @override
-    def name(self) -> str:
-        return f"{self.__class__.__name__}"
     
 
 
@@ -336,5 +327,3 @@ class ObjectiveFunctionTimeStdDev(AObjective):
             return - np.std(departure_times)
         return 0.0  # Retourne 0 si pas assez de données pour un calcul significatif
 
-    def name(self) -> str:
-        return f"{self.__class__.__name__}"

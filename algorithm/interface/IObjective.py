@@ -5,8 +5,6 @@ from utils.controller.database_dynamique import MetaDynamiqueDatabase
 from typing import List
 from typing_extensions import Type, override
 
-import inspect
-
 # Interface 
 class IObjective(ABC):
     """Interface pour le calcul d'une fonction objectif a partir d'une liste de ISimulatedObject"""
@@ -16,24 +14,25 @@ class IObjective(ABC):
         """Calcule la fonction objectif a partir de data (generique)."""
         pass
 
-    @abstractmethod
-    def name(self) -> str:
-        """Nom pour decrire la fonction Objectif"""
-        pass
-
 # Abstraction
 class AObjective(IObjective):
     """Classe abstraite pour le calcul d'une fonction objectif a partir d'une liste de ASimulatedAircraft"""
+
+    def __init__(self, **kwargs):
+        self.__name = self.__class__.__name__
+        pass
 
     @abstractmethod
     def evaluate(self, data: List[ASimulatedAircraft]) -> float:
         """Calcule la fonction objectif a partir de data (generique)."""
         pass
 
-    @override
-    def name(self) -> str:
-        return f"{self.__class__.__name__}"
+    def get_name(self) -> str:
+        return self.__name
 
+    def set_name(self, name: str) -> None:
+        """Modifie le nom de la fonction objective stocké dans l'attribut"""
+        self.__name = name
 
     @classmethod
     def register_objective_function(cls, objectif_class: Type):

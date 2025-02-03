@@ -68,6 +68,10 @@ class Etat:
         msg = f"function argument must be Callable with on parameter of type List[ASimulatedAircraft]"
         raise TypeError(msg) 
     
+    def get_critere(self) -> float:
+        """Renvoie la valeur du crietere de l'etat"""
+        return self.critere
+
     def copy(self, copy_from: 'Etat') -> None:
         self.vector    = copy_from.vector[:]
         self.data      = copy_from.data[:]

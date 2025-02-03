@@ -16,34 +16,98 @@ import numpy as np
 if TYPE_CHECKING:
     from model.conflict_manager import ConflictManager, ConflictInformation
 
-@dataclass
 class Aircraft:
-    speed: float
-    flight_plan: List[Balise]
+    __REGISTRY: Dict[int, 'Aircraft'] = {}
+    __observers: WeakSet = WeakSet()
 
-    position: Point = field(init=False)
-    time: float = field(init=False)
-    flight_time: float = field(init=False)
-    take_off_time: Optional[float] = 0.
+    def __init__(self, flight_plan: List[Balise], speed: float, id: int = None, take_off_time=0.):
+        # Logger
+        self.logger = setup_logging(self.__class__.__name__)
 
-    heading: float = field(init=False)
-    flight_plan_timed: Dict[str, float] = field(init=False) # Dictionnaire avec le nom de la balise en clé et le temps de passage en valeur
-    id: int = field(init=False)  # L'attribut `id` sera défini dans `__post_init__`
-    rng: np.random.Generator = field(init=False)
+        self.flight_plan       = flight_plan
+        
+        # Initialisation du dictionnaire rempli par calculate_estimated_times_commands
+        self.flight_plan_timed = {}
+
+        if speed == None or speed <= 0: # Protection pour calcul des temps de passage au balise !!!
+            error = f"{self.__class__.__name__} cannot be instanciate due to speed negative or null value or None value"
+            raise ValueError(error)
+        
+        if take_off_time < 0:
+            error = f"{self.__class__.__name__} cannot be instanciate due to speed negative value for take_off_time: must be >=0"
+            raise error
+        
+        # Vitesse
+        self.speed = speed
+
+        # Identifiant
+        self.id = id if id != None else len(self.get_available_aircrafts()) + 1
+
+        # Generateur de nombre aleatoire
+        self.rng = np.random.default_rng(seed=self.id)
+        
+        # Initialisation des attributs
+        self.current_target_index = 0  # Commence avec la première balise
+        self._is_finished         = False
+        self.flight_plan_timed    = {}
+
+        # Premiere position autour de la premiere balise
+        self.start_position = self.generate_position_near_balise(self.flight_plan[self.current_target_index])
+        self.position       = deepcopy(self.start_position)
+        self.time           = 0.
+        self.flight_time    = 0.
+        self.take_off_time  = take_off_time
+
+        # Historique des positions
+        self.history: Dict[float, 'Information'] = {}
+
+        # Cap entre la première position et la balise
+        self.heading = self.calculate_heading(self.position, self.flight_plan[self.current_target_index])
+
+        # Collecteur de conflicts
+        self._conflict_dict = Collector(List['ConflictInformation']) # Collecteur vide au depart
+        # List de commandes de l'avion
+        # Si l'avion doit changer de vitesse dans le temps par exemple.
+        self.commands = [DataStorage(id=self.id, time=self.take_off_time,
+                                     speed=self.speed, heading=self.heading)
+                        ]
+        
+        # Prochaine commande à appliquer
+        self.next_command = self.set_next_command()
+
+        # Calcul du plan de vol timé par rapport à la vitesse (et au commande dans le temps)
+        self.calculate_estimated_times_commands()
+
+        self.__REGISTRY[self.id] = self
+
+
+    @classmethod
+    def reinititalise_registry(cls) -> None:
+        """Nettoie le dictionnaire des instances des avions disponibles en le vidant"""
+        cls.__REGISTRY.clear()
     
-    current_target_index: int = field(init=False)  # Indice de la balise cible actuelle
-    # Historique des positions de l'avion: key=time et value=Information(position, time, speed, heading)
-    history: Dict[float, Information] = field(default_factory=dict, init=False) # Gestion d'un dictionnaire car recherche de point par cle en O(1)
-    _is_finished: bool = field(init=False) # La trajectoire est-elle terminee ?
-    _conflict_dict: Collector[List['ConflictInformation']] = field(init=False) # Dictionnaire de conflict entre self et les autres: cle=id_autre, valeur=liste des dates conflicts
-    
-    commands: List[DataStorage] = field(init=False)
-    next_command: DataStorage = field(init=False)
+    @classmethod
+    def get_available_aircrafts(cls) -> Dict[int, 'Aircraft']:
+        """Renvoie le dictionnaire des instances des avions disponibles"""
+        return cls.__REGISTRY
 
-    # Attribut de classe pour suivre le nombre d'instances
-    __COUNTER: int = 0
+    @classmethod
+    def remove_aircraft_from_registry(cls, aircraft: 'Aircraft') -> None:
+        """Supprime l'aircraft du registre de classe Aircraft"""
+        id = aircraft.get_id_aircraft()
+        if id in cls.__REGISTRY.keys():
+            del cls.__REGISTRY[aircraft.get_id_aircraft()]
 
-    _observers: WeakSet = None
+    @classmethod
+    def register_observer(cls, observer: 'ConflictManager'):
+        """Enregistre un observateur global (ex: ConflictManager)."""
+        cls.__observers.add(observer)
+
+    @classmethod
+    def notify_observers(cls, aircraft: 'Aircraft'):
+        """Notifier les observateurs d'un changement dans un avion."""
+        for observer in cls.__observers:
+            observer.update_aircraft_conflicts(aircraft)
 
     def __hash__(self):
         return hash(self.get_id_aircraft())
@@ -54,44 +118,53 @@ class Aircraft:
         return self.get_id_aircraft() == other.get_id_aircraft()
 
 
-    def __post_init__(self):
-        self.__class__.logger = setup_logging(__class__.__name__)
-        # Incrémenter le compteur de classe et assigner l'ID unique
-        self.__class__.__COUNTER += 1
-        object.__setattr__(self, 'id', self.__class__.__COUNTER)
-        
-        # Créer un générateur aléatoire propre à cet avion
-        object.__setattr__(self, 'rng', np.random.default_rng(seed=self.id))
+    def get_position(self): return self.position
 
-        # Initialiser les observateurs au niveau de la classe, si ce n'est pas encore fait
-        if self.__class__._observers == None:
-            self.__class__._observers = WeakSet()
+    def get_time(self): return self.time
+    def set_time(self, time: float) -> None: 
+        self.time = time
 
-        # Initialisation des attributs
-        self.current_target_index = 0  # Commence avec la première balise
-        self._is_finished = False
-        self.flight_plan_timed = {}
+    def get_flight_time(self): return self.flight_time
+    def get_take_off_time(self): return self.take_off_time
+    def get_speed(self): return self.speed
+    def get_heading(self, in_aero: bool = False): 
+        if in_aero:return rad_to_deg_aero(self.heading)
+        else: return self.heading
+    def get_flight_plan(self): return self.flight_plan
+    def get_next_target(self): return self.flight_plan[self.current_target_index]
+    def get_id_aircraft(self): return self.id
+    def get_history(self): return self.history
+    def get_random_generator(self): return self.rng
+    def set_aircraft_id(self, id: int) -> None:
+        self.id = id
 
-        # Premiere position autour de la premiere balise
-        self.position = self.generate_position_near_balise(self.flight_plan[self.current_target_index])
-        self.time     = 0.
-        self.flight_time = 0.
+    def get_conflicts(self) -> Collector[List['ConflictInformation']]: return self._conflict_dict
+    def get_commands(self) -> List['DataStorage']: return self.commands
 
-        object.__setattr__(self, 'heading',  self.calculate_heading(self.position, self.flight_plan[self.current_target_index]))
+    def set_speed(self, speed: float) -> None:
+        """ Modifie la vitesse de l'avion et recalcul les conflits futurs """
+        self.speed = speed
+    
+    def set_heading(self, hdg: float) -> None:
+        #self.__class__.logger.info(f"Set heading to aircraft {self.id}: from {self.heading} to {hdg}")
+        self.heading = hdg
 
-        # Enregistrer les temps de passage prévu par le plan de vol
-        self.flight_plan_timed = {} # Initialisation du dictionnaire rempli par calculate_estimated_times_commands
+    def set_take_off_time(self, take_off_time: float) -> None:
+        self.take_off_time = take_off_time
 
-        self._conflict_dict = Collector() # Dictionnaire vide au depart
-        self.commands = [DataStorage(id=self.id, time=self.take_off_time,
-                                     speed=self.speed, heading=self.heading)
-                        ]
-        
-        self.next_command = self.set_next_command()
-        if self.speed == None or self.speed <= 0: # Protection pour calcul des temps de passage au balise !!!
-            raise ValueError("{self.__class__.__name__} cannot be instanciate due to speed negative or null value or None value")
-        self.calculate_estimated_times_commands()
+    def get_flight_plan_timed(self) -> Dict[str, float]: return self.flight_plan_timed
 
+    def is_in_conflict(self) -> bool: return not(self._conflict_dict.is_empty())
+
+
+    def get_arrival_time_on_last_point(self) -> float:
+        """Renvoie le temps de passage à la dernière balise du plan de vol"""
+        # Heure d'arrivée au dernier point du plan de vol de l'avion
+        last_time = list(self.get_flight_plan_timed().values())[-1]
+    
+        # Retourner la durée maximale
+        return last_time # 0.0 si aucune donnée n'est présente
+    
     def deepcopy(self) -> 'Aircraft':
         new_aircraft = deepcopy(self)
         return new_aircraft
@@ -210,13 +283,9 @@ class Aircraft:
 
 
     def update(self, timestep: float) -> None:
-        """Mise à jour des attributs de l'avion pour le faire avancer en utilisant"""
-
-        if self.time < self.take_off_time: # L'avion a pas décollé, mise a jour que du temps
-            self.time = self.__round(self.time + timestep)
-        else:
-            self.time = self.__round(self.time + timestep)
-            self.position = self.get_position_from_time(time=self.time)
+        """Mise à jour des attributs de l'avion pour le faire avancer en utilisant get_position_from_time"""
+        self.time     = self.__round(self.time + timestep)
+        self.position = self.get_position_from_time(time=self.time)
 
     # def update(self, timestep: float) -> None:
     #    """Method de mise à jour des attributs de l'avion pour le faire avancer.
@@ -295,61 +364,25 @@ class Aircraft:
             return new_point        
 
 
-    def get_position(self): return self.position
-    def get_time(self): return self.time
-    def set_time(self, time: float) -> None: 
-        self.time = time
-    def get_flight_time(self): return self.flight_time
-    def get_take_off_time(self): return self.take_off_time
-    def get_speed(self): return self.speed
-    def get_heading(self, in_aero: bool = False): 
-        if in_aero:return rad_to_deg_aero(self.heading)
-        else: return self.heading
-    def get_flight_plan(self): return self.flight_plan
-    def get_next_target(self): return self.flight_plan[self.current_target_index]
-    def get_id_aircraft(self): return self.id
-    def get_history(self): return self.history
-    def get_random_generator(self): return self.rng
-    def set_aircraft_id(self, id: int) -> None:
-        self.id = id
-        
-
-    def set_speed(self, speed: float) -> None:
-        """ Modifie la vitesse de l'avion et recalcul les conflits futurs """
-        self.speed = speed
-    
-    def set_heading(self, hdg: float) -> None:
-        #self.__class__.logger.info(f"Set heading to aircraft {self.id}: from {self.heading} to {hdg}")
-        self.heading = hdg
-
-    def set_take_off_time(self, take_off_time: float) -> None:
-        self.take_off_time = take_off_time
-
-    def get_flight_plan_timed(self) -> Dict[str, float]: return self.flight_plan_timed
-
-    def is_in_conflict(self) -> bool: return not(self._conflict_dict.is_empty())
-
-    def get_conflicts(self) -> Collector[List['ConflictInformation']]: return self._conflict_dict
-   
     def clear_conflicts(self, with_aircraft_id: int = None) -> None:
         """Efface les conflits dépassés ou spécifiques à un autre avion."""
         # Nouveau Collector pour stocker les conflits a garder
         #self.logger.info(f"Nettoyage des conflicts de l'avion {self.get_id_aircraft()} with_aircraft_id={with_aircraft_id})")
         new_collector = Collector()
-
-        for key, conflicts in self._conflict_dict.get_all().items():
-            # Filtrer les conflits selon la condition
-            filtered_conflicts = [
-                c for c in conflicts
-                if (with_aircraft_id == None and c.get_conflict_time_one() < self.time) or
-                   (with_aircraft_id != None and (
-                       c.get_aircraft_two().get_id_aircraft() != with_aircraft_id or 
-                       c.get_conflict_time_one() < self.time))
-            ]
-            #self.logger.info(f"filtered_conflicts pour avion {self.id}: {filtered_conflicts}")
-            # Ajouter les conflits restants dans le nouveau collector
-            if filtered_conflicts:
-                new_collector.add(key, filtered_conflicts)
+        for key, conflicts in self.get_conflicts().get_all().items():
+            if conflicts != None:
+                # Filtrer les conflits selon la condition
+                filtered_conflicts = [
+                    c for c in conflicts
+                    if (with_aircraft_id == None and c.get_conflict_time_one() < self.time) or
+                    (with_aircraft_id != None and (
+                        c.get_aircraft_two().get_id_aircraft() != with_aircraft_id or 
+                        c.get_conflict_time_one() < self.time))
+                ]
+                #self.logger.info(f"filtered_conflicts pour avion {self.id}: {filtered_conflicts}")
+                # Ajouter les conflits restants dans le nouveau collector
+                if filtered_conflicts:
+                    new_collector.add(key, filtered_conflicts)
 
         # Remplacer l'ancien _conflict_dict par le nouveau
         self._conflict_dict = new_collector
@@ -389,23 +422,19 @@ class Aircraft:
             time += dt
         return None
 
-    @classmethod
-    def register_observer(cls, observer: 'ConflictManager'):
-        """Enregistre un observateur global (ex: ConflictManager)."""
-        cls._observers.add(observer)
-
-    @classmethod
-    def notify_observers(cls, aircraft: 'Aircraft'):
-        """Notifier les observateurs d'un changement dans un avion."""
-        for observer in cls._observers:
-            observer.update_aircraft_conflicts(aircraft)
-
 
     def get_position_from_time(self, time: float) -> Point:
         """ Renvoie la position de l'avion au temps <time>"""
-        return self.__find_position_position(target_time=time)
+        return self.__find_next_position(target_time=time)
 
-    def __find_position_position(self, target_time: float) -> Point:
+    def __find_next_position(self, target_time: float) -> Point:
+        """Methode qui calcul par interpolation linéaire sa position 
+        en fonction de la cible temporelle passéé en paramètre
+        
+        /!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\
+        /!\     Cette méthode est très sensibe au modification !!!        /!\
+        /!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\/!\
+        """
         def find_keys(flight_plan_timed: Dict[str, float], time: float):
             """Chercher entre quelle balise l'avion est en fonction du time"""
             # Convertir en liste triée de tuples, elle est deja triee si tout va bien.
@@ -422,44 +451,51 @@ class Aircraft:
             return lower, upper
         #---------------------------------------
         self.flight_time = max(0, target_time - self.take_off_time) # si target_time < take_off alors avion pas décollé
-        self.time = target_time
+        #self.time = target_time
         if target_time < self.take_off_time: # L'avion ne bouge pas
-           self._is_finished = False
-           return self.position
+            self._is_finished = False
+            self.position = self.start_position
+            self.heading  = self.calculate_heading(self.start_position, self.flight_plan[0])
+            return self.start_position
         else: # L'avion doit bouger
             # Trouver les balises entre lesquelles se trouve l'avion
-            balise_name, next_balise_name = find_keys(flight_plan_timed=self.flight_plan_timed, time=target_time)
-            if balise_name == None:  # L'avion n'a pas encore démarré
-                self._is_finished = False
-                return self.position
+            previous_balise_name, next_balise_name = find_keys(flight_plan_timed=self.flight_plan_timed, time=target_time)
+
+            #-------------- Cas 1 --------------------------
             if next_balise_name == None:  # L'avion est arrivé à sa dernière balise
                 self._is_finished = True
+                x, y = self.flight_plan[-1].get_point().getXY() # se positionner sur la balise
+                self.position = Point(x, y, z=self.position.getZ())
                 return self.position
+            else: # L'avion a une prochaine balise donc recuperation du temps de passage a la balise
+                next_balise      = Balise.get_balise_by_name(next_balise_name)
+                next_balise_time = self.flight_plan_timed.get(next_balise_name)
+            
+            #-------------- Cas 2 --------------------------
+            if previous_balise_name == None: # L'avion a démarré et est entre sa position_start et la next_balise (1ere)
+                previous_balise      = self.start_position
+                previous_balise_time = self.take_off_time # L'avion etait au depart si il n'y a pas de balise précédante
+            else: # L'avion connait sa balise precedante
+                previous_balise       = Balise.get_balise_by_name(previous_balise_name)
+                previous_balise_time  = self.flight_plan_timed.get(previous_balise_name)
 
-            # Récupérer les objets Balise
-            balise      = Balise.get_balise_by_name(balise_name)              
-            next_balise = Balise.get_balise_by_name(next_balise_name)
-
-            # Récupérer les temps des balises
-            balise_time      = self.flight_plan_timed.get(balise_name)
-            next_balise_time = self.flight_plan_timed.get(next_balise_name)
-
-            if balise_time == None or next_balise_time == None:
-                return self.position  # Évite les erreurs en cas de données manquantes
-
+            # La gestion des cas a ete faite:
+            # les différentes variables sont définies et différentes de None
             # Calcul de la fraction du trajet effectuée
-            progress = (self.__round(target_time) - balise_time) / (next_balise_time - balise_time)
+            progress = (self.__round(target_time) - previous_balise_time) / (next_balise_time - previous_balise_time)
 
             # Interpolation linéaire entre les balises
-            new_x = balise.getX() + progress * (next_balise.getX() - balise.getX())
-            new_y = balise.getY() + progress * (next_balise.getY() - balise.getY())
+            new_x = previous_balise.getX() + progress * (next_balise.getX() - previous_balise.getX())
+            new_y = previous_balise.getY() + progress * (next_balise.getY() - previous_balise.getY())
             new_z = self.position.getZ() #+ progress * (next_balise.getZ() - balise.getZ())
 
             # Mettre à jour le heading de l'avion
-            self.heading = self.calculate_heading(Point(new_x, new_y, new_z), next_balise)
+            new_point = Point(new_x, new_y, new_z)
+            self.heading = self.calculate_heading(new_point, next_balise)
+            self.position = new_point
             self._is_finished = False
             #return self.controle_position(new_x, new_y, new_z) # modifie le heading pour faire un rebond 
-            return Point(new_x, new_y, new_z) # raise error si les new_xyz sortent de MinMax Value
+            return new_point # raise error si les new_xyz sortent de MinMax Value
 
     
     def set_next_command(self) -> Optional[DataStorage]:
@@ -503,9 +539,6 @@ class Aircraft:
             print(f"Speed : {self.speed} à time {self.next_command.time} for aircraft {self.id}")
             #self.commands.remove(self.next_command)  # Retirer la commande exécutée
             self.next_command = None  # Réinitialiser pour trouver la suivante
-
-    def get_commands(self):
-        return self.commands
 
     def __round(self, value: float) -> float:
         return round(value, 2)
