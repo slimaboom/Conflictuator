@@ -35,7 +35,6 @@ class SimulatedAircraftImplemented(ASimulatedAircraft):
         """Met a jour les commandes pour l'avion"""
         self.__aircraft.set_commands(commands=commands, recalcul=recalcul, dt=dt)
         self.__commands = commands
-        self.logger.info(f"Id {self.__aircraft.get_id_aircraft()}: {commands}")
     
     @override
     def initialize(self) -> List[DataStorage]:
