@@ -73,7 +73,7 @@ class AParamDialog(QDialog):
         return input_field
 
     def create_inputs(self, specific_inputs_types_dict: Dict[Type, List[str]] = {bool: TRUE_OR_FALSE_STR}) -> None:
-        # Sauvegardes types particuliers bool/Enum, ou AFormat, AWritter, AAlgorithm, ATrafficGenerator[Dynamic|Recorded]
+        # Sauvegardes types particuliers bool/Enum, ou AFormat, AWriter, AAlgorithm, ATrafficGenerator[Dynamic|Recorded]
         self.specific_inputs_types_dict = specific_inputs_types_dict
 
         # Définition des titres de colonnes

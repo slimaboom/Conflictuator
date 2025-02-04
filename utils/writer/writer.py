@@ -1,9 +1,9 @@
-from utils.writter.AWritter import AWritter
+from utils.writer.AWriter import AWriter
 from typing_extensions import override
 
-@AWritter.register_writter
-class FileWritter(AWritter):
-    """Classe concrète de AWritter pour écrire dans un fichier"""
+@AWriter.register_writer
+class FileWriter(AWriter):
+    """Classe concrète de AWriter pour écrire dans un fichier"""
 
     @override
     def __init__(self, filename: str):

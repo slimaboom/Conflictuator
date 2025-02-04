@@ -6,16 +6,16 @@ from PyQt5.QtWidgets import (QDialog, QVBoxLayout,
 from typing import Tuple
 
 from utils.formatter.AFormat import AFormat
-from utils.writter.AWritter import AWritter
+from utils.writer.AWriter import AWriter
 
 class RecordDialog(QDialog):
     def __init__(self, parent=None, available_formats=None, available_writers=None):
         super().__init__(parent)
-        self.setWindowTitle("Choose which format types and writter types")
+        self.setWindowTitle("Choose which format types and writer types")
 
         # Initialisation des options
         self.available_formats = available_formats or AFormat.get_available_formats()
-        self.available_writers = available_writers or AWritter.get_available_writters()
+        self.available_writers = available_writers or AWriter.get_available_writers()
 
         # Layout principal
         layout = QVBoxLayout(self)
@@ -31,7 +31,7 @@ class RecordDialog(QDialog):
 
         # Section type d'écriture
         writer_layout = QHBoxLayout()
-        writer_label = QLabel("Writter :")
+        writer_label = QLabel("Writer :")
         self.writer_combobox = QComboBox()
         self.writer_combobox.addItems(self.available_writers)
         writer_layout.addWidget(writer_label)
@@ -60,18 +60,18 @@ class RecordDialog(QDialog):
             self.file_name = file_name  # Stocke le nom du fichier choisi
             self.accept()  # Ferme le RecordDialog lorsque le fichier est valide
             
-    def get_selection(self) -> Tuple[AFormat, AWritter, str]:
+    def get_selection(self) -> Tuple[AFormat, AWriter, str]:
         """
-        Retourne les objets format et writter, ainsi que le nom du fichier saisi.
+        Retourne les objets format et writer, ainsi que le nom du fichier saisi.
         """
         fmt_name = self.format_combobox.currentText()
-        writter_name = self.writer_combobox.currentText()
+        writer_name = self.writer_combobox.currentText()
 
         # Assure s que le nom du fichier est valide
         while not self.file_name or '.' not in self.file_name:
             return self.get_selection()  # Redemander l'entrée à l'utilisateur
 
-        return AFormat.create_formatter(fmt_name), AWritter.create_writter(writter_name, container=self.file_name)
+        return AFormat.create_formatter(fmt_name), AWriter.create_writer(writer_name, container=self.file_name)
 
 
     def show_error_message(self, message: str) -> None:

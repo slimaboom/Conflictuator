@@ -10,7 +10,7 @@ class MetaDynamiqueDatabase:
         Utiliser pour enregistrer les classes de types:
             - AAlgorithm
             - AObjective
-            - AWritter
+            - AWriter
             - AFormat
             - AReader
             - ATrafficGenerator
@@ -31,7 +31,7 @@ class MetaDynamiqueDatabase:
             {'MyFunctionObject': MyFunctionObject (Objet) subclass non instancé}
         }
 
-        De même pour les AWritter et AFormat et autre si évolution...
+        De même pour les AWriter et AFormat, AReader, ATrajectoryGenerator et autre si évolution...
     Développé au 29/01/2025 16:20:00 par F.NOUALHAGUET
     """
     
@@ -118,6 +118,6 @@ class MetaDynamiqueDatabase:
         """
         Découvre et importe tous les modules dans un package donné.
         
-        :param package: Le chemin du package où chercher les writters (ex. 'utils.writter').
+        :param package: Le chemin du package où chercher les writers (ex. 'utils.writer').
         """
         return dynamic_discovering(package=package)

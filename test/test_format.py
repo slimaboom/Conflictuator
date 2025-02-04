@@ -7,12 +7,12 @@ from model.configuration import BALISES
 from model.route import Airway
 from model.aircraft.storage import DataStorage
 
-# Découvre tous les writters dans le package utils.writter
+# Découvre tous les formatters dans le package utils.formatter
 AFormat.discover_formatters('utils.formatter')
 
 formatter = AFormat.create_formatter('JSONFormat')
 aircraft  = Aircraft(speed=0.003, #0.001 # Conflit 5:48
-                    flight_plan=Airway.transform(["ATN", "BURGO", "BOJOL", "LSE", "LTP", "GRENA", "SANTO", "JAMBI", "SICIL", "SODRI"], BALISES)
+                    flight_plan=Airway.transform(["ATN", "BURGO", "BOJOL", "LSE", "LTP", "GRENA", "SANTO", "JAMBI", "SICIL", "SODRI"])
                     )
 
 commands = [DataStorage(speed=0.003, id=1, time=177.88, heading=5.516356508438049)]

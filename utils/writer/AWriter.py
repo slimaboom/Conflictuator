@@ -3,9 +3,9 @@ from typing import List, Type
 from typing_extensions import override
 
 from utils.controller.database_dynamique import MetaDynamiqueDatabase
-from utils.writter.IWritter import IWritter
+from utils.writer.IWriter import IWriter
 
-class AWritter(IWritter):
+class AWriter(IWriter):
     """Classe abstraite pour les classes qui écrivent des données"""
 
     @override
@@ -26,59 +26,59 @@ class AWritter(IWritter):
         return self.__container
 
     @classmethod
-    def register_writter(cls, writter_class: Type):
-        """Classe décoratrice pour enregistrer un nouveau writter.
+    def register_writer(cls, writer_class: Type):
+        """Classe décoratrice pour enregistrer un nouveau writer.
         Exception TypeError
         """
-        writter_class = MetaDynamiqueDatabase.register(subclass=writter_class)
-        params = MetaDynamiqueDatabase.get_class_constructor_params(base_class=cls, class_name=writter_class.__name__)
+        writer_class = MetaDynamiqueDatabase.register(subclass=writer_class)
+        params = MetaDynamiqueDatabase.get_class_constructor_params(base_class=cls, class_name=writer_class.__name__)
         # Vérifie que le constructeur (init) n'accepte que `self` et le container
         if len(params) != 1: # self est deja retirer dans MetaDynamiqueDatabase
             error =  f"Class {cls.__name__}({cls.__bases__[0]}) shoud have only one parameter (container: str), total parameters:(self, container: str)."
             error += f" container is the string related to where writting will be done (filename or database for example)"
             raise TypeError(error)
-        return writter_class
+        return writer_class
 
 
     @classmethod
-    def get_available_writters(cls):
+    def get_available_writers(cls):
         """
-        Retourne la liste des noms des writters disponibles.
+        Retourne la liste des noms des writers disponibles.
         Exception: TypeError
         """
         return MetaDynamiqueDatabase.get_available(base_class=cls)
 
 
     @classmethod
-    def discover_writters(cls, package: str):
+    def discover_writers(cls, package: str):
         """
         Découvre et importe tous les modules dans un package donné.
         
-        :param package: Le chemin du package où chercher les writters (ex. 'utils.writter').
+        :param package: Le chemin du package où chercher les writers (ex. 'utils.writer').
         """
         return MetaDynamiqueDatabase.discover_dynamic(package=package)
 
 
     @classmethod
-    def get_writter_class(cls, name: str) -> 'AWritter':
+    def get_writer_class(cls, name: str) -> 'AWriter':
         """
-        Renvoie une classe AWritter à partir de son nom enregistré.
+        Renvoie une classe AWriter à partir de son nom enregistré.
         L'instance n'est pas crée.
         Exception: TypeError ou ValueError
         """
         try:
             return MetaDynamiqueDatabase.get_class(base_class=cls, name=name)
         except Exception as e:
-            error = f"Writter '{name}' non supporté car non enregistré dans la classe {cls.__name__}"
-            error += f"\nUtiliser @{cls.__name__}.register_writter en décoration de la classe dérivée pour enregistré le writter."
+            error = f"Writer '{name}' non supporté car non enregistré dans la classe {cls.__name__}"
+            error += f"\nUtiliser @{cls.__name__}.register_writer en décoration de la classe dérivée pour enregistré le writer."
             full_message = f"{str(e)}\n{error}"
             raise type(e)(full_message)
 
 
     @classmethod
-    def create_writter(cls, name: str, container: str) -> 'AWritter':
+    def create_writer(cls, name: str, container: str) -> 'AWriter':
         """
-        Instancie une classe AWritter à partir de son nom enregistré, et du container
+        Instancie une classe AWriter à partir de son nom enregistré, et du container
         Exception: TypeError ou ValueError
         """
-        return cls.get_writter_class(name)(container)
+        return cls.get_writer_class(name)(container)

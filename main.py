@@ -888,8 +888,8 @@ class MainWindow(QMainWindow):
         dialog = RecordDialog(parent=self)
         if dialog.exec_() == QDialog.Accepted:
             # Récupérer les choix de l'utilisateur
-            aformatter, awritter = dialog.get_selection()
-            self.logger.info(f"{aformatter}, {awritter}")
+            aformatter, awriter = dialog.get_selection()
+            self.logger.info(f"{aformatter}, {awriter}")
 
             # Afficher un message indiquant que l'enregistrement a commencé
 
@@ -898,9 +898,9 @@ class MainWindow(QMainWindow):
             # Connecter un slot temporaire pour l'enregistrement
             def recorder(is_terminated: bool):
                 if is_terminated:
-                    is_okay = self.simulation_controller.record_simulation(aformatter, awritter)
+                    is_okay = self.simulation_controller.record_simulation(aformatter, awriter)
 
-                    self.__on_simulation_finished(dialog, is_okay, container=awritter.get_container())
+                    self.__on_simulation_finished(dialog, is_okay, container=awriter.get_container())
                     # Déconnecter le signal après l'exécution
                     #self.simulation_controller.stop_simulation()
                     self.simulation_controller.simulation.signal.simulation_finished.disconnect(recorder)
@@ -987,7 +987,7 @@ def main():
     else: # Windows
         pass
 
-    # Découverte dynamique des algorithms, fonctions objectifs, writters, formatters, traffic generator
+    # Découverte dynamique des algorithms, fonctions objectifs, writers, formatters, traffic generator
     main_dynamic_discovering()
 
     # Apres gestion de la variable d'environnement: lancement de la fenetre
