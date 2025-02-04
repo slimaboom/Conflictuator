@@ -76,23 +76,23 @@ class AlgorithmRecuit(AAlgorithm):
             accept_counter    = 0
             for k in range(self.__nb_transitions):
                 self.set_process_time(process_time=datetime.now().timestamp() - self.get_start_time())
+                if not self.is_timeout():
+                    # Generation of state point
+                    xi.initialize_random()
+                    yi = xi.calcul_critere(self.get_objective_function().evaluate)
 
-                # Generation of state point
-                xi.initialize_random()
-                yi = xi.calcul_critere(self.get_objective_function().evaluate)
+                    # Generation of neighborhood of xi
+                    xj.copy(xi)
+                    xj.generate_neighborhood()
+                    yj = xj.calcul_critere(self.get_objective_function().evaluate)
 
-                # Generation of neighborhood of xi
-                xj.copy(xi)
-                xj.generate_neighborhood()
-                yj = xj.calcul_critere(self.get_objective_function().evaluate)
-
-                # Is neighborhood accepted ?
-                #self.logger.info(f"At T={temperature}, yi={yi}, yj={yj}")
-                if self.__accept(yi, yj, temperature):
-                    accept_counter += 1
-                    # Maj du critiere
-                    self.set_best_critere(yj)
-                #    self.logger.info(f"At T={temperature}, yi={yi}, yj={yj} ({accept_counter}/{self._nb_transitions})")
+                    # Is neighborhood accepted ?
+                    #self.logger.info(f"At T={temperature}, yi={yi}, yj={yj}")
+                    if self.__accept(yi, yj, temperature):
+                        accept_counter += 1
+                        # Maj du critiere
+                        self.set_best_critere(yj)
+                    #    self.logger.info(f"At T={temperature}, yi={yi}, yj={yj} ({accept_counter}/{self._nb_transitions})")
 
             # Count rate of accepted transitions
             accept_rate = accept_counter/self.__nb_transitions
