@@ -28,11 +28,12 @@ class FishLawRoutesTrafficGeneratorDynamic(ATrafficGeneratorDynamic):
         self.route_rates = {}  # Stocke les paramètres lambda pour chaque route
         
         self.precision =  int(np.abs(np.floor(np.log10(abs(SpeedValue.MIN.value)))))
+        self.__possible_speed = np.round(np.linspace(SpeedValue.MIN.value, SpeedValue.MAX.value, 20), self.precision) 
 
     def __fish_law_on_routes(self):
         """Calcule les taux de génération de trafic pour chaque route selon la loi de Poisson."""
         for route_key in self.routes:
-            self.__set_poisson_rate(route_key, self.get_generator().uniform(self.__lambda_poisson, 1.5*self.__lambda_poisson))  # Exemple : lambda aléatoire entre 0.01 et 0.1 (0.0012)
+            self.__set_poisson_rate(route_key, self.get_generator().uniform(self.__lambda_poisson, self.__lambda_poisson))  # Exemple : lambda aléatoire entre 0.01 et 0.1 (0.0012)
 
 
     def __set_poisson_rate(self, route_key: str, rate: float):
@@ -83,7 +84,7 @@ class FishLawRoutesTrafficGeneratorDynamic(ATrafficGeneratorDynamic):
                     break
 
                 # Crée un avion avec une vitesse aléatoire
-                speed = self.get_generator().uniform(SpeedValue.MIN.value, SpeedValue.MAX.value) #SpeedValue.MIN.value, SpeedValue.MAX.value # Exemple d'intervalle de vitesse
+                speed = self.get_generator().choice(self.__possible_speed) # Exemple d'intervalle de vitesse
                 
                 if len(data.values()) < self.__number_of_aircrafts:
                     data[i] = (round(speed, self.precision), flight_plan, time)
