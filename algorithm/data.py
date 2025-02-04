@@ -23,16 +23,19 @@ class SimulatedAircraftImplemented(ASimulatedAircraft):
 
         self.__aircraft = self.get_object()
         self.__random_generator = aircraft.get_random_generator()
-        self.__possible_speeds  = [0.001, 0.0016, 0.0014, 0.0012] #np.round(np.linspace(SpeedValue.MIN.value, SpeedValue.MAX.value, self.NB_SPEEDS_POSSIBLE), self.PRECISION)
+        self.__possible_speeds  = np.linspace(SpeedValue.MIN.value, SpeedValue.MAX.value, self.NB_SPEEDS_POSSIBLE) #[0.001, 0.0016, 0.0014, 0.0012]
         
+        self.PRECISION = int(np.max(np.abs(np.floor(np.log10(self.__possible_speeds)))))
+        self.__possible_speeds = np.round(self.__possible_speeds, self.PRECISION)
+                
         self.__commands = aircraft.get_commands()
-       # self.update_commands(commands=self.initialize())
-    
+
     @override
     def update_commands(self, commands: List[DataStorage], recalcul = True, dt: int = 0) -> None:
         """Met a jour les commandes pour l'avion"""
         self.__aircraft.set_commands(commands=commands, recalcul=recalcul, dt=dt)
         self.__commands = commands
+        self.logger.info(f"Id {self.__aircraft.get_id_aircraft()}: {commands}")
     
     @override
     def initialize(self) -> List[DataStorage]:
