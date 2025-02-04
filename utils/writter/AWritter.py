@@ -35,7 +35,7 @@ class AWritter(IWritter):
         # Vérifie que le constructeur (init) n'accepte que `self` et le container
         if len(params) != 1: # self est deja retirer dans MetaDynamiqueDatabase
             error =  f"Class {cls.__name__}({cls.__bases__[0]}) shoud have only one parameter (container: str), total parameters:(self, container: str)."
-            error += f" container is the string related to where writting will be done (filename or database for exemple)"
+            error += f" container is the string related to where writting will be done (filename or database for example)"
             raise TypeError(error)
         return writter_class
 

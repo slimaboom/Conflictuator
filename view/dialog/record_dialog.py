@@ -54,7 +54,7 @@ class RecordDialog(QDialog):
         if file_name:
             # Vérifie si le fichier choisi a une extension valide
             if '.' not in file_name:
-                self.show_error_message("The name should include an extension (name.txt for exemple).")
+                self.show_error_message(f"The name should include an extension ({file_name}.json for example).")
                 return  # Ne pas fermer la fenêtre si le fichier est invalide
                 
             self.file_name = file_name  # Stocke le nom du fichier choisi

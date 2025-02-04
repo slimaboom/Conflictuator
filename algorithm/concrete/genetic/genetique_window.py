@@ -53,8 +53,9 @@ class OptimizedGeneticAlgorithm(AlgorithmGeneticBase):
         """Renvoie la couche des layers en liste d'AlgorithmGeneticBase"""
         return super().get_layers()
 
-    def control_type_layers(self)->None:
+    def control_type_layers(self)-> None:
         for i, layer_algo in enumerate(self.get_layers()) :
+            self.logger.info(f"{layer_algo}, {isinstance(layer_algo, AlgorithmGeneticBase)}")
             if not isinstance(layer_algo, AlgorithmGeneticBase) : 
                 error = f"Layer {i} must be an AlgorithmGeneticBase Type, got {type(layer_algo)}"
                 raise TypeError(error)

@@ -31,7 +31,7 @@ class AReader(IReader):
         # Vérifie que le constructeur (init) n'accepte que `self`et la source
         if len(params) != 1: # self est deja retirer dans MetaDynamiqueDatabase
             error =  f"Class {cls.__name__}({cls.__bases__[0]}) shoud have only one parameter (source: str), total parameters:(self, source: str)."
-            error += f" source is the string related to where reading will be done (filename or database for exemple)"
+            error += f" source is the string related to where reading will be done (filename or database for example)"
             raise TypeError(error)
         return reader_class
 

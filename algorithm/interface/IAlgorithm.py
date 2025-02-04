@@ -197,7 +197,7 @@ class AAlgorithm(IAlgorithm):
         except Exception as e:
             # import traceback
             # tb = traceback.format_exc()
-            # self.set_state(AlgorithmState.ERROR)
+            self.set_state(AlgorithmState.ERROR)
             # raise type(e)(f"{e}\nTraceback:\n{tb}") from e # Propager l'erreur avec le traceback
             return e
         
