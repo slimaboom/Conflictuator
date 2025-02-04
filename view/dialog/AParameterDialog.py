@@ -119,12 +119,14 @@ class AParamDialog(QDialog):
                 if expected_type == int:
                     input_field = QSpinBox(self)
                     input_field.setMinimum(0)
+                    input_field.setMaximum(2100500)
                     input_field.setSingleStep(1)
 
                 elif expected_type == float:
                     input_field = QDoubleSpinBox(self)
                     input_field.setMaximum(float('inf'))
-                            # Calcul de l'ordre de grandeur du pas
+                    
+                    # Calcul de l'ordre de grandeur du pas
                     if param.default != inspect.Parameter.empty and param.default != 0:
                         exponent = np.floor(np.log10(abs(param.default)))  # Exponent de la valeur
                         if exponent <0:

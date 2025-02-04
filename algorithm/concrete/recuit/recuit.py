@@ -118,7 +118,7 @@ class AlgorithmRecuit(AAlgorithm):
         temperatures = self.__get_all_temperatures(initial_temperature)
         for i, temperature in enumerate(temperatures):
             pourcentage = round(100*(i+1)/len(temperatures), 1)
-            self.set_process(pourcentage=pourcentage)
+            self.set_progress(pourcentage=pourcentage)
 
             if not self.is_running() or self.is_timeout():
                 break

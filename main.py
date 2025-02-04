@@ -30,7 +30,6 @@ from algorithm.data import DataStorage
 from utils.controller.dynamic_discover_packages import main_dynamic_discovering
 
 from logging_config import setup_logging
-from view.dialog.scroll_message_box import ScrollableMessageBox
 
 
 import sys
@@ -355,24 +354,24 @@ class MainWindow(QMainWindow):
         selected_text = self.combobox.itemText(index.row())
         try:
             # Ne lancer un algorithm que si c'est le premier
-            if not self.simulation_controller.simulation.get_algorithm_manager().has_been_lauch():
-                # Gestion IHM
-                self.combobox.setCurrentIndex(index.row())  # S'assurer que l'élément sélectionné reste visible
-                # Gestion Algorithm class
-                aalgorithm = AAlgorithm.get_algorithm_class(selected_text)
-                # Demande des paramètres du constructeur de la classe dérivée AAlgorithm (dynamique)
-                algo_constructor_parameters_objective_function_constructors_parameters = self.configure_algorithm(selected_text)
+            #if not self.simulation_controller.simulation.get_algorithm_manager().has_been_lauch():
+            # Gestion IHM
+            self.combobox.setCurrentIndex(index.row())  # S'assurer que l'élément sélectionné reste visible
+            # Gestion Algorithm class
+            aalgorithm = AAlgorithm.get_algorithm_class(selected_text)
+            # Demande des paramètres du constructeur de la classe dérivée AAlgorithm (dynamique)
+            algo_constructor_parameters_objective_function_constructors_parameters = self.configure_algorithm(selected_text)
 
-                self.freeze_interactions(True)
-                self.create_algorithm_panel()
-                self.record_sim_btn.setDisabled(True)
-                self.arrival_manager.setEnabledRefresh(False)
-                self.time_slider.setValue(0) # Remettre les avions à la position initiale
-                self.time_slider.setDisabled(True)
-                self.simulation_controller.start_algorithm(aalgortim=aalgorithm,
-                                                           **algo_constructor_parameters_objective_function_constructors_parameters)                
-            else:
-                self.notify_algorithm_termination(AlgorithmState.ALREADY_LAUNCH)
+            self.freeze_interactions(True)
+            self.create_algorithm_panel()
+            self.record_sim_btn.setDisabled(True)
+            self.arrival_manager.setEnabledRefresh(False)
+            self.time_slider.setValue(0) # Remettre les avions à la position initiale
+            self.time_slider.setDisabled(True)
+            self.simulation_controller.start_algorithm(aalgortim=aalgorithm,
+                                                        **algo_constructor_parameters_objective_function_constructors_parameters)                
+            #else:
+            #    self.notify_algorithm_termination(AlgorithmState.ALREADY_LAUNCH)
         except Exception as e:
             import traceback
             tb = traceback.format_exc()
@@ -791,8 +790,6 @@ class MainWindow(QMainWindow):
         self.combobox.setStyleSheet("background-color: none;")
         self.combobox.setEnabled(True)
 
-
-        #msg_box = ScrollableMessageBox(self)
         msg_box = QMessageBox(self)
         msg_box.setIcon(QMessageBox.Critical if is_error else QMessageBox.Information)
         msg_box.setWindowTitle(title)
