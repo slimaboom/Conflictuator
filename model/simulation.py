@@ -65,11 +65,14 @@ class SimulationModel:
         if traffic_generator != None: # Protection 
             # Mise a jour de l'attribut
             self.__traffic_generator = traffic_generator
-            self._algorithm_manager.set_simulation_duration(self.get_simulation_time())
+            self.__traffic_generator.reset_seed()
+
             # Generation du traffic
             self.aircrafts = traffic_generator.generate_traffic()
             self.initialise_aircrafts()
             self.initialise_conflicts()
+
+            self._algorithm_manager.set_simulation_duration(self.get_simulation_time())
 
     def get_simulation_time(self) -> float:
         return self.__traffic_generator.get_simulation_duration()

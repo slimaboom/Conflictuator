@@ -188,7 +188,13 @@ class MainWindow(QMainWindow):
 
         # Bouton Stop
         self.stop_button = QPushButton("Stop")
-        self.stop_button.clicked.connect(self.reset_simulation)
+        self.stop_button.setCheckable(True)
+        self.stop_button.clicked.connect(self.stop_simulation)
+
+        # Bouton Reset
+        self.reset_button = QPushButton("Reset Simulation")
+        self.reset_button.setCheckable(True)
+        self.reset_button.clicked.connect(self.reset_simulation)
 
         # Afficher le temps de simulation
         self.time_label = QLabel("Elapsed Time: 00:00:00.00")
@@ -256,6 +262,7 @@ class MainWindow(QMainWindow):
         # Ajouter les widgets à la barre
         layout_one.addWidget(self.play_button)
         layout_one.addWidget(self.stop_button)
+        layout_one.addWidget(self.reset_button)
         layout_one.addWidget(self.time_label)  # Ajouter le QLabel au panneau
         layout_one.addWidget(self.conflict_label)
         layout_one.addWidget(self.conflict_value_label)
@@ -654,6 +661,13 @@ class MainWindow(QMainWindow):
             self.simulation_controller.stop_simulation() # Passer l'attribut a False
             self.combobox.setEnabled(True) # Remettre la possibilité de lancer un algorithme quand la simulation est en arret
 
+    def stop_simulation(self, checked: bool) -> None:
+        if checked:
+            self.manage_play_pause_button(checked=False)
+            self.simulation_controller.stop_simulation() # Passer l'attribut a False
+            self.combobox.setEnabled(True) # Remettre la possibilité de lancer un algorithme quand la simulation est en arret
+            self.stop_button.setChecked(False)
+
     def manage_play_pause_button(self, checked: bool) -> None:
         """Bascule l'affichage du bouton entre Pause ou Play."""
         if checked:
@@ -704,6 +718,11 @@ class MainWindow(QMainWindow):
         self.arrival_manager_btn.setChecked(False)
         
         self.play_button.setDisabled(False)
+        self.play_button.setChecked(False)
+        self.stop_button.setDisabled(False)
+        self.play_button.setChecked(False)
+        self.reset_button.setDisabled(False)
+        self.reset_button.setChecked(False)
 
         self.combobox.setDisabled(False)
         self.combobox.setCurrentIndex(0)
