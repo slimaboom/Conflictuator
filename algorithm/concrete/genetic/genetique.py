@@ -16,7 +16,7 @@ import numpy as np
 class AlgorithmGeneticBase(AAlgorithm):
     #@method_control_type(List[ASimulatedAircraft])
     def __init__(self, data: List[ASimulatedAircraft], 
-                 is_minimise: bool = False,
+                 is_minimise: bool = True,
                  verbose    : bool = False,
                  timeout: time = time(hour=0, minute=2, second=0),
                  population_size: int = 50, 
