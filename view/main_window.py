@@ -100,7 +100,9 @@ class MainWindow(QMainWindow):
 
         # Fenêtre des conflits
         self.scroll_area_conflict_window = QScrollArea(container)
-        self.conflict_window = ConflictWindow(interval=int(1000*self.simulation_controller.simulation.get_interval_timer()))
+        self.conflict_window = ConflictWindow(interval=int(1000*self.simulation_controller.simulation.get_interval_timer()),
+                                              parent=self.scroll_area_conflict_window)
+        
         self.scroll_area_conflict_window.setWidget(self.conflict_window)
         self.scroll_area_conflict_window.setWidgetResizable(True)
 
