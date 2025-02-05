@@ -7,6 +7,7 @@ from PyQt5.QtWidgets import (QGraphicsItem,
                              QGraphicsTextItem,
                              QGraphicsRectItem,
                              QGraphicsEllipseItem,
+                             QScrollArea
                              )
 
 from PyQt5.QtGui import QColor, QPainterPath
@@ -286,16 +287,16 @@ class ConflictWindow(QWidget):
         self._current_balise: QtBalise = None
 
         # Refresh part
-        self._interval_msec = interval
+        self._interval_msec = interval if interval > 10*1000 else 10*1000
         self._qtimer = QTimer()
-        self._qtimer.setInterval(interval)
+        self._qtimer.setInterval(int(self._interval_msec))
         self._qtimer.timeout.connect(self.__update_conflicts)
 
         self.close_button.clicked.connect(lambda : self._qtimer.stop())
 
     @override
     def show(self) -> None:
-        """Show widget et start le timer pour refresh"""
+        """Affiche le widget et démarre le timer sans changer la position de la scrollbar."""
         super().show()
 
     @override
@@ -311,6 +312,7 @@ class ConflictWindow(QWidget):
         self._qtimer.stop()  # Stoppe le timer s'il était déjà en cours
         self._current_balise = qtbalise  # Stocker la balise
         self._qtimer.start()  # Redémarre le timer
+        self.__update_conflicts()
 
     def __update_conflicts(self) -> None:
         """Met à jour l'affichage avec la liste des conflits."""
@@ -322,13 +324,16 @@ class ConflictWindow(QWidget):
         if not conflicts:
             self.conflict_display.setText("<b>Aucun conflit détecté.</b>")
         else:
-            text = f"<h3>Balise : {balise.get_name()}</h3><ul>"
-            for conflict in conflicts:
+            try:
+                text = f"<h3>Balise : {balise.get_name()}</h3><ul>"
+                for conflict in conflicts:
 
-                text = self.add_conflict_text(conflict, text)
+                    text = self.add_conflict_text(conflict, text)
 
-            self.conflict_display.setHtml(text)
-    
+                self.conflict_display.setHtml(text)
+            except KeyError:
+                pass
+
     def add_conflict_text(self, conflict: ConflictInformation, text1: str) -> str:
         aircraft_1 = conflict.get_aircraft_one()
         aircraft_2 = conflict.get_aircraft_two()

@@ -1,8 +1,6 @@
-import numpy as np
 from ray import tune
 from ray.tune.schedulers import ASHAScheduler
-from functools import partial
-from typing import Type, Dict, Any, List
+from typing import Dict, Any, List
 
 from typing_extensions import override
 
@@ -10,7 +8,6 @@ from algorithm.interface.IAlgorithm import AAlgorithm
 from algorithm.concrete.genetic.genetique import AlgorithmGeneticBase
 from algorithm.interface.ISimulatedObject import ASimulatedAircraft
 
-import ray
 import time
 from ray.air import session
 

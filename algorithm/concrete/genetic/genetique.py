@@ -347,7 +347,7 @@ class AlgorithmGeneticBase(AAlgorithm):
         best_fitness    = None
 
         for generation in range(self.__generations):
-            if not self.is_running():
+            if not self.is_running() or self.is_timeout():
                 break  
 
             # Mutation rate evolutif

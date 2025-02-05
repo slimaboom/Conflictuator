@@ -7,7 +7,6 @@ from algorithm.concrete.genetic.genetique import AlgorithmGeneticBase
 from algorithm.interface.ISimulatedObject import ASimulatedAircraft
 from model.aircraft.storage import DataStorage
 from logging_config import setup_logging
-from utils.controller.argument import method_control_type
 from utils.conversion import time_to_sec
 from typing import List, Dict, Tuple
 from typing_extensions import override
@@ -35,8 +34,7 @@ class OptimizedGeneticAlgorithm(AlgorithmGeneticBase):
                          mutation_rate=mutation_rate,
                          crossover_rate=crossover_rate,
                          **kwargs)        
-        self.__population_size = population_size
-        self.__generations  = generations
+        
         self.__time_window  = time_to_sec(time_window.isoformat())
 
         self.__interval_type: str = "group" # or'time'
@@ -100,20 +98,7 @@ class OptimizedGeneticAlgorithm(AlgorithmGeneticBase):
             self.aircraft_intervals[interval_index] = part[interval_index]
         return self.aircraft_intervals
 
-    
-    def merge_solutions(self, solutions: Tuple[List[List[DataStorage]], float]) -> List[List[DataStorage]]:
-        """ Fusionne les meilleures solutions des intervalles pour former une solution complète """
-        merged_solution: List[List[List[DataStorage]]] = []
-        for _ in range(self.__population_size) :
-            merged__partial_solution: List[List[DataStorage]] = []
-            for best, _ in solutions:
-                n = random.randint(0, len(best))
-                for _ in range(len(solutions)):
-                    merged__partial_solution.extend(best[n])
-            merged_solution.extend(merged__partial_solution)
-        return merged_solution
 
-    
     def partial_shuffle(self, solution: List[List[DataStorage]], dt: int, first_departure: float, last_departure: float) -> List[List[DataStorage]]:
         """
         Décale aléatoirement les temps des commandes de chaque avion dans la solution,
@@ -149,22 +134,6 @@ class OptimizedGeneticAlgorithm(AlgorithmGeneticBase):
             shuffled_solution.append(delayed_aircraft)
 
         return shuffled_solution
-    
-    def calculate_fitnesses(self, population: List[List[List[DataStorage]]]) -> List[float]:
-        """Calcul les differentes fitnesses pour chaque individu de la population"""
-        fitnesses = []
-        for individual in population:
-            for i, aircraft_sim in enumerate(self.get_data()):
-                trajectory = individual[i]
-                # La liste de commandes est envoyer a l'avion et celui-ci met a jour son attribut et son TakeOffTime (premier element de la liste)
-                # Les elements de self.get_data() sont modifies en place a travers la methode update_commands
-                # ca re-calcul les differents conflits
-                aircraft_sim.update_commands(trajectory)
-
-            # A calculer apres avoir changer chaque avion 
-            fitnesses.append(self.evaluate()) # Evaluation du critere avec la List[ASimulatedAircraft]
-        return fitnesses
-    
     
     def calculate_fitnesses_individual(self, individual: List[List[DataStorage]], parsed_data :List['ASimulatedAircraft']) -> List[float]:
         """Calcul les differentes fitnesses pour chaque individu de la population"""
@@ -229,7 +198,7 @@ class OptimizedGeneticAlgorithm(AlgorithmGeneticBase):
         T = self.get_simulation_duration()  # Durée totale de la simulation
         nb_intervals = len(best_individuals)
 
-        for _ in range(self.__population_size):
+        for _ in range(self.get_population_size()):
             merged_individual = []
 
             for interval in range(nb_intervals):
@@ -262,130 +231,8 @@ class OptimizedGeneticAlgorithm(AlgorithmGeneticBase):
 
         return final_population
 
-    
 
-    def generate_final_population(self, shifted_populations: Dict[int, List[List[List[DataStorage]]]]) -> List[List[List[DataStorage]]]:
-        """
-        Génère une population complète en concaténant les individus de chaque intervalle.
-        
-        :param shifted_populations: Dictionnaire contenant les individus shiftés de chaque intervalle
-        :param target_population_size: Taille maximale de la population finale
-        :return: Liste d'individus représentant la population fusionnée
-        """
-        final_population = []
-    
-        # Déterminer le nombre de combinaisons possibles
-        min_population_size = min(len(pop) for pop in shifted_populations.values())
-        
-        for _ in range(min_population_size):
-            merged_individual = []
-
-            for interval, population in shifted_populations.items():
-                chosen_individual = random.choice(population)  # Prendre un individu aléatoire
-                merged_individual.extend(chosen_individual)
-
-            final_population.append(merged_individual)
-
-        # Ajuster la taille de la population finale
-        if len(final_population) > self.__population_size:
-            final_population = final_population[:self.__population_size]
-
-        return final_population
-    
-    def select_parents(self, population: List[List[List[DataStorage]]], fitnesses: List[int]) -> List[List[List[DataStorage]]]:
-        """Selection des parents dans la population aleatoirement """
-        n = len(population)
-        if all(f == 0 for f in fitnesses):
-            probabilities = [1 / len(fitnesses) for _ in fitnesses]
-        else:
-            if self.is_minimisation:
-                max_fitness = max(fitnesses)
-                adjusted_fitnesses = [max_fitness - f for f in fitnesses]
-                total_fitness = sum(adjusted_fitnesses)
-                probabilities = [f / total_fitness if total_fitness > 0 else 1 / len(adjusted_fitnesses) for f in adjusted_fitnesses]
-            else:
-                total_fitness = sum(fitnesses)
-                probabilities = [f / total_fitness if total_fitness > 0 else 1 / len(fitnesses) for f in fitnesses]
-         
-        selected_indices = self.get_generator().choice(n, size=2, replace=False, p=probabilities).tolist()
-        return [population[i] for i in selected_indices]
-    
-    def select_parents_tournament(self, population: List[List[List[DataStorage]]], fitnesses: List[int]) -> List[List[List[DataStorage]]]:
-        """Sélection par tournoi"""
-        k = 5  # nombre d'individus tournoi
-        indices = np.random.choice(len(population), k, replace=False)
-        best_index = max(indices, key=lambda i: fitnesses[i]) if not self.is_minimisation() else min(indices, key=lambda i: fitnesses[i])
-        return [population[best_index], population[np.random.choice(indices)]] #roulette aleatoire pour le deuxieme parent
-
-
-    
-    def crossover(self, parent1: List[List[DataStorage]], parent2: List[List[DataStorage]]) -> List[List[DataStorage]]:
-        """Croisement d'individus entre deux parents"""
-        offspring = []
-        for traj1, traj2 in zip(parent1, parent2):
-            if self.get_generator().random() < self.__crossover_rate: #random.random() < self.crossover_rate:
-                point = self.get_generator().integers(low=1, high=len(traj1) - 1, endpoint=True) if len(traj1) > 1 else 1 #random.randint(1, len(traj1) - 1) if len(traj1) > 1 else 1
-                child = traj1[:point] + traj2[point:]
-                offspring.append(child)
-            else:
-                offspring.append(traj1 if self.get_generator().random() < 0.5 else traj2)
-        return offspring
-        
-    def mutate(self, individual: List[List[DataStorage]]) -> List[List[DataStorage]]:
-        """Mutation d'un individu"""
-        new_individual = []
-        for i, trajectory in enumerate(individual):
-            new_trajectory = []
-            asimulated_aircraft = self.get_data()[i]
-            for j, data in enumerate(trajectory):
-                if j == 0:  # Première commande (temps de départ et vitesse initiale)
-                    if self.get_generator().random() < self.__mutation_rate * 2:
-                        # Regenerer 
-                        updated_data = asimulated_aircraft.generate_commands()[j]
-                        new_trajectory.append(updated_data)
-                    else:
-                        new_trajectory.append(data)
-                else:  # On y passe que si on a plusieurs commandes
-                    if self.get_generator().random() < self.__mutation_rate:
-
-                        updated_datas = asimulated_aircraft.generate_commands()
-
-                        lower_bound   = max(min(len(updated_datas) - 1, 1), 0) # Tirage commande 1 ou plus si possible, 0 sinon
-                        upper_bound   = len(updated_datas)
-                        index_to_select = self.get_generator().integers(low=lower_bound, high=upper_bound, endpoint=False)
-                        updated_data = asimulated_aircraft.generate_commands()[index_to_select]
-
-                        new_trajectory.append(updated_data)
-                    else:
-                        new_trajectory.append(data)
-            new_individual.append(new_trajectory)
-        return new_individual
-    
-    
-    def next_population(self, population: List[List[List[DataStorage]]], fitnesses: List[float]) -> List[List[List[DataStorage]]]:
-        """Calcul la prochaine population en fonction de la precedante et des valeurs de fitnesses"""
-        next_population = []
-
-        if all(f == 0 for f in fitnesses) :
-            return population
-        else : 
-            for _ in range(self.__population_size // 2):
-                try:
-                    parent1, parent2 = self.select_parents(population, fitnesses)
-                    offspring1 = self.crossover(parent1, parent2)
-                    offspring2 = self.crossover(parent2, parent1)
-                    next_population.append(self.mutate(offspring1))
-                    next_population.append(self.mutate(offspring2))
-                except Exception as e:
-                    msg = f"Selection of parents in class {self.__class__.__name__} error\n{e}"
-                    self.logger.error(msg)
-                    return population
-
-            return next_population
-    
-
-
-    def creat_population_with_layers(self) -> List[List[List[DataStorage]]]:
+    def create_population_with_layers(self) -> List[List[List[DataStorage]]]:
          # Commencer les layer sur chaque intervalles
         interval_populations = {}
         # Parser les données
@@ -450,80 +297,7 @@ class OptimizedGeneticAlgorithm(AlgorithmGeneticBase):
         # Fusion des populations des intervalles pour créer la nouvelle population complète
         final_population = self.generate_shifted_population(best_individuals_per_interval)
         return final_population
-    
-    
-    
-    def run_algo_genetic(self, final_population:List[List[List[DataStorage]]]) -> List[List[DataStorage]]:
 
-
-        if self.is_verbose():
-            self.logger.info(f"Il y a {len(self.get_data())} ASimulatedAircraft")
-
-        self.set_process(0.)
-        self.set_start_time(start=datetime.now().timestamp())
-
-        population      = final_population
-        best_individual = None
-        best_fitness    = None
-
-        for generation in range(self.__generations):
-            if not self.is_running():
-                break  
-
-            # Mutation rate evolutif
-            self.__mutation_rate = max(0.01, self.__mutation_rate * 0.99)  # Diminuer progressivement
-
-            # Calcul fitnesses
-            fitnesses = self.calculate_fitnesses(population)
-            #self.logger.info(f"Generation {generation + 1} Fitnesses: {fitnesses}")
-
-            # Acceptation ou non du critere
-            if self.is_minimisation():
-                optimal_fitness = min(fitnesses)
-                if (generation <= 0) or (optimal_fitness < best_fitness) or (best_fitness == None):
-                    # Maj variable locale
-                    best_fitness   = optimal_fitness
-                    best_individual = population[fitnesses.index(optimal_fitness)]
-                    # Maj attribut
-                    best_results = [best_individual]
-                    self.best_results = best_results
-                elif optimal_fitness == best_fitness : 
-                    self.best_results.append(population[fitnesses.index(optimal_fitness)])
-            else: # Maximisation
-                optimal_fitness = max(fitnesses)
-                if (generation <= 0) or (optimal_fitness > best_fitness) or (best_fitness == None):
-                    # Maj variable locale
-                    best_fitness   = optimal_fitness
-                    best_individual = population[fitnesses.index(optimal_fitness)]
-                    # Maj attribut
-                    best_results = [best_individual]
-                    self.best_results = best_results
-                elif optimal_fitness == best_fitness : 
-                    self.best_results.append(population[fitnesses.index(optimal_fitness)])
-
-            # Maj du critiere
-            self.logger.info(f"best fitness {best_fitness}")
-            self.set_best_critere(best_fitness)
-
-            # Logger
-            if self.is_verbose():
-                self.logger.info(f"Generation {generation + 1}: Best Fitness = {best_fitness}, Best Individual = {best_individual}")
-
-            # Calcul de la Prochaine population
-            population = self.next_population(population, fitnesses)
-
-            # Avancement du processus
-            self.set_process(int(((generation + 1) / self.__generations) * 100))
-            self.set_process_time(process_time=datetime.now().timestamp() - self.get_start_time())
-
-            if self.is_verbose():
-                self.logger.info(f"Generation {generation + 1}: Progress = {self.get_progress()}%")
-
-        self.stop()
-        self.logger.info(f"Final Best Solution(fitness: {best_fitness}): {best_individual}")
-        self.reinitialize_data()
-        return best_individual
-    
     
     @override
     def run(self) -> List[List[DataStorage]]:
@@ -536,7 +310,7 @@ class OptimizedGeneticAlgorithm(AlgorithmGeneticBase):
             self.set_start_time(start=datetime.now().timestamp())
 
             # Récuperer la population final après les differente layers 
-            final_population = self.creat_population_with_layers()
+            final_population = self.create_population_with_layers()
             
             # algo genetique generale
             self.set_initial_population(final_population)
