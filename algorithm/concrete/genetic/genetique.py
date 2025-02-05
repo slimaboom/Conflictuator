@@ -1,3 +1,4 @@
+import gc
 from algorithm.interface.IAlgorithm import AAlgorithm
 from algorithm.interface.ISimulatedObject import ASimulatedAircraft
 from model.aircraft.storage import DataStorage
@@ -194,10 +195,10 @@ class AlgorithmGeneticBase(AAlgorithm):
         for traj1, traj2 in zip(parent1, parent2):
             if self.get_generator().random() < self.__crossover_rate: #random.random() < self.crossover_rate:
                 point = self.get_generator().integers(low=1, high=len(traj1) - 1, endpoint=True) if len(traj1) > 1 else 1 #random.randint(1, len(traj1) - 1) if len(traj1) > 1 else 1
-                child = deepcopy(traj1[:point]) + deepcopy(traj2[point:])
+                child = traj1[:point] + traj2[point:]
                 offspring.append(child)
             else:
-                offspring.append(deepcopy(traj1 if self.get_generator().random() < 0.5 else traj2))
+                offspring.append(traj1 if self.get_generator().random() < 0.5 else traj2)
         return offspring
         
     def mutate(self, individual: List[List[DataStorage]]) -> List[List[DataStorage]]:
@@ -390,7 +391,10 @@ class AlgorithmGeneticBase(AAlgorithm):
                 self.logger.info(f"Generation {generation + 1}: Best Fitness = {best_fitness}, Best Individual = {best_individual}")
 
             # Calcul de la Prochaine population
-            population = self.next_population(population, fitnesses)
+            population = self.next_population_elitism_surprod(population, fitnesses)
+
+            # Force la récupération de la mémoire
+            gc.collect()
 
             # Avancement du processus
             self.set_progress(int(((generation + 1) / self.__generations) * 100))
