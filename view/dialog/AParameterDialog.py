@@ -6,7 +6,7 @@ from PyQt5.QtWidgets import (QDialog, QWidget,
 )
 
 from datetime import time
-from typing import Dict, Callable, List, Type
+from typing import Dict, Callable, List, Type, get_args, get_origin
 from types import MappingProxyType
 from utils.controller.database_dynamique import MetaDynamiqueDatabase
 
@@ -98,7 +98,15 @@ class AParamDialog(QDialog):
             name_label = QLabel(param_name)
             self.__grid_layout.addWidget(name_label, row_placement, 0)
 
-            type_label = QLabel(str(expected_type.__name__))
+            def format_type(t):
+                if hasattr(t, "__name__"):  # Type standard comme int, str, float
+                    return t.__name__
+                elif hasattr(t, "__origin__"):  # Typage générique (List[int], Dict[str, int], etc.)
+                    return f"{t.__origin__.__name__}[{', '.join(format_type(arg) for arg in t.__args__)}]"
+                return str(t)
+
+            type_label = QLabel(format_type(expected_type))
+
             self.__grid_layout.addWidget(type_label, row_placement, 1)
 
             default_value = str(param.default) if param.default != inspect.Parameter.empty else ""
@@ -189,6 +197,7 @@ class AParamDialog(QDialog):
         return widget
 
 
+
     def get_parameters(self):
         """
         Retourne les paramètres convertis dans le bon type.
@@ -198,32 +207,45 @@ class AParamDialog(QDialog):
             expected_type = self.param_types[param_name]
 
             if self.specific_inputs_types_dict and expected_type in self.specific_inputs_types_dict:
-                value = input_field.currentText()  # Récupérer la valeur sélectionnée dans le QComboBox
+                value = input_field.currentText()
                 if bool in self.specific_inputs_types_dict:
                     converted_params[param_name] = value == self.TRUE_OR_FALSE_STR[0]
                 else:
                     converted_params[param_name] = MetaDynamiqueDatabase.get_class(expected_type, value)
-                    # Par exemple ca renvoie ca
-                    # print(param_name, converted_params[param_name])
-                    # reader <class 'utils.reader.FileReader.FileReader'>
-                    # parser <class 'utils.formatter.format.JSONFormat'>
-                    
-            elif expected_type == time:  # Gérer le type `time`
+            
+            elif expected_type == time:
                 hours = self.hours_spinbox.value()
-                minutes =self.minutes_spinbox.value()
+                minutes = self.minutes_spinbox.value()
                 seconds = self.seconds_spinbox.value()
                 converted_params[param_name] = time(hour=hours, minute=minutes, second=seconds)
-                #print(param_name, converted_params[param_name])  # Convertir en secondes                
-            else:
 
+            else:
                 value = input_field.text().strip()
-                try:
-                    if expected_type == int or expected_type == float:
-                        value = locale.atof(value)
-                    converted_params[param_name] = expected_type(value)  # Conversion directe
-                except ValueError as e:
-                    raise ValueError(f"\n\nConversion error for '{param_name}': impossible to convert '{value}' in {expected_type}") from e
+
+                # Vérifier si `expected_type` est un type générique
+                origin = get_origin(expected_type)
+                if origin is not None:  
+                    # Gérer `Type[T]` en extrayant T
+                    if origin is Type:
+                        type_param = get_args(expected_type)[0]
+                        converted_params[param_name] = type_param  # Stocker directement la classe
+                    else:
+                        raise TypeError(f"Cannot instantiate generic type {expected_type}")
+                
+                # Gérer `type` explicitement
+                elif expected_type is type or expected_type == Type:
+                    converted_params[param_name] = type(value)
+
+                else:
+                    try:
+                        if expected_type == int or expected_type == float:
+                            value = locale.atof(value)
+                        converted_params[param_name] = expected_type(value)
+                    except ValueError as e:
+                        raise ValueError(f"\n\nConversion error for '{param_name}': impossible to convert '{value}' in {expected_type}") from e
+
         return converted_params
+
 
     def create_ok_button(self):
         # Bouton OK
@@ -232,3 +254,6 @@ class AParamDialog(QDialog):
         self.__main_layout.addWidget(self.ok_button)
 
         self.setLayout(self.__main_layout)
+
+
+

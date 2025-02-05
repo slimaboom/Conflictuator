@@ -928,7 +928,6 @@ class MainWindow(QMainWindow):
         dialog.accept()  # Fermer le dialogue
         self.record_sim_btn.setChecked(False)
 
-            
 
     def show_arrival_manager(self) -> None:
         """Afficher l'arrival manager"""

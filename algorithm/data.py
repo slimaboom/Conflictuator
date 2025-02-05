@@ -133,9 +133,12 @@ class SimulatedAircraftImplemented(ASimulatedAircraft):
                 elif var == VariableName.TIME:
                     if i == 0: # Premiere commande : ajustement du temps de depart
                         # Ajustement si proba de tirer uniforme entre 0 et 1 < 0.1
-                        if self.__random_generator.random() < 1: # seuil a modifier
+                        if self.__random_generator.random() < 0.5: # seuil a modifier
                             random_time = self.__generate_random_time(low=-250.0, high=250.0)
-                            time = max(cmd.time + random_time, 0.) # Temps de départ ajusté                    else:
+                            time = max(cmd.time + random_time, 0.) # Temps de départ ajusté 
+                        else:
+                            random_time = self.__generate_random_time(low=-25.0, high=25.0)
+                            time = max(cmd.time + random_time, 0.) # Temps de départ ajusté 
                         random_time = self.__generate_random_time(low=-10.0, high=10.0)
                         time = max(cmd.time + random_time, 0.) # Temps de commande ajusté                   
                 else: # VariableName.HEADING

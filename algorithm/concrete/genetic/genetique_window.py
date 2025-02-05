@@ -91,7 +91,7 @@ class OptimizedGeneticAlgorithm(AAlgorithm):
             
             if interval_index < num_intervals:
                 #on remplit avec une deepcopy des avions
-                self.aircraft_intervals[interval_index].append(deepcopy(obj))
+                self.aircraft_intervals[interval_index].append(obj)
         
         return self.aircraft_intervals
     
@@ -169,6 +169,21 @@ class OptimizedGeneticAlgorithm(AAlgorithm):
             fitnesses.append(self.evaluate()) # Evaluation du critere avec la List[ASimulatedAircraft]
         return fitnesses
     
+    
+    def calculate_fitnesses_individual(self, individual: List[List[DataStorage]], parsed_data :List['ASimulatedAircraft']) -> List[float]:
+        """Calcul les differentes fitnesses pour chaque individu de la population"""
+        fitnesses = []
+        for i, aircraft_sim in enumerate(parsed_data):
+            trajectory = individual[i]
+            # La liste de commandes est envoyer a l'avion et celui-ci met a jour son attribut et son TakeOffTime (premier element de la liste)
+            # Les elements de self.get_data() sont modifies en place a travers la methode update_commands
+            # ca re-calcul les differents conflits
+            aircraft_sim.update_commands(trajectory)
+
+        # A calculer apres avoir changer chaque avion 
+        fitnesses.append(self.evaluate()) # Evaluation du critere avec la List[ASimulatedAircraft]
+        return fitnesses
+    
 
     def select_all_best_individuals(self, interval_populations: Dict[int, List[List[List[DataStorage]]]]) -> Dict[int, List[List[List[DataStorage]]]]:
         """
@@ -185,12 +200,13 @@ class OptimizedGeneticAlgorithm(AAlgorithm):
         for interval, parsed_data in intervals.items():
             data_intervals.append(parsed_data)
 
+
         for interval, population in interval_populations.items():
             scored_population = []
 
             # Calculer la fitness pour chaque individu
             for i, individual in enumerate(population):
-                fitness = self.calculate_fitnesses([individual])  # Méthode qui calcule la fitness
+                fitness = self.calculate_fitnesses_individual(individual, data_intervals[interval])  # Méthode qui calcule la fitness
                 scored_population.append((individual, fitness))
 
             if not scored_population:
@@ -202,46 +218,54 @@ class OptimizedGeneticAlgorithm(AAlgorithm):
             best_individuals = [ind[0] for ind in scored_population if ind[1] == min_fitness]
             # Sauvegarder les meilleurs individus pour cet intervalle
             best_individuals_per_interval[interval] = best_individuals
-            print(best_individuals_per_interval)
 
         return best_individuals_per_interval
     
-    def generate_shifted_population(self, best_individuals: Dict[int, List[List[List[DataStorage]]]], max_variants: int = 5) -> Dict[int, List[List[List[DataStorage]]]]:
+    def generate_shifted_population(self, best_individuals: Dict[int, List[List[List[DataStorage]]]]) -> List[List[List[DataStorage]]]:
         """
-        Génère des individus identiques mais décalés dans le temps avec un `dt` constant.
+        Génère une population complète en prenant un individu de best_individuals[0], 
+        en ajustant le premier avion à t = interval * T / nb_intervals.
         
         :param best_individuals: Meilleurs individus de chaque intervalle
-        :param num_variants: Nombre de variantes à générer par individu
-        :return: Dictionnaire contenant les populations de chaque intervalle après le décalage
+        :return: Liste contenant la population finale après les décalages
         """
-        shifted_populations = {}
+        final_population = []
+        T = self.get_simulation_duration()  # Durée totale de la simulation
+        nb_intervals = len(best_individuals)
 
-        for interval, individuals in best_individuals.items():
-            shifted_populations[interval] = []
-            num_variants = min(max_variants, self.__population_size // len(best_individuals.get(interval, [1])))
+        for _ in range(self.__population_size):
+            merged_individual = []
 
-            for individual in individuals:
-                for i in range(num_variants):
-
-                    dt = random.randint(-i * 100, i * 100) 
+            for interval in range(nb_intervals):
+                if best_individuals.get(interval):
+                    chosen_individual = random.choice(best_individuals[interval])  # Sélection d'un individu aléatoire
                     
+                    # Calcul du décalage de référence pour ce groupe
+                    dt = (interval * T) / (nb_intervals-1)
+                    
+                    # Trouver le premier temps de départ de l'individu choisi
+                    first_departure = min(command.time for commands in chosen_individual for command in commands)
+
                     shifted_individual = []
-                    for commands in individual:
+                    for commands in chosen_individual:
+                        shifted_commands = []
                         for command in commands:
-                            new_time = command.time + dt
+                            new_time = command.time - first_departure + dt  # Décalage en soustrayant le premier départ
                             new_time = max(0, min(new_time, self.get_simulation_duration()))
-                            shifted_aircraft = [
-                                DataStorage(
-                                    id=command.id,
-                                    speed=command.speed,
-                                    time=new_time  # Appliquer un décalage constant
-                                )
-                            ]
-                            shifted_individual.append(shifted_aircraft)
+                            shifted_command = DataStorage(
+                                id=command.id,
+                                speed=command.speed,
+                                time=new_time
+                            )
+                            shifted_commands.append(shifted_command)
+                        shifted_individual.append(shifted_commands)
 
-                    shifted_populations[interval].append(shifted_individual)
+                    merged_individual.extend(shifted_individual)
 
-        return shifted_populations
+            final_population.append(merged_individual)
+
+        return final_population
+
     
 
     def generate_final_population(self, shifted_populations: Dict[int, List[List[List[DataStorage]]]]) -> List[List[List[DataStorage]]]:
@@ -253,7 +277,7 @@ class OptimizedGeneticAlgorithm(AAlgorithm):
         :return: Liste d'individus représentant la population fusionnée
         """
         final_population = []
-
+    
         # Déterminer le nombre de combinaisons possibles
         min_population_size = min(len(pop) for pop in shifted_populations.values())
         
@@ -305,10 +329,10 @@ class OptimizedGeneticAlgorithm(AAlgorithm):
         for traj1, traj2 in zip(parent1, parent2):
             if self.get_generator().random() < self.__crossover_rate: #random.random() < self.crossover_rate:
                 point = self.get_generator().integers(low=1, high=len(traj1) - 1, endpoint=True) if len(traj1) > 1 else 1 #random.randint(1, len(traj1) - 1) if len(traj1) > 1 else 1
-                child = deepcopy(traj1[:point]) + deepcopy(traj2[point:])
+                child = traj1[:point] + traj2[point:]
                 offspring.append(child)
             else:
-                offspring.append(deepcopy(traj1 if self.get_generator().random() < 0.5 else traj2))
+                offspring.append(traj1 if self.get_generator().random() < 0.5 else traj2)
         return offspring
         
     def mutate(self, individual: List[List[DataStorage]]) -> List[List[DataStorage]]:
@@ -408,7 +432,7 @@ class OptimizedGeneticAlgorithm(AAlgorithm):
                         remaining_slots = max_iter - len(population_layer)
                         for i in range(remaining_slots):
                             dt = (dt_interval / number_of_aircraft_per_window) * (i + 1)  # Augmentation progressive de dt
-                            modified_solution = deepcopy(random.choice(best_individuals))  # Copie aléatoire d'un meilleur individu
+                            modified_solution = random.choice(best_individuals) # Copie aléatoire d'un meilleur individu
                             # Application du partial_shuffle avec dt croissant
                             modified_solution = self.partial_shuffle(modified_solution, dt, first_departure, last_departure)
                             population_layer.append(modified_solution)
@@ -418,9 +442,9 @@ class OptimizedGeneticAlgorithm(AAlgorithm):
         #Pour chaque intervalle recuperer les meilleurs elements 
         best_individuals_per_interval = self.select_all_best_individuals(interval_populations) 
         #Pour chaque individus creer de nouveaux qui sont shifter dans le temps 
-        best_individuals_shifted_interval = self.generate_shifted_population(best_individuals_per_interval)
+        #best_individuals_shifted_interval = self.generate_shifted_population(best_individuals_per_interval)
         # Fusion des populations des intervalles pour créer la nouvelle population complète
-        final_population = self.generate_final_population(best_individuals_shifted_interval)
+        final_population = self.generate_shifted_population(best_individuals_per_interval)
         return final_population
     
     
@@ -435,7 +459,6 @@ class OptimizedGeneticAlgorithm(AAlgorithm):
         self.set_start_time(start=datetime.now().timestamp())
 
         population      = final_population
-        print("population", population)
         best_individual = None
         best_fitness    = None
 
@@ -448,7 +471,6 @@ class OptimizedGeneticAlgorithm(AAlgorithm):
 
             # Calcul fitnesses
             fitnesses = self.calculate_fitnesses(population)
-            print("best fiiiitness ", fitnesses)
             #self.logger.info(f"Generation {generation + 1} Fitnesses: {fitnesses}")
 
             # Acceptation ou non du critere

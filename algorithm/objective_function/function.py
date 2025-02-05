@@ -236,18 +236,23 @@ class ObjectiveFunctionConflictInternal(AObjective):
 
     def __init__(self,
                 nb_expected_conflict: int = 2,
+                nb_expected_balise :int = 2,
                 weight_conflicts: float = 1,
-                weight_external_penality: float= 0.1,
+                weight_external_penality: float= 0.01,
+                weight_balise: float = 0.1,
                 **kwargs):
 
         super().__init__(**kwargs)
 
         # Nombre de conflit voulu
-        self.nb_expected_conflict: int = 2
+        self.nb_expected_conflict: int = nb_expected_conflict
+        self.nb_expected_balise: int = nb_expected_balise
 
         # Bonus et penalisation
         self.__weight_conflicts = weight_conflicts
         self.__weight_external_penality = weight_external_penality
+        self.__weight_conflicts = weight_conflicts
+        self.__weight_balise = weight_balise
 
     def set_nb_expected_conflict(self, n: int) -> None:
         self.nb_expected_conflict = n
@@ -257,7 +262,10 @@ class ObjectiveFunctionConflictInternal(AObjective):
         total_conflicts = 0
         nc = 0.
         conflict = []
+        conflict_pair = []
+        conflict_balise = []
         external_penalisation = 0
+        redundance_penalisation = 0
         for _, aircraft_sim in enumerate(data):
             for conflicts in aircraft_sim.get_object().get_conflicts().get_all().values():
                 if conflicts not in conflict:
@@ -266,15 +274,29 @@ class ObjectiveFunctionConflictInternal(AObjective):
                     total_conflicts += nc
 
                     for c in conflicts : 
+                        if c.location not in conflict_balise :
+                            conflict_balise.append(c.location)
+                        if c.conflict_time_one >c.conflict_time_two : 
+                            if (c.aircraft_two, c.aircraft_one)  not in conflict_pair :
+                                conflict_pair.append((c.aircraft_two, c.aircraft_one))
+                            else :
+                                redundance_penalisation += 1
+                        else : 
+                            if (c.aircraft_one, c.aircraft_two)  not in conflict_pair :
+                                conflict_pair.append((c.aircraft_one, c.aircraft_two))
+                            else : 
+                                redundance_penalisation += 1
                         if c.location.is_external() == True:
                             external_penalisation += 1
 
 
         # Calcul du coût : 
         penalisation = self.__weight_external_penality * external_penalisation
-        conflicts    = np.abs(self.__weight_conflicts * self.nb_expected_conflict - (total_conflicts * 0.5))
+        conflicts    = np.abs(self.nb_expected_conflict - (total_conflicts * 0.5)) * self.__weight_conflicts
+        penality_balise = abs(self.nb_expected_balise - len(conflict_balise)) * self.__weight_balise
+        red_penalisation =  self.__weight_balise / 2 * redundance_penalisation
 
-        total = conflicts + penalisation 
+        total = conflicts + penalisation + penality_balise + red_penalisation
         return total
     
     
@@ -307,12 +329,15 @@ class ObjectiveFunctionTimeStdDev(AObjective):
     @override
     def evaluate(self, data: List[ASimulatedAircraft] = None) -> float:
         """
-        Calcule l'écart-type des temps de passage aux balises.
-        Utile pour un genetique qui maximise l'écartype 
+        Calcule la somme des écarts-types des temps de passage aux balises en prenant toutes les combinaisons possibles de 3 avions.
+        Utile pour un génétique qui maximise l'écart-type.
         
         :param data: Liste des avions simulés
-        :return: Écart-type des temps de passage
+        :return: Somme des écarts-types des temps de passage par groupes de 3
         """
+        import numpy as np
+        from itertools import combinations
+        
         departure_times = [aircraft.get_object().get_commands()[0].time for aircraft in data]
         first_departure = min(departure_times) if departure_times else float('inf') 
         last_departure = max(departure_times) if departure_times else float('inf') 
@@ -320,10 +345,11 @@ class ObjectiveFunctionTimeStdDev(AObjective):
         self.time_window_start = first_departure
         self.time_window_end = last_departure
 
-        passage_times = []
-        # on recupere les temps de passage a toutes les balises
-
-        if len(departure_times) > 1:
-            return - np.std(departure_times)
-        return 0.0  # Retourne 0 si pas assez de données pour un calcul significatif
-
+        if len(departure_times) < 3:
+            return 0.0  # Pas assez de données pour un calcul significatif
+        
+        # Calcul de la somme des écarts-types pour toutes les combinaisons possibles de 3 avions
+        std_sum = sum(np.std(comb) for comb in combinations(departure_times, 3))
+        
+        return std_sum
+    
