@@ -286,9 +286,9 @@ class ConflictWindow(QWidget):
         self._current_balise: QtBalise = None
 
         # Refresh part
-        self._interval_msec = interval
+        self._interval_msec = interval if interval > 10*1000 else 10*1000
         self._qtimer = QTimer()
-        self._qtimer.setInterval(interval)
+        self._qtimer.setInterval(self._interval_msec)
         self._qtimer.timeout.connect(self.__update_conflicts)
 
         self.close_button.clicked.connect(lambda : self._qtimer.stop())
