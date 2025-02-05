@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-class IWritter(ABC):
+class IWriter(ABC):
     """Interface pour les classes qui écrivent des données"""
     
     @abstractmethod

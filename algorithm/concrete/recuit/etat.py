@@ -51,13 +51,14 @@ class Etat:
 
         # Selection aleatoire d'un element du vecteur (un ISimulatedObject)
         i = self.generator.integers(low=0, high=self.dimension) # [0, dim - 1]
-
+        j = self.generator.integers(low=0, high=self.dimension)
         # Generation d'un voisin de cet objet
-        obji = self.data[i]
-        obji.generate_neighbor()
-
-        self.vector[i] = obji.get_data_storages()
-        self.data[i] = obji
+        for k in range(min(i, j), max(i, j) + 1): # Plusieurs d'un cout
+            obji = self.data[k]
+        
+            obji.generate_neighbor()
+            self.vector[k] = obji.get_data_storages()
+            self.data[k] = obji
         
     def calcul_critere(self, function: Callable) -> float:
         """Evaluation du critere (fonction objectif) prenant une List[ASimulatedAircraft]"""

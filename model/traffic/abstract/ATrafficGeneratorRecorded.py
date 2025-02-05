@@ -9,6 +9,8 @@ from typing import Dict
 
 from typing_extensions import override
 
+import numpy as np
+
 @ATrafficGenerator.register_traffic_generator
 class ATrafficGeneratorRecorded(ATrafficGenerator):
     """Générateur statique de trafic aérien nécessitant 3 paramètres:
@@ -36,6 +38,8 @@ class ATrafficGeneratorRecorded(ATrafficGenerator):
         super().__init__(**kwargs)
 
         self.__simulation_duration = None
+        self.__generator = None
+        self.reset_seed()
 
     @override
     def generate_traffic(self) -> Dict[int, Aircraft]:
@@ -45,6 +49,17 @@ class ATrafficGeneratorRecorded(ATrafficGenerator):
         parsed_data = parsed_data = self.parser.parse(data_str)  # Parse la donnée pour obtenir les avions
         self.__simulation_duration = self.__find_simulation_duration(parsed_data)
         return parsed_data  # Retourne un dictionnaire d'objets Aircraft (ou ce qui est retourné par le parser)
+
+    @override
+    def reset_seed(self) -> None:
+        """Réintialise la seed du générateur"""
+        seed = int(self.__simulation_duration) if self.__simulation_duration else self.__simulation_duration
+        self.__generator = np.random.default_rng(seed=seed)
+        
+
+    def get_generator(self) -> np.random.Generator:
+        """Renvoie le générateur aléatoire"""
+        return self.__generator
 
     @override
     def get_simulation_duration(self) -> float:

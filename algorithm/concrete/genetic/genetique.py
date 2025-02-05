@@ -50,25 +50,24 @@ class AlgorithmGeneticBase(AAlgorithm):
         # Autres attributs
         self.logger = setup_logging(self.__class__.__name__)
 
-
     def set_initial_population(self, initial_population : List[List[List[DataStorage]]] ) -> None :
-        """ Initialise la population de l'algo genetique """
+        """Initialise la population de l'algorithme genetique """
         self.__initial_population = initial_population
 
     def get_initial_population(self) -> List[List[List[DataStorage]]] :
-        """ Renvoie la population de l'algorithme genetique """
+        """Renvoie la intitale population de l'algorithme genetique """
         return self.__initial_population 
 
     def has_initial_population(self) -> bool :
-        """ Renvoie si la population de l'algorithme genetique est initialisé """
+        """Renvoie si la population de l'algorithme genetique est initialisée """
         return self.__initial_population != None
     
     def get_population_size(self) -> int:
-        """ Renvoie la taille de la population"""
+        """Renvoie la taille de la population"""
         return self.__population_size
     
     def set_population_size(self, population_size: int) -> None:
-        """ Modifie la valeur de la taille de la population"""
+        """Modifie la valeur de la taille de la population (>0)"""
         if population_size > 0 : 
             self.__population_size = population_size
         else : 
@@ -76,31 +75,31 @@ class AlgorithmGeneticBase(AAlgorithm):
             raise ValueError(error)
         
     def get_generations(self) -> int:
-        """" Renvoie le nombre de generation"""
+        """"Renvoie le nombre de generation"""
         return self.__generations
     
     def set_generations(self, generations: int) -> None:
-        """ Modifie la valeur du nombre de generation"""
+        """Modifie la valeur du nombre de generation (>=0)"""
         if generations >= 0 : 
             self.__population_size = generations
         else : 
-            error = f"generations must be positive got {generations}"
+            error = f"generations must be positive, got {generations}"
             raise ValueError(error)
     
     def get_mutation_rate(self) -> float:
-        """ Renvoie le taux de mutation"""
+        """Renvoie le taux de mutation [0-1]"""
         return self.__mutation_rate
     
     def get_crossover_rate(self) -> float:
-        """ Renvoie le taux de croisement"""
+        """Renvoie le taux de croisement [0-1]"""
         return self.__crossover_rate
     
     def set_mutation_rate(self, mutation_rate: float) -> None:
-        """ Modifie le taux de mutation"""
+        """Modifie le taux de mutation [0-1]"""
         if 0 <= mutation_rate <=1 : 
             self.__mutation_rate = mutation_rate
         else : 
-            error = f"mutation must be between 0 and 1 both included got {mutation_rate}"
+            error = f"mutation_rate must be between 0 and 1 both included, got {mutation_rate}"
             raise ValueError(error)
     
     def set_crossover_rate(self, crossover_rate: float) -> None:
@@ -112,27 +111,27 @@ class AlgorithmGeneticBase(AAlgorithm):
             raise ValueError(error)
         
     def get_best_fitness(self) -> float:
-        """ Renvoie la meilleur fitness trouvé"""
+        """ Renvoie la meilleure fitness trouvée"""
         return self.get_best_critere()
     
     def set_best_fitness(self, fitness: float) -> None:
-        """ Modifie la valeur de la meilleur fitness """
+        """ Modifie la valeur de la meilleure fitness """
         self.set_best_critere(fitness)
     
     def get_best_results(self) -> float:
-        """ Rnvoie la meilleur fitness trouvé"""
+        """ Renvoie la meilleure fitness trouvée"""
         return self.__best_results
 
     def set_best_results(self, best_results: List[List[List[DataStorage]]]) -> None:
-        """ Modifie la liste des meilleurs individus """
+        """Modifie la liste des meilleurs individus"""
         self.__best_results = best_results
     
     def add_best_results(self, best_result: List[List[DataStorage]]) -> None:
-        """ Ajoute la liste des meilleurs individus le meilleur individu """
+        """ Ajoute à la liste des meilleurs individus, le meilleur individu """
         self.__best_results.append(best_result)
 
     def get_early_stopping(self) -> int:
-        """ Renvoie le nombre maximum d'individus qui ont la meme fitness avant d'arreter l'algorithme """
+        """Renvoie le nombre maximum d'individus qui ont la meme fitness avant d'arreter l'algorithme"""
         return self.__early_stopping
     
     def set_early_stopping(self, early_stopping:int) -> None:
@@ -340,15 +339,13 @@ class AlgorithmGeneticBase(AAlgorithm):
         if self.is_verbose():
             self.logger.info(f"Il y a {len(self.get_data())} ASimulatedAircraft")
 
-        self.set_process(0.)
+        self.set_progress(0.)
         self.set_start_time(start=datetime.now().timestamp())
 
         population      = self.generate_initial_population(self.get_data())
         best_individual = None
         best_fitness    = None
 
-        self.logger.info(f"genration{self.__generations}")
-        self.logger.info(f"{self.get_generations()}")
         for generation in range(self.__generations):
             if not self.is_running():
                 break  
@@ -358,7 +355,9 @@ class AlgorithmGeneticBase(AAlgorithm):
 
             # Calcul fitnesses
             fitnesses = self.calculate_fitnesses(population)
-            #self.logger.info(f"Generation {generation + 1} Fitnesses: {fitnesses}")
+
+            if self.is_verbose():
+                self.logger.info(f"Generation {generation + 1} Fitnesses: {fitnesses}")
 
             # Acceptation ou non du critere
             if self.is_minimisation():
@@ -398,7 +397,7 @@ class AlgorithmGeneticBase(AAlgorithm):
             gc.collect()
 
             # Avancement du processus
-            self.set_process(int(((generation + 1) / self.__generations) * 100))
+            self.set_progress(int(((generation + 1) / self.__generations) * 100))
             self.set_process_time(process_time=datetime.now().timestamp() - self.get_start_time())
 
             if self.is_verbose():

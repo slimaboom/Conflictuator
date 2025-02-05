@@ -5,6 +5,8 @@ from utils.controller.database_dynamique import MetaDynamiqueDatabase
 from utils.conversion import time_to_sec
 from typing_extensions import override
 
+import numpy as np
+
 @ATrafficGenerator.register_traffic_generator
 class ATrafficGeneratorDynamic(ATrafficGenerator):
     """Générateur abstrait dynamique de trafic aérien nécessitant un paramètre obligatoire (simulation_duration)."""
@@ -24,7 +26,10 @@ class ATrafficGeneratorDynamic(ATrafficGenerator):
 
         super().__init__(**kwargs)  # Transmet les hyperparamètres à la classe parent
         self.simulation_duration = duration
-    
+        self.__simulation_duration = duration
+        self.__generator = None
+        self.reset_seed()
+
     @override
     def get_simulation_duration(self) -> float:
         """Renvoie la durée de la simulation en secondes"""
@@ -36,9 +41,19 @@ class ATrafficGeneratorDynamic(ATrafficGenerator):
         # N'écraser la valeur que si elle est plus grande pour protéger la plus grande durée
         # La méthode est utilisé dans les classes dérivées pour prendre
         # le dernier temps de passages du dernier avions et envoyés la valeur dans l'attribut
-        self.simulation_duration = max(self.simulation_duration, simulation_time) 
+        self.simulation_duration = max(self.__simulation_duration, simulation_time) 
 
-    
+    @override
+    def reset_seed(self) -> None:
+        """Réintialise la seed du générateur"""
+        self.__generator = np.random.default_rng(seed=int(self.__simulation_duration))
+        self.simulation_duration = self.__simulation_duration
+
+    @override
+    def get_generator(self) -> np.random.Generator:
+        """Renvoie le générateur aléatoire"""
+        return self.__generator
+
     @classmethod
     @override # redefinit le comportement de la classe parent pour cette classmethod
     def get_class_constructor_params(cls, class_name: str):

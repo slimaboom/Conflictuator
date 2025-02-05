@@ -4,7 +4,7 @@ from view.simulation_notifier import SimulationModelNotifier
 from view.QtObject import QtSector, QtBalise, QtAirway, QtAircraft
 from view.arrival_manager import ArrivalManagerWindow
 from utils.formatter.AFormat import AFormat
-from utils.writter.AWritter import AWritter
+from utils.writer.AWriter import AWriter
 
 from algorithm.interface.IAlgorithm import AAlgorithm
 
@@ -380,14 +380,14 @@ class SimulationViewController(QObject):
         self.simulation.disconnect()
         self.disconnect()
     
-    def record_simulation(self, aformatter: AFormat, awritter: AWritter) -> None:
+    def record_simulation(self, aformatter: AFormat, awriter: AWriter) -> None:
         """"""
         """
         La méthode pour enregistrer la simulation.
         """
         filtered_positive_id = [a for a in self.simulation.get_aircrafts().values() if a.get_id_aircraft() > 0]
         formatted_data = aformatter.export(iterable=filtered_positive_id)
-        return awritter.write(text=formatted_data)
+        return awriter.write(text=formatted_data)
 
     def display_arrival_manager(self, arrival_manager: ArrivalManagerWindow) -> None:
         aircraft_to_show = [a for id, a in self.simulation.get_aircrafts().items() if id > 0]

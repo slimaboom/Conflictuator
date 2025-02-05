@@ -10,8 +10,10 @@ class MetaDynamiqueDatabase:
         Utiliser pour enregistrer les classes de types:
             - AAlgorithm
             - AObjective
-            - AWritter
+            - AWriter
             - AFormat
+            - AReader
+            - ATrafficGenerator
 
         Cette méta classe permet d'enregistrer une dictionnaire donc la clé est le type abstrait de la sous classe,
         par exemple AlgorithmRecuit est de type AAlgorithm donc dans le dictionnaire il y aura
@@ -29,26 +31,32 @@ class MetaDynamiqueDatabase:
             {'MyFunctionObject': MyFunctionObject (Objet) subclass non instancé}
         }
 
-        De même pour les AWritter et AFormat et autre si évolution...
+        De même pour les AWriter et AFormat, AReader, ATrajectoryGenerator et autre si évolution...
     Développé au 29/01/2025 16:20:00 par F.NOUALHAGUET
     """
     
     __DYNAMIC_DATABASE: Dict[str, Dict[str, Type]] = {}
 
     @classmethod
-    def register(cls, subclass: Type):
+    def register(cls, subclass: Type, base_class_name: str = None):
         """Enregistre une classe dérivée dans le bon dictionnaire.
         Exception: TypeError
         """
         if not isinstance(subclass, Type):  # Vérifie si subclass est bien une classe
             raise TypeError(f"Expected a class (Type), got {type(subclass)} instead.")
 
-        base_class_name = subclass.__bases__[0].__name__  # Ex: "AAlgorithm"
-        
+        if base_class_name == None:
+            base_class_name = subclass.__bases__[0].__name__  # Ex: "AAlgorithm" si heritage directe
+        else:
+            # Ex: "AAlgorithm" si pas heritage directe et qu'on force la classe de base
+            # comme dans IAlgorithm.py dans AAlgorithm.register_algorithm on force l'appelle a MetaDynamiqueDatabase.register avec la bonne cle
+            base_class_name = base_class_name.__name__ 
+
         if base_class_name not in cls.__DYNAMIC_DATABASE:
             cls.__DYNAMIC_DATABASE[base_class_name] = {}
 
         cls.__DYNAMIC_DATABASE[base_class_name][subclass.__name__] = subclass
+
         return subclass  # Permet d'utiliser comme décorateur
 
     @classmethod
@@ -110,6 +118,6 @@ class MetaDynamiqueDatabase:
         """
         Découvre et importe tous les modules dans un package donné.
         
-        :param package: Le chemin du package où chercher les writters (ex. 'utils.writter').
+        :param package: Le chemin du package où chercher les writers (ex. 'utils.writer').
         """
         return dynamic_discovering(package=package)

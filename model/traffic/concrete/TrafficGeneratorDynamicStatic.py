@@ -8,7 +8,7 @@ from datetime import time
 from typing_extensions import override
 
 @ATrafficGeneratorDynamic.register_traffic_generator
-class TrafficGeneratorDynamicStatic(ATrafficGeneratorDynamic):
+class TrafficGeneratorDynamicFixed(ATrafficGeneratorDynamic):
     def __init__(self, simulation_duration: time = time(hour=0, minute=20, second=0), **kwargs):
         """
         Initialise le générateur de trafic aérien avec un nombre d'avion fixé et vitesse fixe

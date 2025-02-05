@@ -52,15 +52,15 @@ def main_dynamic_discovering():
     from algorithm.interface.IAlgorithm import AAlgorithm
     from algorithm.interface.IObjective import AObjective
     from utils.formatter.AFormat import AFormat
-    from utils.writter.AWritter import AWritter
+    from utils.writer.AWriter import AWriter
     from utils.reader.AReader import AReader
     from model.traffic.abstract.ATrafficGenerator import ATrafficGenerator
     from model import configuration
     # Découverte dynamique des formats pour les enregistrés dans une méta base: MetaDynamiqueDatabase depuis AFormat
     AFormat.discover_formatters('utils.formatter')
 
-    # Découverte dynamique des writters pour les enregistrés dans une méta base: MetaDynamiqueDatabase depuis AWritter
-    AWritter.discover_writters('utils.writter')
+    # Découverte dynamique des writers pour les enregistrés dans une méta base: MetaDynamiqueDatabase depuis AWriter
+    AWriter.discover_writers('utils.writer')
 
     # Découverte dynamique des readers pour les enregistrés dans une méta base: MetaDynamiqueDatabase depuis AReader
     AReader.discover_readers('utils.reader')

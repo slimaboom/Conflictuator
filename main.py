@@ -30,7 +30,6 @@ from algorithm.data import DataStorage
 from utils.controller.dynamic_discover_packages import main_dynamic_discovering
 
 from logging_config import setup_logging
-from view.dialog.scroll_message_box import ScrollableMessageBox
 
 
 import sys
@@ -111,7 +110,7 @@ class MainWindow(QMainWindow):
 
         # Fenêtre des conflits
         self.scroll_area_conflict_window = QScrollArea(container)
-        self.conflict_window = ConflictWindow()
+        self.conflict_window = ConflictWindow(interval=int(1000*self.simulation_controller.simulation.get_interval_timer()))
         self.scroll_area_conflict_window.setWidget(self.conflict_window)
         self.scroll_area_conflict_window.setWidgetResizable(True)
 
@@ -189,7 +188,13 @@ class MainWindow(QMainWindow):
 
         # Bouton Stop
         self.stop_button = QPushButton("Stop")
-        self.stop_button.clicked.connect(self.reset_simulation)
+        self.stop_button.setCheckable(True)
+        self.stop_button.clicked.connect(self.stop_simulation)
+
+        # Bouton Reset
+        self.reset_button = QPushButton("Reset Simulation")
+        self.reset_button.setCheckable(True)
+        self.reset_button.clicked.connect(self.reset_simulation)
 
         # Afficher le temps de simulation
         self.time_label = QLabel("Elapsed Time: 00:00:00.00")
@@ -257,6 +262,7 @@ class MainWindow(QMainWindow):
         # Ajouter les widgets à la barre
         layout_one.addWidget(self.play_button)
         layout_one.addWidget(self.stop_button)
+        layout_one.addWidget(self.reset_button)
         layout_one.addWidget(self.time_label)  # Ajouter le QLabel au panneau
         layout_one.addWidget(self.conflict_label)
         layout_one.addWidget(self.conflict_value_label)
@@ -355,24 +361,24 @@ class MainWindow(QMainWindow):
         selected_text = self.combobox.itemText(index.row())
         try:
             # Ne lancer un algorithm que si c'est le premier
-            if not self.simulation_controller.simulation.get_algorithm_manager().has_been_lauch():
-                # Gestion IHM
-                self.combobox.setCurrentIndex(index.row())  # S'assurer que l'élément sélectionné reste visible
-                # Gestion Algorithm class
-                aalgorithm = AAlgorithm.get_algorithm_class(selected_text)
-                # Demande des paramètres du constructeur de la classe dérivée AAlgorithm (dynamique)
-                algo_constructor_parameters_objective_function_constructors_parameters = self.configure_algorithm(selected_text)
+            #if not self.simulation_controller.simulation.get_algorithm_manager().has_been_lauch():
+            # Gestion IHM
+            self.combobox.setCurrentIndex(index.row())  # S'assurer que l'élément sélectionné reste visible
+            # Gestion Algorithm class
+            aalgorithm = AAlgorithm.get_algorithm_class(selected_text)
+            # Demande des paramètres du constructeur de la classe dérivée AAlgorithm (dynamique)
+            algo_constructor_parameters_objective_function_constructors_parameters = self.configure_algorithm(selected_text)
 
-                self.freeze_interactions(True)
-                self.create_algorithm_panel()
-                self.record_sim_btn.setDisabled(True)
-                self.arrival_manager.setEnabledRefresh(False)
-                self.time_slider.setValue(0) # Remettre les avions à la position initiale
-                self.time_slider.setDisabled(True)
-                self.simulation_controller.start_algorithm(aalgortim=aalgorithm,
-                                                           **algo_constructor_parameters_objective_function_constructors_parameters)                
-            else:
-                self.notify_algorithm_termination(AlgorithmState.ALREADY_LAUNCH)
+            self.freeze_interactions(True)
+            self.create_algorithm_panel()
+            self.record_sim_btn.setDisabled(True)
+            self.arrival_manager.setEnabledRefresh(False)
+            self.time_slider.setValue(0) # Remettre les avions à la position initiale
+            self.time_slider.setDisabled(True)
+            self.simulation_controller.start_algorithm(aalgortim=aalgorithm,
+                                                        **algo_constructor_parameters_objective_function_constructors_parameters)                
+            #else:
+            #    self.notify_algorithm_termination(AlgorithmState.ALREADY_LAUNCH)
         except Exception as e:
             import traceback
             tb = traceback.format_exc()
@@ -655,6 +661,13 @@ class MainWindow(QMainWindow):
             self.simulation_controller.stop_simulation() # Passer l'attribut a False
             self.combobox.setEnabled(True) # Remettre la possibilité de lancer un algorithme quand la simulation est en arret
 
+    def stop_simulation(self, checked: bool) -> None:
+        if checked:
+            self.manage_play_pause_button(checked=False)
+            self.simulation_controller.stop_simulation() # Passer l'attribut a False
+            self.combobox.setEnabled(True) # Remettre la possibilité de lancer un algorithme quand la simulation est en arret
+            self.stop_button.setChecked(False)
+
     def manage_play_pause_button(self, checked: bool) -> None:
         """Bascule l'affichage du bouton entre Pause ou Play."""
         if checked:
@@ -705,6 +718,11 @@ class MainWindow(QMainWindow):
         self.arrival_manager_btn.setChecked(False)
         
         self.play_button.setDisabled(False)
+        self.play_button.setChecked(False)
+        self.stop_button.setDisabled(False)
+        self.play_button.setChecked(False)
+        self.reset_button.setDisabled(False)
+        self.reset_button.setChecked(False)
 
         self.combobox.setDisabled(False)
         self.combobox.setCurrentIndex(0)
@@ -791,8 +809,6 @@ class MainWindow(QMainWindow):
         self.combobox.setStyleSheet("background-color: none;")
         self.combobox.setEnabled(True)
 
-
-        #msg_box = ScrollableMessageBox(self)
         msg_box = QMessageBox(self)
         msg_box.setIcon(QMessageBox.Critical if is_error else QMessageBox.Information)
         msg_box.setWindowTitle(title)
@@ -872,8 +888,8 @@ class MainWindow(QMainWindow):
         dialog = RecordDialog(parent=self)
         if dialog.exec_() == QDialog.Accepted:
             # Récupérer les choix de l'utilisateur
-            aformatter, awritter = dialog.get_selection()
-            self.logger.info(f"{aformatter}, {awritter}")
+            aformatter, awriter = dialog.get_selection()
+            self.logger.info(f"{aformatter}, {awriter}")
 
             # Afficher un message indiquant que l'enregistrement a commencé
 
@@ -882,9 +898,9 @@ class MainWindow(QMainWindow):
             # Connecter un slot temporaire pour l'enregistrement
             def recorder(is_terminated: bool):
                 if is_terminated:
-                    is_okay = self.simulation_controller.record_simulation(aformatter, awritter)
+                    is_okay = self.simulation_controller.record_simulation(aformatter, awriter)
 
-                    self.__on_simulation_finished(dialog, is_okay, container=awritter.get_container())
+                    self.__on_simulation_finished(dialog, is_okay, container=awriter.get_container())
                     # Déconnecter le signal après l'exécution
                     #self.simulation_controller.stop_simulation()
                     self.simulation_controller.simulation.signal.simulation_finished.disconnect(recorder)
@@ -970,7 +986,7 @@ def main():
     else: # Windows
         pass
 
-    # Découverte dynamique des algorithms, fonctions objectifs, writters, formatters, traffic generator
+    # Découverte dynamique des algorithms, fonctions objectifs, writers, formatters, traffic generator
     main_dynamic_discovering()
 
     # Apres gestion de la variable d'environnement: lancement de la fenetre

@@ -73,7 +73,7 @@ class AParamDialog(QDialog):
         return input_field
 
     def create_inputs(self, specific_inputs_types_dict: Dict[Type, List[str]] = {bool: TRUE_OR_FALSE_STR}) -> None:
-        # Sauvegardes types particuliers bool/Enum, ou AFormat, AWritter, AAlgorithm, ATrafficGenerator[Dynamic|Recorded]
+        # Sauvegardes types particuliers bool/Enum, ou AFormat, AWriter, AAlgorithm, ATrafficGenerator[Dynamic|Recorded]
         self.specific_inputs_types_dict = specific_inputs_types_dict
 
         # Définition des titres de colonnes
@@ -127,12 +127,14 @@ class AParamDialog(QDialog):
                 if expected_type == int:
                     input_field = QSpinBox(self)
                     input_field.setMinimum(0)
+                    input_field.setMaximum(2100500)
                     input_field.setSingleStep(1)
 
                 elif expected_type == float:
                     input_field = QDoubleSpinBox(self)
                     input_field.setMaximum(float('inf'))
-                            # Calcul de l'ordre de grandeur du pas
+                    
+                    # Calcul de l'ordre de grandeur du pas
                     if param.default != inspect.Parameter.empty and param.default != 0:
                         exponent = np.floor(np.log10(abs(param.default)))  # Exponent de la valeur
                         if exponent <0:
@@ -254,6 +256,7 @@ class AParamDialog(QDialog):
         self.__main_layout.addWidget(self.ok_button)
 
         self.setLayout(self.__main_layout)
+
 
 
 

@@ -14,3 +14,8 @@ class ITrafficGenerator(ABC):
     def get_simulation_duration(self) -> float:
         """Renvoie la durée de la simulation en secondes"""
         pass
+
+    @abstractmethod
+    def reset_seed(self) -> None:
+        """Réintialise la seed du générateur"""
+        pass

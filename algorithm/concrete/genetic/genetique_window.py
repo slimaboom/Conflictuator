@@ -15,7 +15,7 @@ from copy import deepcopy
 from datetime import datetime, time
 
 @AAlgorithm.register_algorithm
-class OptimizedGeneticAlgorithm(AAlgorithm):
+class OptimizedGeneticAlgorithm(AlgorithmGeneticBase):
     
     def __init__(self, 
                  data: List['ASimulatedAircraft'],
@@ -29,26 +29,22 @@ class OptimizedGeneticAlgorithm(AAlgorithm):
                  time_window: time = time(hour=0, minute=20, second=0),
                  **kwargs):
         
-        super().__init__(data=data, is_minimise=is_minimise, verbose=verbose, **kwargs)
+        super().__init__(data=data, is_minimise=is_minimise, verbose=verbose, 
+                         population_size=population_size, 
+                         generations=generations,
+                         mutation_rate=mutation_rate,
+                         crossover_rate=crossover_rate,
+                         **kwargs)
         
         self.__population_size = population_size
         self.__generations  = generations
         self.__time_window  = time_to_sec(time_window.isoformat())
-
-        self.best_results = None
-        self.best_fitness = None
-        self.best_individual = None
-
-        self.__population_size = population_size
-        self.__generations     = generations
-        self.__mutation_rate   = mutation_rate
-        self.__crossover_rate  = crossover_rate
         
         self.__interval_type: str = "group" # or'time'
         self.__interval_value = interval_value
     
     @override
-    def set_layers(self, layers:List['AlgorithmGeneticBase']) -> None:
+    def set_layers(self, layers: List['AlgorithmGeneticBase']) -> None:
         """ Modifie la couche des layers en liste d'AlgorithmGeneticBase"""
         super().set_layers(layers)
 
@@ -56,24 +52,17 @@ class OptimizedGeneticAlgorithm(AAlgorithm):
     def get_layers(self) -> List[AlgorithmGeneticBase]:
         """Renvoie la couche des layers en liste d'AlgorithmGeneticBase"""
         return super().get_layers()
-    
-    def set_initial_population(self, initial_population : List[List[List[DataStorage]]] ) -> None :
-        """ Initialise la population de l'algo genetique """
-        self.__initial_population = initial_population
 
-    def get_initial_population(self) -> List[List[List[DataStorage]]] :
-        """ Renvoie la population de l'algorithme genetique """
-        return self.__initial_population 
-        
-
-    def control_type_layers(self)->None:
+    def control_type_layers(self)-> None:
         for i, layer_algo in enumerate(self.get_layers()) :
+            self.logger.info(f"{layer_algo}, {isinstance(layer_algo, AlgorithmGeneticBase)}")
             if not isinstance(layer_algo, AlgorithmGeneticBase) : 
-                error = f"layer {i} must be an AlgorithmGeneticBase Type, got {type(layer_algo)}"
+                error = f"Layer {i} must be an AlgorithmGeneticBase Type, got {type(layer_algo)}"
                 raise TypeError(error)
 
+
     def split_intervals(self) -> Dict[int, List['ASimulatedAircraft']]:
-        """ Divise les données en intervalles temporels ou par groupes d'avions """
+        """Divise les données en intervalles temporels ou par groupes d'avions """
         if self.__interval_type == "time":
             return self.split_by_time()
         elif self.__interval_type == "group":
@@ -154,6 +143,7 @@ class OptimizedGeneticAlgorithm(AAlgorithm):
 
         return shuffled_solution
     
+<<<<<<< HEAD
     def calculate_fitnesses(self, population: List[List[List[DataStorage]]]) -> List[float]:
         """Calcul les differentes fitnesses pour chaque individu de la population"""
         fitnesses = []
@@ -184,6 +174,8 @@ class OptimizedGeneticAlgorithm(AAlgorithm):
         fitnesses.append(self.evaluate()) # Evaluation du critere avec la List[ASimulatedAircraft]
         return fitnesses
     
+=======
+>>>>>>> dd8c309783591554e90dff58fd7580223cc13109
 
     def select_all_best_individuals(self, interval_populations: Dict[int, List[List[List[DataStorage]]]]) -> Dict[int, List[List[List[DataStorage]]]]:
         """
@@ -296,24 +288,8 @@ class OptimizedGeneticAlgorithm(AAlgorithm):
 
         return final_population
     
-    def select_parents(self, population: List[List[List[DataStorage]]], fitnesses: List[int]) -> List[List[List[DataStorage]]]:
-        """Selection des parents dans la population aleatoirement """
-        n = len(population)
-        if all(f == 0 for f in fitnesses):
-            probabilities = [1 / len(fitnesses) for _ in fitnesses]
-        else:
-            if self.is_minimisation:
-                max_fitness = max(fitnesses)
-                adjusted_fitnesses = [max_fitness - f for f in fitnesses]
-                total_fitness = sum(adjusted_fitnesses)
-                probabilities = [f / total_fitness if total_fitness > 0 else 1 / len(adjusted_fitnesses) for f in adjusted_fitnesses]
-            else:
-                total_fitness = sum(fitnesses)
-                probabilities = [f / total_fitness if total_fitness > 0 else 1 / len(fitnesses) for f in fitnesses]
-         
-        selected_indices = self.get_generator().choice(n, size=2, replace=False, p=probabilities).tolist()
-        return [population[i] for i in selected_indices]
     
+<<<<<<< HEAD
     def select_parents_tournament(self, population: List[List[List[DataStorage]]], fitnesses: List[int]) -> List[List[List[DataStorage]]]:
         """Sélection par tournoi"""
         k = 5  # nombre d'individus tournoi
@@ -389,16 +365,23 @@ class OptimizedGeneticAlgorithm(AAlgorithm):
     
 
 
+=======
+>>>>>>> dd8c309783591554e90dff58fd7580223cc13109
     def creat_population_with_layers(self) -> List[List[List[DataStorage]]]:
          # Commencer les layer sur chaque intervalles
         interval_populations = {}
         # Parser les données
         intervals = self.split_intervals()
-        self.logger.info(f"intervals: {intervals}")
-        for interval, parsed_data in intervals.items():
+        for i, (interval, parsed_data) in enumerate(intervals.items()):
             population_layer : List[List[List[DataStorage]]] = None
             
+            progress = 100 * (i + 1 )/len(intervals)
+            self.set_progress(round(progress  , 2))
+            self.logger.info(f"Progress in creat_population_with_layers {progress} ({self.get_progress()})")
             for layer_num, layer_algo in enumerate(self.get_layers()):
+
+                self.set_process_time(process_time=datetime.now().timestamp() - self.get_start_time())
+
                 # couche 1 : maximiser l'ecartype 
                 # couche 2 : nombre de conflits en minimisant les changement temporelle des avions 
                 # couche 3 : ???
@@ -409,9 +392,12 @@ class OptimizedGeneticAlgorithm(AAlgorithm):
                     # On recommence les algorithme avec un liste de dataStorage qui contient tout le meilleurs individus  
                     if not layer_algo.has_initial_population(): 
                         layer_algo.set_initial_population(population_layer)
-                    best_indi = layer_algo.start()
+
+                    _ = layer_algo.start()
                     best_individuals = layer_algo.get_best_results()
                     number_of_aircraft_per_window = self.__interval_value
+
+                    self.set_best_fitness(layer_algo.get_best_fitness())
 
                     # Création de la prochaine population           
                     all_departure_times = [command.time for best in best_individuals for trajectory in best for command in trajectory]  
@@ -455,7 +441,7 @@ class OptimizedGeneticAlgorithm(AAlgorithm):
         if self.is_verbose():
             self.logger.info(f"Il y a {len(self.get_data())} ASimulatedAircraft")
 
-        self.set_process(0.)
+        self.set_progress(0.)
         self.set_start_time(start=datetime.now().timestamp())
 
         population      = final_population
@@ -509,7 +495,7 @@ class OptimizedGeneticAlgorithm(AAlgorithm):
             population = self.next_population(population, fitnesses)
 
             # Avancement du processus
-            self.set_process(int(((generation + 1) / self.__generations) * 100))
+            self.set_progress(int(((generation + 1) / self.__generations) * 100))
             self.set_process_time(process_time=datetime.now().timestamp() - self.get_start_time())
 
             if self.is_verbose():
@@ -528,15 +514,21 @@ class OptimizedGeneticAlgorithm(AAlgorithm):
             if self.is_verbose():
                 self.logger.info(f"Il y a {len(self.get_data())} ASimulatedAircraft")
 
-            self.set_process(0.)
+            self.set_progress(0.)
             self.set_start_time(start=datetime.now().timestamp())
 
             # Récuperer la population final après les differente layers 
             final_population = self.creat_population_with_layers()
-
+            
             # algo genetique generale
-            best_individual = self.run_algo_genetic(final_population)
+            self.set_initial_population(final_population)
+            #best_individual = self.run_algo_genetic(final_population)
 
+            best_individual = super().start()
+            self.set_best_critere(super().get_best_fitness())
+            super().stop()
+            self.logger.info(f"Final Best Solution(fitness: {self.get_best_fitness()}): {best_individual}")
+            super().reinitialize_data()
             return best_individual
         
         except Exception as e :

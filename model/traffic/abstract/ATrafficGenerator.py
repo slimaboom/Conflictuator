@@ -3,6 +3,8 @@ from model.traffic.interface.ITrafficGenerator import ITrafficGenerator
 from utils.controller.database_dynamique import MetaDynamiqueDatabase
 from typing import Type, Any
 
+import numpy as np
+
 class ATrafficGenerator(ITrafficGenerator):
     """Classe abstraite contenant des méthodes utilitaires communes."""
     
@@ -17,6 +19,13 @@ class ATrafficGenerator(ITrafficGenerator):
         """Retourne un paramètre stocké ou la valeur par défaut"""
         return self.extra_params.get(param_name, default)
     
+    def reset_seed(self) -> None:
+        """Réintialise la seed du générateur"""
+        pass
+
+    def get_generator(self) -> np.random.Generator:
+        """Renvoie le générateur aléatoire"""
+        pass
 
     @classmethod
     def register_traffic_generator(cls, traffic_class: Type):

@@ -6,13 +6,16 @@ from PyQt5.QtWidgets import (QGraphicsItem,
                              QGraphicsScene, 
                              QGraphicsTextItem,
                              QGraphicsRectItem,
-                             QGraphicsEllipseItem)
+                             QGraphicsEllipseItem,
+                             )
 
 from PyQt5.QtGui import QColor, QPainterPath
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QTextEdit
 from PyQt5.QtWidgets import QPushButton
+from PyQt5.QtCore import QTimer
 
 from typing import List
+from typing_extensions import override
 
 from model.point import Point
 from model.balise import Balise
@@ -260,8 +263,8 @@ class QtAircraft(QGraphicsPolygonItem):
         return f"{self.__class__.__name__}(id={self.aircraft.get_id_aircraft()}, commands={self.aircraft.get_commands()})"
 
 class ConflictWindow(QWidget):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, interval: float, parent=None):
+        super().__init__(parent)
         self.setWindowTitle("Conflits détectés")
 
         # Configuration de la mise en page
@@ -282,12 +285,38 @@ class ConflictWindow(QWidget):
 
         self._current_balise: QtBalise = None
 
+        # Refresh part
+        self._interval_msec = interval
+        self._qtimer = QTimer()
+        self._qtimer.setInterval(interval)
+        self._qtimer.timeout.connect(self.__update_conflicts)
+
+        self.close_button.clicked.connect(lambda : self._qtimer.stop())
+
+    @override
+    def show(self) -> None:
+        """Show widget et start le timer pour refresh"""
+        super().show()
+
+    @override
+    def close(self) -> None:
+        self._qtimer.stop()
+        super().close()
+
     @property
     def current_balise(self) -> QtBalise: return self._current_balise
 
     def update_conflicts(self, qtbalise: QtBalise) -> None:
+        """Démarre ou redémarre le timer avec la nouvelle balise."""
+        self._qtimer.stop()  # Stoppe le timer s'il était déjà en cours
+        self._current_balise = qtbalise  # Stocker la balise
+        self._qtimer.start()  # Redémarre le timer
+
+    def __update_conflicts(self) -> None:
         """Met à jour l'affichage avec la liste des conflits."""
-        self._current_balise = qtbalise
+        qtbalise = self._current_balise
+        if not qtbalise: return
+
         balise = qtbalise.get_balise()
         conflicts = balise.get_conflicts()
         if not conflicts:

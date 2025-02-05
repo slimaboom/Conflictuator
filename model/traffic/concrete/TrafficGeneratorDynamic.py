@@ -3,15 +3,18 @@ from datetime import time
 from model.route import Airway
 from model.aircraft.aircraft import Aircraft
 from model.aircraft.speed import SpeedValue
-from typing import Dict
+from typing import Dict, Tuple
 
 from model.traffic.abstract.ATrafficGeneratorDynamic import ATrafficGeneratorDynamic
 from utils.conversion import time_to_sec
 from typing_extensions import override
 
 @ATrafficGeneratorDynamic.register_traffic_generator
-class TrafficGeneratorDynamic(ATrafficGeneratorDynamic):
-    def __init__(self, simulation_duration: time = time(hour=0, minute=30, second=0), lambda_poison: float = 0.0012, **kwargs):
+class FishLawRoutesTrafficGeneratorDynamic(ATrafficGeneratorDynamic):
+    def __init__(self, simulation_duration: time = time(hour=0, minute=30, second=0), 
+                       lambda_poison: float = 0.0012, 
+                       number_of_aircrafts: int = 15, 
+                       **kwargs):
         """
         Initialise le générateur de trafic aérien.
 
@@ -19,17 +22,18 @@ class TrafficGeneratorDynamic(ATrafficGeneratorDynamic):
         :param lambda_poisson: Paramètre lambda pour la loi de Poisson.
         """
         super().__init__(simulation_duration=simulation_duration, **kwargs)
-        self.lambda_poisson = lambda_poison
+        self.__lambda_poisson = lambda_poison
+        self.__number_of_aircrafts = number_of_aircrafts
         self.routes = Airway.get_available_airways()
         self.route_rates = {}  # Stocke les paramètres lambda pour chaque route
         
-        converted_to_sec = time_to_sec(simulation_duration.isoformat())
-        self.__generator = np.random.default_rng(seed=int(converted_to_sec))
+        self.precision =  int(np.abs(np.floor(np.log10(abs(SpeedValue.MIN.value)))))
+        self.__possible_speed = np.round(np.linspace(SpeedValue.MIN.value, SpeedValue.MAX.value, 20), self.precision) 
 
     def __fish_law_on_routes(self):
         """Calcule les taux de génération de trafic pour chaque route selon la loi de Poisson."""
         for route_key in self.routes:
-            self.__set_poisson_rate(route_key, self.__generator.uniform(self.lambda_poisson, self.lambda_poisson))  # Exemple : lambda aléatoire entre 0.01 et 0.1 (0.0012)
+            self.__set_poisson_rate(route_key, self.get_generator().uniform(self.__lambda_poisson, self.__lambda_poisson))  # Exemple : lambda aléatoire entre 0.01 et 0.1 (0.0012)
 
 
     def __set_poisson_rate(self, route_key: str, rate: float):
@@ -63,8 +67,8 @@ class TrafficGeneratorDynamic(ATrafficGeneratorDynamic):
         """
         self.__fish_law_on_routes()
 
-        aircrafts: Dict[int, Aircraft] = {}
-        for route_key, rate in self.route_rates.items():
+        data: Dict[int, Tuple] = {}
+        for i, (route_key, rate) in enumerate(self.route_rates.items()):
             route = self.routes.get(route_key)
             if not route:
                 continue
@@ -80,9 +84,35 @@ class TrafficGeneratorDynamic(ATrafficGeneratorDynamic):
                     break
 
                 # Crée un avion avec une vitesse aléatoire
-                speed = self.__generator.uniform(0.001, 0.0015) #SpeedValue.MIN.value, SpeedValue.MAX.value # Exemple d'intervalle de vitesse
-                aircraft = Aircraft(speed=speed, flight_plan=flight_plan, take_off_time=time)
-                aircrafts[aircraft.get_id_aircraft()] = aircraft
+                speed = self.get_generator().choice(self.__possible_speed) # Exemple d'intervalle de vitesse
+                
+                if len(data.values()) < self.__number_of_aircrafts:
+                    data[i] = (round(speed, self.precision), flight_plan, time)
+                else:
+                    break
+                
+                #aircraft = Aircraft(speed=speed, flight_plan=flight_plan, take_off_time=time)
+                #aircrafts[aircraft.get_id_aircraft()] = aircraft
+        
+        aircrafts = self.create_aircrafts(data)
+        return aircrafts
+    
+    def create_aircrafts(self, data: Dict[int, Tuple]) -> Dict[int, Aircraft]:
+        """Cree les avions a partir du dictionnaire de donnees qui contient le tuple: 
+            speed, plan de vol, take off time
+        """
+        min_take_off_time = min([take_off_time for _, _, take_off_time in data.values()])
+        aircrafts: Dict[int, Aircraft] = {}
+        for tuple in data.values():
+            speed, flight_plan, time = tuple
+
+            # Décallage de l'avion vers le début de simulation
+            take_off_time = time - min_take_off_time
+            
+            
+            aircraft = Aircraft(speed=speed, flight_plan=flight_plan, take_off_time=take_off_time)
+            aircrafts[aircraft.get_id_aircraft()] = aircraft
+        
         last_times = max([a.get_arrival_time_on_last_point() for a in aircrafts.values()])
         self.set_simulation_duration(last_times)
         return aircrafts

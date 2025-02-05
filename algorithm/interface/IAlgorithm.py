@@ -165,6 +165,10 @@ class AAlgorithm(IAlgorithm):
         """Modifie l'attribut data (List[ASimulatedAircraft]) en enoyant l'argument dans l'attribut"""
         self.__data = data
 
+    def get_number_of_layers(self) -> float:
+        """Renvoie le nombre de layer definie dans l'algorithme"""
+        return self.__number_of_layers
+
     def get_layers(self) -> List['AAlgorithm']:
         """Récupération de la liste des différentes couches de AAlgorithm"""
         return self.__layers
@@ -191,11 +195,12 @@ class AAlgorithm(IAlgorithm):
             self.set_state(AlgorithmState.FINISHED)
             return result
         except Exception as e:
-            #import traceback
-            #tb = traceback.format_exc()
-            #self.set_state(AlgorithmState.ERROR)
-            #raise type(e)(f"{e}\nTraceback:\n{tb}") from e # Propager l'erreur avec le traceback
-            raise e
+            # import traceback
+            # tb = traceback.format_exc()
+            self.set_state(AlgorithmState.ERROR)
+            # raise type(e)(f"{e}\nTraceback:\n{tb}") from e # Propager l'erreur avec le traceback
+            return e
+        
     @override
     def stop(self) -> None:
         """Stopper l'algorithme. Ne renvoie pas de solution"""
@@ -216,7 +221,7 @@ class AAlgorithm(IAlgorithm):
         """Récupérer l'avancement de l'exécution, exprimée en % [0-100]"""        
         return self.__pourcentage_process
 
-    def set_process(self, pourcentage: float) -> None:
+    def set_progress(self, pourcentage: float) -> None:
         """Met à jour l'avancement de l'exécution, exprimée en %"""
         self.__pourcentage_process = pourcentage    
 
@@ -313,7 +318,7 @@ class AAlgorithm(IAlgorithm):
         Enregistre un algorithme à partir de la classe.
         Exception: TypeError
         """
-        return MetaDynamiqueDatabase.register(algo_class)
+        return MetaDynamiqueDatabase.register(algo_class, base_class_name=cls)
 
     @classmethod
     def get_available_algorithms(cls):
