@@ -7,7 +7,7 @@ from typing_extensions import override
 from algorithm.interface.IAlgorithm import AAlgorithm
 from algorithm.concrete.genetic.genetique import AlgorithmGeneticBase
 from algorithm.interface.ISimulatedObject import ASimulatedAircraft
-
+import ray
 import time
 from ray.air import session
 

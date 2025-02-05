@@ -189,7 +189,7 @@ class OptimizedGeneticAlgorithm(AlgorithmGeneticBase):
     def generate_shifted_population(self, best_individuals: Dict[int, List[List[List[DataStorage]]]]) -> List[List[List[DataStorage]]]:
         """
         Génère une population complète en prenant un individu de best_individuals[0], 
-        en ajustant le premier avion à t = interval * T / nb_intervals.
+        en ajustant le premier avion à t = interval * T / nb_intervals - 1.
         
         :param best_individuals: Meilleurs individus de chaque intervalle
         :return: Liste contenant la population finale après les décalages
@@ -207,6 +207,7 @@ class OptimizedGeneticAlgorithm(AlgorithmGeneticBase):
                     
                     # Calcul du décalage de référence pour ce groupe
                     dt = (interval * T) / (nb_intervals-1)
+                    print("décallage", dt)
                     
                     # Trouver le premier temps de départ de l'individu choisi
                     first_departure = min(command.time for commands in chosen_individual for command in commands)
@@ -247,9 +248,6 @@ class OptimizedGeneticAlgorithm(AlgorithmGeneticBase):
 
                 self.set_process_time(process_time=datetime.now().timestamp() - self.get_start_time())
 
-                # couche 1 : maximiser l'ecartype 
-                # couche 2 : nombre de conflits en minimisant les changement temporelle des avions 
-                # couche 3 : ???
                 if not self.is_running():
                     break  
                 else :
@@ -292,9 +290,7 @@ class OptimizedGeneticAlgorithm(AlgorithmGeneticBase):
             
         #Pour chaque intervalle recuperer les meilleurs elements 
         best_individuals_per_interval = self.select_all_best_individuals(interval_populations) 
-        #Pour chaque individus creer de nouveaux qui sont shifter dans le temps 
-        #best_individuals_shifted_interval = self.generate_shifted_population(best_individuals_per_interval)
-        # Fusion des populations des intervalles pour créer la nouvelle population complète
+
         final_population = self.generate_shifted_population(best_individuals_per_interval)
         return final_population
 
