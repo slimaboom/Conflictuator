@@ -10,7 +10,7 @@
 Conflictuator est un outil permettant de générer des trajectoires avec des conflits aériens.
 
 ## Fonctionnalités
-- Génération de trajectoires d'avions aléatoire ou non selon ce que l'utilisateur décide
+- Génération de trajectoires d'avions aléatoires ou non selon ce que l'utilisateur décide
 - Modélisation de conflits entre avions: 
 
     Deux avions sont considérés en conflits si ils partagent une ou plusieurs balises dans leur trajectoire et que leur temps de passage à celles-ci est inférieur à 60 secondes
