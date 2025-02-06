@@ -46,19 +46,19 @@ de ```AAlgorithm```
 ## Création de fonctions objectifs
 
 Pour écrire sa propre classe de fonction objective (```AObjective```), il faut:
-• Ecrire la classe dans le répertoire: ```algorithm.objective_function```
-• La classe doit hériter de ```AObjective```
-• Le décorateur au dessus de la classe est: ```@AObjective.register_objective_function```
-• Implémenter la méthode ```evaluate``` de l’interface ```IObjective``` présent dans ```algorithm.interface.IObjective.py```.
+- Ecrire la classe dans le répertoire: ```algorithm.objective_function```
+- La classe doit hériter de ```AObjective```
+- Le décorateur au dessus de la classe est: ```@AObjective.register_objective_function```
+- Implémenter la méthode ```evaluate``` de l’interface ```IObjective``` présent dans ```algorithm.interface.IObjective.py```.
 
 
 ## Création de nouveau ASimulatedAircraft
 
 - Écrire la classe dans le répertoire : ```algorithm.nouveau_fichier.py```
-• La classe doit hériter de ```ASimulatedAircraft```
-• Il n’y a pas eu de mise en place de la fonctionnalité du décorateur pour cette partie.
-• Implémenter les méthodes de l’interface ```ISimulatedObject```.
-• Importer la classe dans ```algorithm.manager.py```
-• Instancier la classe dans ```algorithm.manager.py``` à l’endroit suivant :
+- La classe doit hériter de ```ASimulatedAircraft```
+- Il n’y a pas eu de mise en place de la fonctionnalité du décorateur pour cette partie.
+- Implémenter les méthodes de l’interface ```ISimulatedObject```.
+- Importer la classe dans ```algorithm.manager.py```
+- Instancier la classe dans ```algorithm.manager.py``` à l’endroit suivant :
 
 ```AlgorithmManager.set_data``` avec ```self._data_to_algo = [MaNouvelleClasse(aircraft) for aircraft in data]```
