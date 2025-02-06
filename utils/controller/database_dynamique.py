@@ -32,7 +32,7 @@ class MetaDynamiqueDatabase:
         }
 
         De même pour les AWriter et AFormat, AReader, ATrajectoryGenerator et autre si évolution...
-    Développé au 29/01/2025 16:20:00 par F.NOUALHAGUET
+    Développé au 29/01/2025 16:20:00
     """
     
     __DYNAMIC_DATABASE: Dict[str, Dict[str, Type]] = {}
