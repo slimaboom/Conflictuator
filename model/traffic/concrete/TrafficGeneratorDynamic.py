@@ -50,13 +50,13 @@ class FishLawRoutesTrafficGeneratorDynamic(ATrafficGeneratorDynamic):
 
         for _ in range(self.__number_of_aircrafts):
             # Sélectionne une route au hasard
-            route_key = np.random.choice(list(self.routes.keys()))
+            route_key = self.get_generator().choice(list(self.routes.keys()))
             route = self.routes[route_key]
             start_balise = route.get_start_balise_name()
             flight_plan = route.get_transform_points()
 
             # Génère un temps de départ suivant la loi de Poisson
-            interval = np.random.poisson(1 / self.__lambda_poisson)
+            interval = self.get_generator().poisson(1 / self.__lambda_poisson)
             proposed_time = last_departure_times.get(start_balise, 0) + max(interval, self.MIN_INTERVAL_BETWEEN_DEPARTURES)
 
             # Assure que le temps reste dans la durée de simulation
@@ -64,7 +64,7 @@ class FishLawRoutesTrafficGeneratorDynamic(ATrafficGeneratorDynamic):
                 break  
 
             # Sélectionne une vitesse aléatoire
-            speed = np.random.choice(self.__possible_speed)
+            speed = self.get_generator().choice(self.__possible_speed)
 
             # Stocke les données de l'avion
             aircraft_data.append((speed, flight_plan, proposed_time))
