@@ -30,6 +30,10 @@ Conflictuator est un outil permettant de générer des trajectoires avec des con
 python3 main.py
 ```
 
+# Création de nouvelles classes
+
+En respectant les directives ci-dessous, les nouvelles classes seront prises en compte dans l'IHM.
+
 ## Création d'algorithmes
 
 Pour écrire sa propre classe d’algorithme (```AAlgorithm```), il faut:
@@ -38,6 +42,15 @@ Pour écrire sa propre classe d’algorithme (```AAlgorithm```), il faut:
 de ```AAlgorithm```
 - Le décorateur au dessus de la classe est: ```@AAlgorithm.register_algorithm```
 - Implémenter la méthode run de l’interface ```IAlgorithm``` en mettant la logique de ce que l'algorithm doit renvoyer comme solution
+
+## Création de fonctions objectifs
+
+Pour écrire sa propre classe de fonction objective (```AObjective```), il faut:
+• Ecrire la classe dans le répertoire: ```algorithm.objective_function```
+• La classe doit hériter de ```AObjective```
+• Le décorateur au dessus de la classe est: ```@AObjective.register_objective_function```
+• Implémenter la méthode ```evaluate``` de l’interface ```IObjective``` présent dans ```algorithm.interface.IObjective.py```.
+
 
 ## Création de nouveau ASimulatedAircraft
 
