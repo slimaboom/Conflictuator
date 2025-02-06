@@ -2,9 +2,9 @@ from enum import Enum
 
 
 class SpeedValue(Enum):
-    MAX: float = 0.002   # 8 min = 1 unité = traversé le domain
-    MIN: float = 0.0010  # 15 min = 1 unité = traversé le domain
-    STEP: float = 1e-5
+    MAX: float = 0.002 *0.5 # 8 min = 1 unité = traversé le domain
+    MIN: float = 0.0010 *0.5 # 15 min = 1 unité = traversé le domain
+    STEP: float = 1e-5 * 0.5
 
 # np.round(np.linspace(0.000138, 0.0016, 20), 6) 
 # array([0.000138, 0.000215, 0.000292, 0.000369, 0.000446, 0.000523,
