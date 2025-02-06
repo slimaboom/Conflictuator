@@ -50,8 +50,6 @@ class HyperbandOptimizer(AAlgorithm):
         Exécute l'algorithme génétique avec les hyperparamètres donnés et retourne sa performance.
         """
         self.progress += 1
-        self.set_process(round(self.progress * 100 / self.num_samples, 2))
-        self.set_process_time(time.time())
         
         algo = AlgorithmGeneticBase(
             data=self.get_data(),

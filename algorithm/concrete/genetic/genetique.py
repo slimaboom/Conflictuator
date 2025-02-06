@@ -30,7 +30,7 @@ class AlgorithmGeneticBase(AAlgorithm):
         super().__init__(data=data, is_minimise=is_minimise, verbose=verbose, 
                          timeout=timeout,
                          **kwargs)
-
+        self.__generator = np.random.default_rng(seed=sum(a.get_object().get_id_aircraft() for a in data))
         # Paramètre de l'algorithme génétique
         # les définir pour les rendre compatible a l'optimisation
         self.__population_size = population_size
@@ -183,9 +183,9 @@ class AlgorithmGeneticBase(AAlgorithm):
     def select_parents_tournament(self, population: List[List[List[DataStorage]]], fitnesses: List[int]) -> List[List[List[DataStorage]]]:
         """Sélection par tournoi"""
         k = 5  # nombre d'individus tournoi
-        indices = np.random.choice(len(population), k, replace=False)
+        indices = self.__generator.choice(len(population), k, replace=False)
         best_index = max(indices, key=lambda i: fitnesses[i]) if not self.is_minimisation() else min(indices, key=lambda i: fitnesses[i])
-        return [population[best_index], population[np.random.choice(indices)]] #roulette aleatoire pour le deuxieme parent
+        return [population[best_index], population[self.__generator.choice(indices)]] #roulette aleatoire pour le deuxieme parent
 
 
     
