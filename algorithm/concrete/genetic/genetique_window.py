@@ -116,7 +116,7 @@ class OptimizedGeneticAlgorithm(AlgorithmGeneticBase):
             delayed_aircraft = []
 
             # Générer un décalage aléatoire entre -dt et +dt
-            delta_t = random.uniform(-dt, dt)
+            delta_t = self.get_generator().uniform(-dt, dt)
 
             for old_command in old_commands:
                 new_time = old_command.time + delta_t
@@ -203,7 +203,7 @@ class OptimizedGeneticAlgorithm(AlgorithmGeneticBase):
 
             for interval in range(nb_intervals):
                 if best_individuals.get(interval):
-                    chosen_individual = random.choice(best_individuals[interval])  # Sélection d'un individu aléatoire
+                    chosen_individual = self.get_generator().choice(best_individuals[interval])  # Sélection d'un individu aléatoire
                     
                     # Calcul du décalage de référence pour ce groupe
                     dt = (interval * T) / (nb_intervals-1)
@@ -281,7 +281,7 @@ class OptimizedGeneticAlgorithm(AlgorithmGeneticBase):
                         remaining_slots = max_iter - len(population_layer)
                         for i in range(remaining_slots):
                             dt = (dt_interval / number_of_aircraft_per_window) * (i + 1)  # Augmentation progressive de dt
-                            modified_solution = random.choice(best_individuals) # Copie aléatoire d'un meilleur individu
+                            modified_solution = self.get_generator().choice(best_individuals) # Copie aléatoire d'un meilleur individu
                             # Application du partial_shuffle avec dt croissant
                             modified_solution = self.partial_shuffle(modified_solution, dt, first_departure, last_departure)
                             population_layer.append(modified_solution)
